@@ -13,3 +13,6 @@ int guard_u8_save(const char *key, uint8_t v);      // 0 on success
 // The synthesis loops feed it once per chunk and the idle loop once a second. No effect in the QEMU build (the emulator has no such hang).
 void guard_wdt_arm(uint32_t ms);
 void guard_wdt_feed(void);
+#ifdef ITOFS_EMBEDDED
+void guard_set_watchdog_hooks(void *user, void (*arm)(void *, uint32_t), void (*feed)(void *));
+#endif

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "itofs.h"
-void s3_kernels_init(void);
+int s3_kernels_init(void); /* 0 on success, -1 when required scratch or worker allocation fails */
 void s3_qgemm4(const int8_t *x, int rows, int ldx, int in, const uint8_t *w4, int rs, int out, int32_t *acc, void *user);   // int4-weight rows (see itofs.h)
 void s3_gemm_rows(const int8_t *x, int rows, int ldx, int in16, const int8_t *w, int nw, int32_t *acc, int out);   // the aligned fast path of s3_qgemm
 int s3_kernel_check(int bench);           // kernel_check_s3.c (build with ITOFS_KCHECK): every kernel variant against a C reference, optionally cycles per MAC
