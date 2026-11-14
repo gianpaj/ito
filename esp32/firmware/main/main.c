@@ -21,6 +21,7 @@
 #include <stdatomic.h>
 #ifdef ITOFS_EMBEDDED
 #include "itofs_service.h"
+#include "esp_attr.h"
 static itofs_service_config_t s_audio;
 static int s_service_started, s_service_up;
 static size_t s_hot_reserved;
@@ -2140,16 +2141,27 @@ static void handle_line(char *line)
 static void console_task(void *arg)
 {
     (void)arg;
+#ifdef ITOFS_EMBEDDED
+    static EXT_RAM_BSS_ATTR char line[4096];
+#else
     static char line[4096];
+#endif
     int len = 0;
     uint8_t ch[64];
     for (;;) {
+#if defined(ITOFS_EMBEDDED) && defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG)
+        int n = 0;
+#else
         int n = uart_read_bytes(UART_NUM_0, ch, sizeof ch, pdMS_TO_TICKS(20));
+#endif
 #ifndef ITOFS_QEMU
         if (n <= 0) {            // found on the board: with only the native USB port connected the commands never arrived; read the USB-Serial/JTAG FIFO as well
             n = 0;
             while (n < (int)sizeof ch && usb_serial_jtag_ll_rxfifo_data_available()) n += usb_serial_jtag_ll_read_rxfifo(ch + n, sizeof ch - n);
         }
+#endif
+#if defined(ITOFS_EMBEDDED) && defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG)
+        if (n == 0) { vTaskDelay(pdMS_TO_TICKS(20)); continue; }
 #endif
         for (int i = 0; i < n; i++) {
             if (ch[i] == '\n' || ch[i] == '\r') {
@@ -2308,10 +2320,12 @@ static esp_err_t runtime_start(void)
         xQueueSend(s_free_q, &b, 0);
     }
 #ifdef ITOFS_EMBEDDED
+#ifndef CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
     if (s_audio.start_console && !uart_is_driver_installed(UART_NUM_0)) {
         esp_err_t error = uart_driver_install(UART_NUM_0, 4096, 0, 0, NULL, 0);
         if (error != ESP_OK) return error;
     }
+#endif
 #else
     uart_driver_install(UART_NUM_0, 4096, 0, 0, NULL, 0);
 #endif
