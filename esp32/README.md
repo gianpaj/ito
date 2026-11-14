@@ -76,6 +76,12 @@ esp32/tools/build_fw.sh && esp32/tools/qemu/run_qemu.sh       # the real firmwar
 
 `make test_sched` runs the boot-calibration and start-delay policy (`engine/itofs_sched.c`, §4b) against a model of the speaker with simulated timings; it needs no weights.
 
+`make -C esp32/host test_runtime` runs the firmware's C playback and frontend
+ownership functions with POSIX queue and codec mocks. It checks cancellation
+during pre-roll, a write, output starvation and final drain, plus stale PCM and
+text-job ownership. It needs Python 3 and a C11 compiler with pthreads; it does
+not need ESP-IDF or weights. Physical DMA drain still needs a board test.
+
 `make test` checks the C engine against an engine-numerics PyTorch reference stored in `host/golden/` (male voice:
 `make test VOICE=male`, references in `host/golden/g/`; `VOICE=male esp32/tools/qemu/run_qemu.sh` runs the male voice in QEMU). It checks
 durations, the SNR of every stage, and that streaming output is bit-identical to whole-utterance output. It runs for

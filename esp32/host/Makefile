@@ -6,6 +6,7 @@
 #   make test_split        the verdict state machine of the runtime split choice (engine/itofs_split.c) with simulated resets and test results
 #   make test_frontend   the on-chip text front end (esp32/frontend: espeak-ng 1.52.0 en-us port + phonemizer / nltk logic) against golden ids made by the Python front end; needs no weights
 #   make test_sched        the boot calibration / start-delay policy (engine/itofs_sched.c) against a model of the speaker, with simulated timings (no weights needed)
+#   make test_runtime      the firmware's playback and frontend ownership functions with POSIX queue/codec mocks (no IDF or weights needed)
 CC ?= cc
 CFLAGS = -std=c99 -D_DEFAULT_SOURCE -O2 -ffp-contract=off -Wall -Wno-unused-function -I../engine
 ENGINE = ../engine/itofs.c ../engine/itofs.h
@@ -46,6 +47,9 @@ host_test_split: host_test_split.c ../engine/itofs_split.c ../engine/itofs_split
 test_split: host_test_split
 	./host_test_split
 
+test_runtime:
+	python3 test_runtime.py
+
 
 # ---- on-chip text front end (esp32/frontend) ----
 FE = ../frontend
@@ -69,4 +73,4 @@ test: test_frontend host_test_v3 host_test_v3_asan $(BLOB)
 clean:
 	rm -f ito_batch host_test_frontend host_test_split host_test_sched w4_dump ito_cli host_test_v3 host_test_v3_asan gen_selftest opcount_v3 asan.log golden/*.wav
 
-.PHONY: all test test_sched test_split test_frontend clean
+.PHONY: all test test_sched test_split test_frontend test_runtime clean
