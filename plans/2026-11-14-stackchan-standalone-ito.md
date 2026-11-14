@@ -29,8 +29,8 @@ A phrase stored in firmware also plays after a reset without a host process
 sending text. This proves that synthesis does not depend on the Mac. It does not
 establish battery life or performance on battery power.
 
-The dedicated image replaces the robot app. Both phases keep the display
-backlight off and the motors disabled. Phase 1 leaves the microphones inactive.
+The dedicated image replaces the robot app. A green dot indicates PCM playback;
+the backlight is off while idle. Both phases keep the motors disabled. Phase 1 leaves the microphones inactive.
 Face animation, hands-free wake words, simultaneous listening and speaking,
 Wi-Fi, Bluetooth, camera, mobile app support and OTA integration remain outside
 these phases.
@@ -350,7 +350,7 @@ session logs when diagnosing an installation failure.
 Test in this order:
 
 1. Muted boot detects 8 MB PSRAM and the required I2C devices. Check that
-   the motors remain disabled and the backlight remains off.
+   the motors remain disabled and the backlight remains off until PCM playback.
 2. Main-model self-test matches the blob's expected PCM hash. Verify the hot
    engine arena is in internal SRAM and weights are copied into PSRAM.
 3. Run `ids`, `textq`, `stats` and `status`. Compare IDs and PCM with the host

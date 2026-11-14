@@ -9,8 +9,8 @@ the factory-restore rehearsal are deferred. The full factory backup is verified.
 
 Ito runs the English text frontend and speech model on the ESP32-S3. The Mac
 sends text and records USB logs. This target uses the built-in AW88298 speaker,
-8 MB quad PSRAM and 16 MB flash. It keeps motor power, microphone power and the
-display backlight off. GPIO0 is an audio clock; it has no demo-button task.
+8 MB quad PSRAM and 16 MB flash. It keeps motor and microphone power off. A green dot appears during PCM
+playback; the backlight is off while idle. GPIO0 is an audio clock; it has no demo-button task.
 
 ## Build
 
@@ -97,6 +97,11 @@ text Hello! I am StackChan.
 cancel
 ```
 
+The green dot starts after the first successful I2S submission and disappears
+after the audio drains or cancellation flushes it. The image is drawn once
+into LCD memory; playback only switches the backlight. Display failure reports
+a warning and leaves speech available.
+
 `volume 0` keeps the amplifier muted across utterances. Volume uses the codec's
 hardware attenuation. Board or codec failures report an error and hold the
 amplifier in reset. Ito owns I2S and duplicates mono samples into two 16-bit
@@ -130,7 +135,7 @@ its failure latch stays in place. Do not force full split to improve timing.
 
 | File | Offset | SHA-256 |
 | --- | --- | --- |
-| `ito_stackchan_merged.bin` | `0x0` | `386bb5b737b3f3f0b467118abf1dd5a154aa0bde2b8eddac9bbae5bc0d71ca71` |
+| `ito_stackchan_merged.bin` | `0x0` | `46798f594b8f28f621268d2f92ba1f0dfcf609d58ef44f2a7ad3434ef6fdb370` |
 | `ito_female_esp32s3.bin` | `0x200000` | `0266caf56597639b8d1d7d4c26e5f689436bc63fddc8797310b6a877389879f5` |
 | `ito_female_esp32s3_int4.bin` | `0x680000` | `155da4f3c58266ab49c0b885caff08d02d72be5635d5bc960c86ed055d529b27` |
 
@@ -140,7 +145,11 @@ rebuilding. Logs, host references and image metadata are under
 `esp32/logs/stackchan/20261114T201157.747967Z/`. Fast-boot verification is under
 `esp32/logs/stackchan/20261114T205347.304975Z/` and includes both self-tests,
 calibration, USB speech and the number-sentence PCM reference. Metadata records
-the source revision. StackChan pins the text frontend to core 1 and synthesis
+the source revision. Playback-indicator verification is under
+`esp32/logs/stackchan/20261114T211448.253946Z/`: both model self-tests pass,
+the number-sentence PCM matches the host, speech has zero underruns and cancel
+flushes audio in 9.5 ms with the dot off. The user confirms the visual states.
+The retained synthesis profile has the 980-second stability result. StackChan pins the text frontend to core 1 and synthesis
 to core 0; generic boards retain their default placement.
 
 ## Restore

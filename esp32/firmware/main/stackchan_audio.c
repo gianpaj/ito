@@ -190,3 +190,33 @@ esp_err_t stackchan_audio_set_volume(int volume)
     xSemaphoreGive(s_lock);
     return error;
 }
+
+esp_err_t stackchan_lcd_reset(void)
+{
+    if (!s_lock || !s_aw) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    // AW9523 P1.1 is LCD_RST. Preserve all other expander outputs.
+    esp_err_t error = update_reg(s_aw, 0x03, 1 << 1, 0);
+    if (error == ESP_OK) error = update_reg(s_aw, 0x13, 0, 1 << 1);
+    if (error == ESP_OK) error = update_reg(s_aw, 0x05, 1 << 1, 0);
+    if (error == ESP_OK) {
+        vTaskDelay(pdMS_TO_TICKS(20));
+        error = update_reg(s_aw, 0x03, 0, 1 << 1);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    if (error == ESP_OK) error = verify_reg(s_aw, 0x03, 1 << 1, 1 << 1);
+    xSemaphoreGive(s_lock);
+    return error;
+}
+
+esp_err_t stackchan_lcd_backlight(bool on)
+{
+    if (!s_lock || !s_axp) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    // The factory brightness map uses register values 20..28. Use 26.
+    esp_err_t error = on ? update_reg(s_axp, 0x99, 0x1f, 26) : ESP_OK;
+    if (error == ESP_OK) error = update_reg(s_axp, 0x90, 1 << 7, on ? 1 << 7 : 0);
+    if (error == ESP_OK) error = verify_reg(s_axp, 0x90, 1 << 7, on ? 1 << 7 : 0);
+    xSemaphoreGive(s_lock);
+    return error;
+}

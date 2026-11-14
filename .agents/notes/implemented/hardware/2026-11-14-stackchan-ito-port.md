@@ -36,7 +36,8 @@ requested demo without claiming the original strict streaming gate passes.
   interface would reconfigure Ito's I2S channel. The control interface checks
   errors while Ito owns the existing audio path.
 - Hold amplifier reset during board setup. Read back motor power and power
-  rails before playback. Keep microphone power, motor power and backlight off.
+  rails before playback. Keep microphone and motor power off; the display
+  backlight follows PCM playback.
 - Use GPIO0 as MCLK and omit the GPIO0 demo-button task. I2S uses BCLK 34,
   WS 33 and DOUT 13, at 24 kHz with mono duplicated into two 16-bit slots.
 - Set volume 35 after the user reports that 25 is too quiet. Volume zero stays
@@ -47,7 +48,8 @@ requested demo without claiming the original strict streaming gate passes.
 
 ## Evidence
 
-The user confirms clear speech, still motors and an unlit screen. Schematics
+The user confirms clear speech, still motors and a green dot during speech
+that disappears afterward. Schematics
 and source references are listed in `esp32/STACKCHAN.md`. Power readbacks
 confirm AXP2101 `0x34`, AW9523 `0x58` and base PY32 `0x6f`, version `0x41`.
 
@@ -83,7 +85,7 @@ is pending. Preserve Ito's NVS safety counters when returning from that test.
 Builds, model checks, reference audio and measurements are under
 `esp32/logs/stackchan/20261114T184935.713345Z/`. Metadata records hashes of the
 images, configurations and models. The installed merged image SHA-256 is
-`386bb5b737b3f3f0b467118abf1dd5a154aa0bde2b8eddac9bbae5bc0d71ca71`.
+`46798f594b8f28f621268d2f92ba1f0dfcf609d58ef44f2a7ad3434ef6fdb370`.
 
 The serial monitor owns the port while running and prints its private session
 folder. Close it before another serial tool opens the device. Opening native
@@ -96,6 +98,17 @@ USB greeting playback has zero underruns, and the number-sentence token and
 PCM hashes match the host. Its logs are under
 `esp32/logs/stackchan/20261114T205347.304975Z/`. DevKit and QEMU builds pass.
 The 980-second stability result covers the retained synthesis profile.
+
+The static playback dot uses the original LCD driver and reset sequence. A
+640-byte temporary row buffer draws the image into panel memory during boot,
+then is freed. Playback toggles only the backlight. There is no display task
+or redraw during speech. Optional display failure leaves audio available.
+
+Indicator verification is under `esp32/logs/stackchan/20261114T211448.253946Z/`.
+Both model self-tests pass, the number-sentence PCM matches the host, speech
+has zero underruns and cancellation flushes audio in 9.5 ms with the dot off.
+The hot arena remains 239,948 bytes in internal SRAM. Free internal SRAM after
+warm-up is about 29 KB with the LCD driver. DevKit and QEMU builds pass.
 
 The full backup is verified. Recovery rehearsal and additional boot-cycle
 checks remain deferred. Retain the original backup and do not force full split

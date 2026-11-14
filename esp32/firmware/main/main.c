@@ -48,6 +48,7 @@
 #endif
 #ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
 #include "stackchan_audio.h"
+#include "stackchan_display.h"
 #endif
 #ifdef CONFIG_ITOFS_FRONTEND
 #include "ito_frontend.h"
@@ -270,6 +271,9 @@ static void cancel_flush(int16_t *st)
     for (int i = 0; i < 6; i++) { size_t n = 0; i2s_channel_preload_data(s_tx, st, sizeof(int16_t) * 2 * (size_t)I2S_SLICE, &n); }
     i2s_channel_enable(s_tx);
     CODEC_MUTE(1);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    stackchan_display_playing(false);
+#endif
     printf("CANCEL: audio flushed %.1f ms after the command\n", ms(esp_timer_get_time() - s_cancel_t));
 }
 #else
@@ -303,6 +307,9 @@ static void play_task(void *arg)
                 const int64_t w = end_us + (int64_t)TAIL_SAMPLES * 1000000 / s_sr + 60000 - esp_timer_get_time();
                 if (w > 0) vTaskDelay(pdMS_TO_TICKS((w + 999) / 1000));
                 CODEC_MUTE(1);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+                stackchan_display_playing(false);
+#endif
             }
             last = 0; s_playing = 0; xQueueSend(s_done_q, &b, portMAX_DELAY); continue;
         }
@@ -345,7 +352,10 @@ static void play_task(void *arg)
                 s_cancel = 1;
                 break;
             }
-            if (submit_us) s_first_i2s_submit_us = submit_us;
+            if (submit_us) {
+                s_first_i2s_submit_us = submit_us;
+                stackchan_display_playing(true);
+            }
 #else
             i2s_channel_write(s_tx, st, sizeof(int16_t) * 2 * (size_t)m, &wr, portMAX_DELAY);
 #endif
@@ -2157,6 +2167,9 @@ void app_main(void)
     mem_report("boot");
 #ifdef CONFIG_ITOFS_FRONTEND
     fe_start();
+#endif
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    (void)stackchan_display_init();
 #endif
     xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, NULL, 1);
     xTaskCreatePinnedToCore(synth_task, "itofs_synth", 12288, NULL, 5, NULL, 0);

@@ -9,3 +9,7 @@ esp_err_t stackchan_audio_prepare(void);
 esp_err_t stackchan_audio_init(int sample_rate, int volume);
 esp_err_t stackchan_audio_mute(bool mute);
 esp_err_t stackchan_audio_set_volume(int volume);
+
+// The display shares the board's I2C power and reset controls.
+esp_err_t stackchan_lcd_reset(void);
+esp_err_t stackchan_lcd_backlight(bool on);
