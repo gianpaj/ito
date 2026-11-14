@@ -10,7 +10,7 @@
 //                           "style <0-63>" | "act <8|16>" | "demo" | "demo <k>" | "test" | "stats" | "bench" |
 //                           "wmode <0|1|2>" (weight staging: direct / copy / gdma) | "first <n>" (frames in the
 //                           first chunk) | "split [auto|row|full]" (GEMM split, see DUAL_CORE_POWER.md) | "equiv [light on|off]" (weight sets validated by ear) |
-//                           "volume <0-100>" (ES8388 builds) | "cancel" (stop the
+//                           "volume <0-100>" (codec builds) | "cancel" (stop the
 //                           utterance being spoken) | "rep <n> [k]" (n silent repetitions of the demos, with timing and hash) |
 //                           "reboot" | "help"
 //   I2S: sample rate from the blob (24 kHz), 16-bit, mono duplicated to stereo. Pins: BCLK GPIO15, LRCLK GPIO16, DOUT GPIO17 (plain DAC, default), or the ES8388 shield's.
@@ -46,6 +46,9 @@
 #ifdef CONFIG_ITOFS_AUDIO_ES8388
 #include "es8388.h"
 #endif
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+#include "stackchan_audio.h"
+#endif
 #ifdef CONFIG_ITOFS_FRONTEND
 #include "ito_frontend.h"
 #include "ito_fe_idf.h"
@@ -56,6 +59,11 @@
 #define PIN_BCLK CONFIG_ITOFS_ES8388_PIN_BCLK
 #define PIN_WS CONFIG_ITOFS_ES8388_PIN_WS
 #define PIN_DOUT CONFIG_ITOFS_ES8388_PIN_DOUT
+#elif defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+#define PIN_MCLK 0
+#define PIN_BCLK 34
+#define PIN_WS 33
+#define PIN_DOUT 13
 #else                                  // a plain I2S DAC / amplifier: BCLK GPIO15, LRCLK GPIO16, DOUT GPIO17, no MCLK
 #define PIN_MCLK I2S_GPIO_UNUSED
 #define PIN_BCLK 15
@@ -63,19 +71,32 @@
 #define PIN_DOUT 17
 #endif
 #define PIN_BOOT 0
-#ifdef CONFIG_ITOFS_AUDIO_ES8388
+#if defined(CONFIG_ITOFS_AUDIO_ES8388) || defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
 #define VOLUME_HELP "volume <0-100> | "
 #else
 #define VOLUME_HELP ""
 #endif
 #ifdef CONFIG_ITOFS_AUDIO_ES8388
 #define CODEC_MUTE(m) es8388_mute(m)       // the DAC is muted whenever nothing is spoken: a class-D amplifier makes no noise and no click on a silent, steady input
+#elif defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+#define CODEC_MUTE(m) do { \
+    const esp_err_t error_ = stackchan_audio_mute(m); \
+    if (error_ != ESP_OK) { s_cancel = 1; printf("ERROR StackChan mute: %s; playback cancelled\n", esp_err_to_name(error_)); } \
+} while (0)
 #else
 #define CODEC_MUTE(m) ((void)0)
 #endif
 #define MAX_TOKENS 400
 #define TAIL_SAMPLES 120             // end of an utterance: the last sample decays to zero over 5 ms (the engine's PCM ends at up to -45 dBFS, not at zero: a step would click)
 #define I2S_SLICE 480                // samples per I2S write (20 ms = one DMA descriptor); a chunk (up to 300 ms) goes out in slices
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+#ifndef STEADY_FRAMES
+#define STEADY_FRAMES 32
+#endif
+#ifndef FIRST_FRAMES
+#define FIRST_FRAMES 32
+#endif
+#endif
 #ifndef STEADY_FRAMES
 #define STEADY_FRAMES 24             // frames per chunk once the start-up ramp is over (24 frames = 300 ms): every chunk reads each weight
                                      // matrix once from PSRAM, so bigger chunks mean less weight traffic per second of audio
@@ -155,6 +176,9 @@ static volatile int s_underruns, s_playing;
 static volatile int s_cancel, s_speaking;   // `cancel`: set by the console while an utterance is spoken; the synthesis stops at the next chunk, the player drops what it holds and flushes the I2S ring
 static volatile int64_t s_cancel_t;         // esp_timer time of the cancel command
 static volatile int64_t s_utt_t0;       // esp_timer time (us) at which the current utterance was handed to the engine
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+static int64_t s_first_i2s_submit_us;
+#endif
 static int s_delay_override_ms = START_DELAY_MS;   // >= 0: hold the DAC until this long after the text arrived, whatever the plan says (`delay <ms>`); -1: use the plan (`delay auto`)
 static volatile int64_t s_cur_delay_us;            // the planned start delay of the current utterance (from its text arrival); raised while the player waits if the chunks come slower than calibrated
 static int s_trace;                                // `trace 1`: print the chunk times of every utterance
@@ -224,6 +248,13 @@ static void i2s_setup(void)
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_rx, &sc));          // the receive channel shares the transmit channel's clocks; it is enabled only during a `loopback`
 #endif
     ESP_ERROR_CHECK(i2s_channel_enable(s_tx));
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (stackchan_audio_init(s_sr, CONFIG_ITOFS_AUDIO_VOLUME) != ESP_OK) {
+        i2s_channel_disable(s_tx);
+        printf("ERROR StackChan audio initialization failed; playback stopped, use USB download mode to recover\n");
+        for (;;) { guard_wdt_feed(); vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+#endif
 #ifdef CONFIG_ITOFS_AUDIO_ES8388
     const int e = es8388_init(CONFIG_ITOFS_ES8388_PIN_SDA, CONFIG_ITOFS_ES8388_PIN_SCL, CONFIG_ITOFS_AUDIO_VOLUME);   // the clocks run, so the codec can lock to them
     if (e) printf("ERROR ES8388 codec %s: nothing will be heard\n", e == -1 ? "does not answer on the I2C bus" : "bus error");
@@ -305,7 +336,19 @@ static void play_task(void *arg)
             if (s_lb_on) lb_play_note(b.pcm + o, m);
 #endif
             size_t wr = 0;
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+            const size_t bytes = sizeof(int16_t) * 2 * (size_t)m;
+            const int64_t submit_us = s_first_i2s_submit_us ? 0 : esp_timer_get_time();
+            const esp_err_t err = i2s_channel_write(s_tx, st, bytes, &wr, portMAX_DELAY);
+            if (err != ESP_OK || wr != bytes) {
+                printf("ERROR StackChan I2S write: %s, %u/%u bytes\n", esp_err_to_name(err), (unsigned)wr, (unsigned)bytes);
+                s_cancel = 1;
+                break;
+            }
+            if (submit_us) s_first_i2s_submit_us = submit_us;
+#else
             i2s_channel_write(s_tx, st, sizeof(int16_t) * 2 * (size_t)m, &wr, portMAX_DELAY);
+#endif
         }
         last = b.pcm[b.n - 1];
         if (s_cancel) { cancel_flush(st); s_playing = 0; }
@@ -337,6 +380,9 @@ static int speak(const int *tok, int n, int style, uint32_t seed, int play, int1
     s_cancel = 0; s_speaking = play;
     int64_t t0 = esp_timer_get_time();
     s_utt_t0 = t0;
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    s_first_i2s_submit_us = 0;
+#endif
     s3_stats_reset();
     int T = itofs_begin(&s_ctx, tok, n, style, seed);
     int64_t t1 = esp_timer_get_time();
@@ -423,6 +469,13 @@ static void print_timing(const char *what, const stats_t *S, int n_tok, int styl
            S->compute_ms, S->compute_ms / 1000.0 / S->audio_s, s_underruns, s_delay_override_ms >= 0 ? "fixed" : "planned",
            s_delay_override_ms >= 0 ? (double)s_delay_override_ms : S->plan_delay_ms, s_delay_override_ms >= 0 || S->plan_feasible ? "" : ", model predicts underruns", s_active, s3_gemm_dual ? "full" : "row", s3_wmode_name(s3_wmode),
            s3_stats.calls, s3_stats.pf_hit, s3_stats.pf_miss + s3_stats.pf_free, S->chunks, s3_stats.wbytes / 1e6, (unsigned long)S->hash);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (s_first_i2s_submit_us) {
+        printf("I2S_START: engine begin -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_utt_t0));
+        if (s_req_tmp.t0) printf(", text received -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_req_tmp.t0));
+        printf(" (successful I2S API call; DMA and acoustic latency excluded)\n");
+    }
+#endif
     mem_report(what);
 }
 
@@ -1286,8 +1339,13 @@ static void repeat_demos(int n, int only)
 // It runs in its own task (stack in PSRAM, priority below the synthesis) and hands the utterances to the synthesis task through the
 // request queue; while utterance k is synthesized (the synthesis task waits for the player whenever it is ahead) it prepares k + 1.
 // ------------------------------------------------------------------------------------------------------------------
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+extern const char phrases_start[] asm("_binary_stackchan_phrases_txt_start");
+extern const char phrases_end[] asm("_binary_stackchan_phrases_txt_end");
+#else
 extern const char phrases_start[] asm("_binary_phrases_txt_start");
 extern const char phrases_end[] asm("_binary_phrases_txt_end");
+#endif
 #ifdef CONFIG_ITOFS_FE_FAST_FIRST
 static int s_fe_fast_first = 1;         // `fastfirst 0|1` changes it at run time
 #else
@@ -1571,13 +1629,18 @@ static void at_finish(void)
 
 static void fe_start(void)
 {
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    const BaseType_t frontend_core = 1;
+#else
+    const BaseType_t frontend_core = 0;
+#endif
     s_fe_q = xQueueCreate(1, sizeof(fejob_t));
     s_fe_text = heap_caps_malloc(FE_TEXT_MAX, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     s_fe_st = heap_caps_malloc(sizeof(itofe_stream), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     s_fe_req = heap_caps_malloc(sizeof(req_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         StackType_t *stk = heap_caps_malloc(FE_STACK_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!s_fe_q || !s_fe_text || !s_fe_st || !s_fe_req || !stk) { printf("ERROR front end: no memory\n"); return; }
-    s_fe_h = xTaskCreateStaticPinnedToCore(fe_task, "itofs_fe", FE_STACK_BYTES / sizeof(StackType_t), NULL, 3, stk, &s_fe_tcb, 0);
+    s_fe_h = xTaskCreateStaticPinnedToCore(fe_task, "itofs_fe", FE_STACK_BYTES / sizeof(StackType_t), NULL, 3, stk, &s_fe_tcb, frontend_core);
 }
 
 // submit a text job (from the console or the boot demo); text == NULL: the stored phrase list
@@ -1627,7 +1690,11 @@ static void synth_task(void *arg)
     fe_submit(NULL, FE_PHRASES);
     #endif
 #endif
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    printf("READY (StackChan, serial: text <English text> | volume <0-100> | cancel | status | help)\n");
+#else
     printf("READY (BOOT button = demos, serial: say <ids> | style <k> | demo [k] | test | stats | tier [k] | status | help)\n");
+#endif
     for (;;) {
         while (xQueueReceive(s_req_q, &s_req_tmp, pdMS_TO_TICKS(1000)) != pdTRUE) guard_wdt_feed();      // idle: the watchdog is fed once a second
         guard_wdt_feed();
@@ -1828,11 +1895,16 @@ static void handle_line(char *line)
             s_in_req.kind = 15; s_in_req.n = a[0] == 'a' ? ITOFS_PREF_AUTO : a[0] == 'r' ? ITOFS_PREF_ROW : ITOFS_PREF_FULL;
             xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
         } else printf("ERROR split auto|row|full\n");
-#ifdef CONFIG_ITOFS_AUDIO_ES8388
-    } else if (!strncmp(line, "volume", 6)) {         // volume <0-100>: codec output volume in percent (91 = 0 dB, 100 = +4.5 dB); 0 mutes the DAC
+#if defined(CONFIG_ITOFS_AUDIO_ES8388) || defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+    } else if (!strncmp(line, "volume", 6)) {         // codec output level in percent; zero keeps the amplifier muted
         const int v = atoi(line + 6);
         if (v < 0 || v > 100 || !line[6]) { printf("ERROR volume 0-100\n"); return; }
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+        const esp_err_t error = stackchan_audio_set_volume(v);
+        if (error != ESP_OK) { s_cancel = 1; printf("ERROR volume: %s\n", esp_err_to_name(error)); return; }
+#else
         es8388_set_volume_percent(v);                // 0 is a true mute that utterances do not lift (the codec's volume register alone only reaches -45 dB)
+#endif
         printf("OK volume %d\n", v);
 #endif
 #ifdef CONFIG_ITOFS_AUDIO_LOOPBACK
@@ -1958,6 +2030,7 @@ static void console_task(void *arg)
     }
 }
 
+#ifndef CONFIG_ITOFS_AUDIO_STACKCHAN
 static void button_task(void *arg)
 {
     (void)arg;
@@ -1973,6 +2046,7 @@ static void button_task(void *arg)
         vTaskDelay(pdMS_TO_TICKS(30));
     }
 }
+#endif
 
 // ------------------------------------------------------------------------------------------------------------------
 // boot
@@ -1990,6 +2064,9 @@ void app_main(void)
     }
 #endif
     printf("\n==== ItoFS TTS on ESP32-S3 ====\n");
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (stackchan_audio_prepare() != ESP_OK) return;
+#endif
     guard_wdt_arm(WDT_RUN_MS);
     {   // GEMM split: the stored verdict and the evidence of the reset that led here (see itofs_split.h); the row split runs until the supply test has passed
         const itofs_rst_t rst = guard_reset_class(&s_rst_name);
@@ -2075,5 +2152,7 @@ void app_main(void)
     xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, NULL, 1);
     xTaskCreatePinnedToCore(synth_task, "itofs_synth", 12288, NULL, 5, NULL, 0);
     xTaskCreatePinnedToCore(console_task, "itofs_con", 4096, NULL, 4, NULL, 0);
+#ifndef CONFIG_ITOFS_AUDIO_STACKCHAN
     xTaskCreatePinnedToCore(button_task, "itofs_btn", 4096, NULL, 4, NULL, 0);
+#endif
 }

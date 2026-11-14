@@ -3,10 +3,28 @@
 # flash, I2S on) and the QEMU configuration (quad PSRAM, DIO flash, I2S compiled out), then write
 # esp32/prebuilt/ito_app_frontend_merged.bin (bootloader + partition table + app; flash it at 0x0).
 #   esp32/tools/build_fw.sh
-set -e
+#   BOARD=stackchan esp32/tools/build_fw.sh  -> build_stackchan/ito_stackchan_merged.bin
+set -eo pipefail
 cd "$(dirname "$0")/../firmware"
 IDF=${IDF_PATH:-$HOME/esp/esp-idf}
 . "$IDF/export.sh" > /dev/null
+if [ "${BOARD:-devkit}" = stackchan ]; then
+    rm -rf build_stackchan
+    SD="sdkconfig.defaults;sdkconfig.stackchan.defaults"
+    idf.py -B build_stackchan -D SDKCONFIG=build_stackchan/sdkconfig -D SDKCONFIG_DEFAULTS="$SD" set-target esp32s3
+    idf.py -B build_stackchan -D SDKCONFIG=build_stackchan/sdkconfig -D SDKCONFIG_DEFAULTS="$SD" build
+    python -m esptool --chip esp32s3 merge_bin \
+        -o build_stackchan/ito_stackchan_merged.bin --flash_mode dio --flash_freq 80m --flash_size 16MB \
+        0x0 build_stackchan/bootloader/bootloader.bin \
+        0x8000 build_stackchan/partition_table/partition-table.bin \
+        0x10000 build_stackchan/itofs.bin
+    echo "STACKCHAN_BUILD_DONE: esp32/firmware/build_stackchan/ito_stackchan_merged.bin"
+    exit 0
+fi
+if [ "${BOARD:-devkit}" != devkit ]; then
+    echo "Unknown BOARD '${BOARD}'. Use devkit or stackchan." >&2
+    exit 1
+fi
 # a stale <dir>/sdkconfig from an earlier build keeps its old values and silently ignores new sdkconfig.defaults entries (the front end needs
 # CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: without it the hot arena no longer fits internal SRAM and the engine runs ~25 % slower): always start clean
 rm -rf build_hw build_qemu
