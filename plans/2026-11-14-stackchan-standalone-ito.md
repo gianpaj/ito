@@ -1,7 +1,12 @@
 # StackChan speech and push-to-talk conversation
 
-Status: proposed implementation plan. Implement phase 1, then phase 2 after its
-entry checks pass. Implementation and device flashing have not started.
+Status: phase 1 implementation. Bootloader access and the full-flash backup are
+verified. The StackChan target builds and the serial monitor passes its host
+integration check. Flash writes and device speech validation have not started.
+Continue phase 1, then phase 2 after its entry checks pass. See the
+[device preflight record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-backup-preflight.md).
+Implementation decisions and checks are in the
+[firmware port record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-ito-port.md).
 
 ## Outcome
 
@@ -90,18 +95,21 @@ Inspected on 2026-11-14:
 | Item | Evidence | Consequence |
 | --- | --- | --- |
 | Hardware | M5Stack documents ESP32-S3, 16 MB flash, 8 MB quad PSRAM and AW88298 speaker amplifier | Capacity matches Ito; memory mode and audio need a port |
-| USB | Espressif USB JTAG/serial device enumerates at `/dev/cu.usbmodem1101` | Candidate port; confirm device identity before any write |
+| USB | Bootloader responds at `/dev/cu.usbmodem1101`; esptool USB reset reaches download mode | Recheck port and device identity before any write |
 | Toolchain | `~/esp/esp-idf` contains ESP-IDF 5.5.4 | Reuse it and validate this port with that version |
 | Serial tools | IDF Python environment contains esptool 4.12.dev1 and pyserial | Use its underscore command names; do not upgrade it for this task |
 | Ito environment | `.venv` contains the model download and host synthesis dependencies | Use it for weights and host reference audio |
-| Weights | No chip weights in this checkout's `models/` directory | Check configured weight locations and the HF cache before downloading |
+| Weights | Access is granted; main and int4 host tests and device self-tests match their references | Use the approved int4 fallback when baseline timing requires it |
 | Ito defaults | Octal PSRAM, generic I2S pins, GPIO0 demo button task | Supplied prebuilt image is unsuitable for this board |
 | StackChan source | Board audio already runs at 24 kHz | Sample rate matches Ito |
 | Source status | Both checkouts contain unrelated untracked files | Preserve them and keep implementation changes in Ito |
 
-Hardware facts follow [M5Stack's StackChan documentation][m5]. The device's chip
-revision, security configuration, flash contents and runtime memory remain
-unmeasured. USB enumeration alone does not verify these.
+Hardware specifications follow [M5Stack's StackChan documentation][m5]. The
+[device preflight record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-backup-preflight.md)
+records chip identity, security state, two matching full-flash reads and the
+original DIO boot header with QIO runtime flash at 80 MHz. The 32-frame row
+profile uses 239,948 bytes of internal SRAM for its hot arena. PSRAM copy
+bandwidth measures about 32 MB/s. Sustained playback validation is in progress.
 
 Ito's reported text frontend run peaked at roughly 6.0 to 6.3 MB PSRAM and left
 about 52 KB internal SRAM free. Those figures come from another board with octal
@@ -166,7 +174,7 @@ step and keep playback disabled.
 
 | Path in Ito | Change |
 | --- | --- |
-| `esp32/firmware/sdkconfig.stackchan.defaults` | Quad PSRAM, StackChan audio selection and silent boot defaults |
+| `esp32/firmware/sdkconfig.stackchan.defaults` | Quad PSRAM, QIO flash, StackChan audio and a quiet stored greeting |
 | `esp32/firmware/main/Kconfig.projbuild` | Add StackChan to the existing audio output choice |
 | `esp32/firmware/main/stackchan_audio.c` and `.h` | Power, expander, amplifier initialization, mute and volume |
 | `esp32/firmware/main/main.c` | Select board pins, call helper, route mute/volume and disable GPIO0 button task |
@@ -281,13 +289,14 @@ provide a reference for board self-tests. Model access follows
   cores; this is not a single-core mode. Enable the existing automatic supply
   test only after baseline boot and audio work. Keep brownout detection and
   watchdog recovery enabled.
-- Build one image that boots muted. Use existing silent commands and self-tests
-  before requesting playback; add no diagnostic build variant or test subsystem.
+- Disable `CONFIG_ITOFS_BOOT_TEXT` for the first diagnostic build. Use existing
+  silent commands and self-tests before requesting playback. Enable the stored
+  greeting for the final image; add no diagnostic build variant or test subsystem.
 - Use a fresh StackChan build directory. Inspect its resolved `sdkconfig` for
   PSRAM mode, codec selection, console, CPU clock and frontend enablement.
 - Match the flash mode and frequency to the verified original bootloader and
-  board configuration. The local StackChan build artifacts specify DIO at
-  80 MHz; confirm that against the device backup.
+  board configuration. The factory bootloader uses a DIO header and enables
+  QIO at runtime. Match that behavior at 80 MHz.
 - Check the map, app size and partition sizes. The app must fit its existing
   `0x1F0000` byte slot. Ensure all flashed ranges remain within 16 MB.
 - Build the default DevKit and QEMU targets once to check configuration
@@ -296,14 +305,14 @@ provide a reference for board self-tests. Model access follows
 Completion condition: board-specific build artifacts, hashes, flash offsets and
 configuration are reviewable. Default prebuilt files remain untouched.
 
-The proposed build command, added by the build-script change, is:
+The StackChan build command is:
 
 ```sh
 BOARD=stackchan esp32/tools/build_fw.sh
 ```
 
-It writes `esp32/firmware/build_stackchan/ito_stackchan_merged.bin`. This command
-is a planned interface and does not work in the unmodified checkout.
+It writes `esp32/firmware/build_stackchan/ito_stackchan_merged.bin`. The board
+guide is [esp32/STACKCHAN.md](../esp32/STACKCHAN.md).
 
 ### 1.5. Flash and validate in stages
 
@@ -320,16 +329,18 @@ Start flashing at 460800 baud and lower it if transfer reliability requires it.
 After the build and backup checks, use the existing explicit-path interface:
 
 ```sh
-BAUD=460800 esp32/tools/flash.sh "$STACKCHAN_PORT" \
+ESPTOOL_BEFORE=no_reset ESPTOOL_AFTER=no_reset BAUD=460800 \
+  esp32/tools/flash.sh "$STACKCHAN_PORT" \
   models/ito_female_esp32s3.bin \
   esp32/firmware/build_stackchan/ito_stackchan_merged.bin
 ```
 
 Run this from the Ito checkout in the IDF shell. The explicit weight argument
 also prevents the script from attempting a model download in IDF Python.
-After flashing completes, start the host monitor and reset the board to capture
-its complete boot log. Save build and flashing output alongside the session
-logs when diagnosing an installation failure.
+The reset environment variables keep the chip in download mode between erase
+and write operations. After flashing completes, start the host monitor with
+`--reset` to capture the boot log. Save build and flashing output alongside the
+session logs when diagnosing an installation failure.
 
 Test in this order:
 
@@ -372,8 +383,8 @@ with memory placement and synthesis correctness established separately.
 - Run repeated speech for at least 15 minutes and compare free memory after
   warm-up and at the end. Require no persistent memory loss, resets, hash
   failures or audible gaps. Perform five reset/boot cycles and repeat a phrase.
-- Store one phrase in `main/phrases.txt` and enable the existing boot-phrase
-  option for the final build. After completing and verifying the flash, close
+- Store one phrase in `main/stackchan_phrases.txt` and enable the existing
+  boot-phrase option for the final build. Keep other boards' phrase lists intact. After completing and verifying the flash, close
   all serial processes and reset the device. It must speak the phrase without
   host text or host computation. Keep the startup phrase quiet and brief.
 

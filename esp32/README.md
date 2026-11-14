@@ -1,5 +1,8 @@
 # Ito on the ESP32-S3
 
+For M5Stack StackChan, follow the [StackChan board guide](STACKCHAN.md) for its
+quad PSRAM target, built-in speaker, USB logs and recovery procedure.
+
 **Text in, speech out on the chip.** The whole chain from English text to waveform runs on an **ESP32-S3-DevKitC-1 N16R8** (16 MB flash, 8 MB octal PSRAM): text normalization and phonemization (a port of espeak-ng 1.52.0, [`FRONTEND.md`](FRONTEND.md)), then the text
 encoder, duration head, prosody net, mel head, harmonic F0 source, ConvNeXt vocoder and iSTFT. Give it text with the serial command `text <string>` (or a phrase list stored in flash) and it speaks, 24 kHz, with no computer in the loop; `tools/say.py` remains the host alternative (it phonemizes on the computer and sends token ids). Most speed figures on this page (sections 4 to 4c) were measured with ids sent from the host, so they start at the ids and exclude normalization, G2P and the serial transfer; the on-chip text front end adds 2 to 20 ms (section 4d). sanoTTS runs its front end on the chip and counts it in its wall time, so compare it with the text-in numbers of section 4d, not with the ids-in ones. No DAC was attached in any measurement on this page.
 
