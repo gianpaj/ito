@@ -23,8 +23,11 @@ requested demo without claiming the original strict streaming gate passes.
 - Keep the main model at `0x200000` and the approved female int4 fallback at
   `0x680000`. Calibration selects int4. The unapproved female light variant is
   absent. No model architecture or arithmetic changes are needed for the port.
-- Keep gdma+prefetch staging. It is the fastest of all four existing modes
-  when measured on both the main and int4 models.
+- Select the measured gdma+prefetch mode at StackChan startup. It is the
+  fastest of all four modes on both models. Skip the full boot benchmark and
+  retain calibration and self-tests. `bench` runs diagnostics manually; if the
+  staging mode is unavailable, startup benchmarks the available modes. This
+  avoids calibration-cache state for the fixed device profile.
 - Pin the StackChan text frontend to core 1 and keep synthesis on core 0. The
   long speaker paragraph improves from RTF 1.00194 to 1.00098. Both placements
   match host PCM. Other boards keep frontend core 0.
@@ -80,12 +83,19 @@ is pending. Preserve Ito's NVS safety counters when returning from that test.
 Builds, model checks, reference audio and measurements are under
 `esp32/logs/stackchan/20261114T184935.713345Z/`. Metadata records hashes of the
 images, configurations and models. The installed merged image SHA-256 is
-`6338216a1e94e3872846680106654133e0ed54ce0e54d0955e3fb999ad6ff7e6`.
+`386bb5b737b3f3f0b467118abf1dd5a154aa0bde2b8eddac9bbae5bc0d71ca71`.
 
 The serial monitor owns the port while running and prints its private session
 folder. Close it before another serial tool opens the device. Opening native
-USB serial can reset the chip; boot benchmarking and calibration take about
-two minutes. Wait for the stored greeting to finish before sending text.
+USB serial can reset the chip. Startup reaches READY in 25.9 seconds and
+finishes the stored greeting in 29.3 seconds, measured from serial open.
+Wait for the greeting to finish before sending text.
+
+The fast-boot image passes both model self-tests and calibrates both models.
+USB greeting playback has zero underruns, and the number-sentence token and
+PCM hashes match the host. Its logs are under
+`esp32/logs/stackchan/20261114T205347.304975Z/`. DevKit and QEMU builds pass.
+The 980-second stability result covers the retained synthesis profile.
 
 The full backup is verified. Recovery rehearsal and additional boot-cycle
 checks remain deferred. Retain the original backup and do not force full split

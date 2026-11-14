@@ -1672,7 +1672,16 @@ static void synth_task(void *arg)
     self_test(0);
     if (!s_selftest_ok) { printf("WARNING: the first weight set FAILED its self-test and is excluded; the other sets are tried below\n"); s_tier[first].valid = 0; }
 #ifndef ITOFS_QEMU
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (set_wmode(3)) {
+        printf("WARNING: StackChan gdma+prefetch unavailable; benchmarking available staging modes\n");
+        board_bench();
+    } else {
+        printf("BOOT: StackChan uses measured gdma+prefetch; boot benchmark skipped (run `bench` for diagnostics)\n");
+    }
+#else
     board_bench();                   // hardware: measure, keep the fastest weight-staging mode (QEMU: `bench` command)
+#endif
 #endif
     tiers_select();
 #ifdef CONFIG_ITOFS_AUTOTEST

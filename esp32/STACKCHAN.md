@@ -113,8 +113,11 @@ Runs without a host reader retain no logs.
 
 `TIMING` records first PCM, compute time, RTF, underruns and the planned delay.
 `I2S_START` records the first successful PCM submission to the I2S API. It
-excludes DMA and acoustic latency. Boot benchmarking and calibration take about
-two minutes. Wait for the stored greeting to finish before sending text.
+excludes DMA and acoustic latency. Startup reaches `READY` in about 26 seconds
+and finishes its greeting in about 29 seconds. Wait for the greeting to finish
+before sending text. StackChan uses the measured gdma+prefetch mode and skips
+the full boot benchmark. Calibration and model self-tests still run. `bench`
+runs diagnostics manually; unavailable staging triggers a benchmark fallback.
 
 ## Validation record
 
@@ -127,16 +130,18 @@ its failure latch stays in place. Do not force full split to improve timing.
 
 | File | Offset | SHA-256 |
 | --- | --- | --- |
-| `ito_stackchan_merged.bin` | `0x0` | `6338216a1e94e3872846680106654133e0ed54ce0e54d0955e3fb999ad6ff7e6` |
+| `ito_stackchan_merged.bin` | `0x0` | `386bb5b737b3f3f0b467118abf1dd5a154aa0bde2b8eddac9bbae5bc0d71ca71` |
 | `ito_female_esp32s3.bin` | `0x200000` | `0266caf56597639b8d1d7d4c26e5f689436bc63fddc8797310b6a877389879f5` |
 | `ito_female_esp32s3_int4.bin` | `0x680000` | `155da4f3c58266ab49c0b885caff08d02d72be5635d5bc960c86ed055d529b27` |
 
 The image hash identifies the tested source and configuration. Recheck it after
 rebuilding. Logs, host references and image metadata are under
 `esp32/logs/stackchan/20261114T184935.713345Z/`. Physical playback logs are under
-`esp32/logs/stackchan/20261114T201157.747967Z/`. The firmware source is
-commit `8c1edf4`. StackChan pins the text frontend to core 1 and synthesis to
-core 0; generic boards retain their default placement.
+`esp32/logs/stackchan/20261114T201157.747967Z/`. Fast-boot verification is under
+`esp32/logs/stackchan/20261114T205347.304975Z/` and includes both self-tests,
+calibration, USB speech and the number-sentence PCM reference. Metadata records
+the source revision. StackChan pins the text frontend to core 1 and synthesis
+to core 0; generic boards retain their default placement.
 
 ## Restore
 
