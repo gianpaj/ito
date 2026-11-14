@@ -1,9 +1,9 @@
 # Local Ito speech in the original StackChan firmware
 
-Status: route 2 selected by the user. Implementation has not started. The user
-requests notice before implementation; wait for the go-ahead before creating
-an implementation worktree, building or changing firmware code. The tested
-green-dot Ito image stays on the device during planning.
+Status: route 2 approved for implementation. The user authorized implementation
+and coordinated sub-agents on 2026-11-14. Work proceeds through the checkpoints
+below. Announce candidate images and the layout before the first device write.
+The tested green-dot Ito image remains the rollback target.
 
 ## Goal and boundary
 
@@ -160,9 +160,8 @@ for changes to shared audio code. Commit and push each verified logical chunk.
 
 ## Immediate next step
 
-Wait for the user's go-ahead. The first work is checkpoint 1 only: a pinned,
-reproducible unmodified build and a baseline report. Present the baseline findings and the first code-change scope before moving
-into firmware implementation. No code or device changes are part of this
-planning update.
+Reproduce the pinned baseline, record its budgets, then implement the approved
+local profile in logical commits. Keep source, dependency revisions and device
+validation in the linked Agent Notes. Announce each device-write checkpoint.
 
 [source-version]: https://github.com/m5stack/StackChan/blob/94856a77876255ceee36f2a7ffae40f572eeb1f2/firmware/CMakeLists.txt
