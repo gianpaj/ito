@@ -1,123 +1,168 @@
-# StackChan animated face with local Ito speech
+# Local Ito speech in the original StackChan firmware
 
-Status: proposed. The green playback dot is implemented, tested and confirmed
-by the user. This plan describes the next step; no face integration is installed.
+Status: route 2 selected by the user. Implementation has not started. The user
+requests notice before implementation; wait for the go-ahead before creating
+an implementation worktree, building or changing firmware code. The tested
+green-dot Ito image stays on the device during planning.
 
-## Goal
+## Goal and boundary
 
-Send English text over USB and hear local Ito speech while the original-style
-StackChan face animates its mouth. Keep the current monitor commands:
+Integrate local Ito text-to-speech into the original StackChan application.
+Reuse its avatar, mouth animation, display, menus and board/codec implementation.
+Keep the USB interface familiar:
 
 ```text
 text Hello, I am StackChan.
 volume 50
 cancel
+status
 ```
 
-The text frontend and speech model run on the robot. The Mac supplies text.
-Use the neutral white face on black, with a closed mouth while idle. During
-playback, animate the mouth; close it when playback drains, is cancelled or
-fails. Keep the face visible while idle. Motors and microphone power stay off
-for this text-to-speech demo.
+The Mac supplies English text; normalization, phonemization and synthesis run
+on the robot. The original face stays visible while idle and animates during
+actual speaker playback. The first local-speech mode keeps motor and microphone
+power off. Cloud conversation and local speech must not own playback together.
 
-## Two implementation routes
+The user chose full original-firmware integration for fidelity and maintenance.
+Copying the face into the standalone Ito image is not the selected route.
 
-1. **Copy the original face into the working Ito firmware. Recommended.** Port
-   its neutral eye/mouth geometry and speaking cadence into the small LCD
-   renderer. Reuse the tested local voice, USB commands and playback callbacks.
-   This is the shortest path to the deadline demo.
-2. **Add local Ito speech to a copy of the full original firmware.** Reuse the
-   original avatar classes and application UI, then add a local text-to-speech
-   mode. This requires audio-service, memory and partition work before it is
-   ready to flash. Choose this when the original menus and app modes matter.
+## Source baseline
 
-Route 1 copies the appearance and mouth behavior. Route 2 preserves the
-original UI implementation. The initial work needs only neutral eyes and a
-speaking mouth; idle blinking and additional expressions can follow separately.
+The supplied checkout `/Users/gianpaj_it/tmp/StackChan` is at
+`447e7dcd64744f73bc8b26fc50aa506d2dffc983` and declares firmware 1.4.2.
+The verified device backup contains active firmware 1.6.0, built with IDF 5.5.4.
 
-## Source evidence
+Use official commit `94856a77876255ceee36f2a7ffae40f572eeb1f2` as the proposed
+version-matched source baseline. Its [CMake version declaration][source-version]
+is 1.6.0. This matches the version number; it does not prove a reproducible
+match to the factory binary. Do not use an unpinned moving branch.
 
-Reference checkout: `/Users/gianpaj_it/tmp/StackChan`, HEAD
-`447e7dcd64744f73bc8b26fc50aa506d2dffc983`. Paths below are relative to it.
+The local `firmware/xiaozhi-esp32` is a separate, ignored Git checkout at
+`e77dedb1309153bb63fed285772962c920c97dd4`. Its parent commit does not pin it.
+Verify and pin the dependency revision and any patches required by the 1.6.0
+source before relying on its audio API. Preserve the supplied checkout and its
+untracked documents, simulator files and binary.
 
-| Source | Useful behavior |
-| --- | --- |
-| `firmware/main/hal/board/stackchan_display.cc`, `SetStatus()` | Speaking adds `SpeakingModifier(0, 180, false)`; standby removes it and closes the mouth |
-| `firmware/main/stackchan/modifiers/speaking.h` | Alternates open/closed mouth weights every 180 ms; head motion is optional |
-| `firmware/main/stackchan/avatar/skins/default/` | Neutral colors, eye geometry and mouth size/radius interpolation |
-| `firmware/xiaozhi-esp32/main/audio/audio_service.cc`, `AudioOutputTask()` | Existing PCM playback queue feeds `codec_->OutputData()` |
-| `firmware/main/hal/board/cores3_audio_codec.cc` | Original firmware owns the board's I2S and codec devices |
+Implementation belongs in a separate StackChan feature worktree. Run `wt list`
+before creating it. The user's StackChan fork is remote `upstream`,
+`git@github.com:gianpaj/StackChan.git`; `origin` is M5Stack's repository.
 
-The mouth animation is driven by speaking state and a timer. It does not need
-the external AI model or phoneme alignment. Keep source attribution and license
-notices when porting code.
+## Intended audio path
 
-## Recommended route, step by step
+```text
+USB text -> local speech service -> Ito frontend and engine
+         -> bounded PCM playback -> original codec -> speaker
+                         |
+                         +-> original avatar speaking/standby states
+```
 
-### 1. Draw the idle face
+- Keep the original board and codec as the sole I2S owner. Import the Ito C
+  engine, frontend, optimized kernels and scheduling logic through a pinned
+  dependency/component boundary. Do not import Ito's `app_main` or board setup.
+- Add one local-speech backend to the original application. Begin with an
+  explicit local build/profile using the existing avatar screen. Preserve the
+  cloud build; runtime switching and new settings UI are separate decisions.
+- Use the original PCM output path. If the selected dependency lacks a raw-PCM
+  submission API, maintain the adapter change in a tracked dependency revision
+  or patch. Do not rely on edits hidden in an ignored dependency checkout.
+- Start only the audio services needed in local mode. Its playback must not
+  allocate microphone processing, wake-word or Opus tasks merely to speak PCM.
+- Preserve original menus and avatar code. First validate the local speech path;
+  do not claim unrelated original applications have been regression-tested.
 
-- Retain the current dot image as the known-working rollback firmware.
-- Extend `esp32/firmware/main/stackchan_display.c` to draw the original neutral
-  eyes and closed-mouth geometry. Use the existing LCD driver and row buffer.
-- Keep the face lit while idle. Leave audio initialization and USB parsing intact.
-- Check the physical appearance before adding animation.
+## Playback contract
 
-Completion: the original-style idle face is visible and `text` still speaks.
+The existing audio queue contains PCM, but its public submission path accepts
+encoded packets in the inspected checkout. Queue-empty also does not establish
+that an in-flight chunk or I2S DMA has drained. Revalidate these details against
+the pinned 1.6.0 dependency before changing its API.
 
-### 2. Connect mouth animation to actual playback
+- Match the scheduler's buffer count to the actual bounded playback pool. Apply
+  backpressure and keep PCM ownership explicit until the consumer releases it.
+- Drive the original speaking state when PCM starts reaching output. Drive
+  standby only after the final samples drain. Use the display's existing lock
+  and application context for UI calls.
+- On cancel, invalidate the active text job, stop its producer, discard its
+  queued PCM, flush in-flight output and close the mouth. Reject stale chunks
+  from a cancelled job. Idle power management must not disable active playback.
+- Keep main-loop/UI work independent of long synthesis. Reuse the original
+  watchdog policy and preserve Ito's self-tests and failed-full row-split guard.
+- Keep error reporting and the degraded flag truthful. Do not route synthesis
+  to the Mac or buffer an entire utterance to conceal throughput limits.
 
-- Reuse `stackchan_display_playing(bool)`. Its caller already marks the first
-  successful I2S submission, drained playback and cancellation flushes.
-- Have that callback notify a small, low-priority display worker. Keep LCD
-  drawing out of the audio task. Only one context owns animation drawing.
-- Animate only the mouth region at the original 180 ms cadence. Reuse the
-  original open-weight range of 40..80 and closed range of 0..20.
-- Stop animation and draw the closed mouth after playback ends or is cancelled.
-  Silent `textq` checks must leave the mouth closed.
-- Use one bounded drawing buffer and a fixed worker stack. Avoid per-frame
-  allocation. Preserve the synthesis hot arena in internal SRAM.
+## Checkpoints
 
-Completion: the mouth follows sound playback, including the stored greeting.
+### 1. Reproduce the source build, without changing the device
 
-### 3. Verify and save the demo
+After approval, fetch and pin the selected StackChan source in an isolated
+worktree. Audit its SDK, dependencies, patches and asset-generation commands.
+Reproduce an unmodified build without flashing or contacting cloud activation.
 
-- Check greeting, numbers, a longer paragraph and cancellation on the device.
-- Require zero playback underruns, no resets and stable memory after warm-up.
-  Compare a deterministic PCM case with the host reference.
-- Check that the 239,948-byte hot arena remains in internal SRAM. The dot
-  firmware leaves about 29 KB free internal SRAM after warm-up, so measure
-  animation stack and buffer use before retaining them.
-- Keep the measured RTF/degraded warning truthful. If rendering causes gaps,
-  reduce its work; keep synthesis on the robot and retain bounded audio buffers.
-- Keep fast startup, volume controls and existing model self-tests. Save the
-  image, hashes and serial logs, then commit and push the tested chunk.
+Deliver a source/dependency manifest, build log, app size, linker memory map,
+asset sizes and a proposed component boundary. Identify the actual audio and
+avatar hooks in that pinned version. Report which baseline dependencies differ
+from the supplied checkout. No Ito implementation or partition changes yet.
 
-## Full original-firmware route
+### 2. Finalize the memory and flash budgets
 
-If route 2 is selected, start with a separate Worktrunk worktree and a build of
-the supplied source. Preserve its existing untracked files and the working Ito
-image. First measure memory with the original face and a local-demo mode.
-The current display wrapper configures a 2 MB image cache and a 320-by-20 RGB565
-DMA buffer. Their real allocation/use must fit beside Ito; the wrapper cannot
-be assumed to fit unchanged.
+Use one approved female int4 model, 3,196,096 bytes. The working synthesis
+profile uses a 239,948-byte hot arena in internal SRAM and a 1,579,920-byte bulk
+arena in PSRAM. The complete original UI/runtime must fit around these needs.
+The standalone image's free-memory figures are not the original app's budget.
 
-Import Ito's C engine, frontend and one approved int4 model. Keep the original
-board/codec as the sole I2S owner. Add a bounded raw-PCM submission path to the
-existing audio service; do not initialize a second I2S driver or encode PCM to
-Opus merely to decode it again. Put external-AI audio and local Ito in mutually
-exclusive modes.
+The original display configures a 2 MB image cache and a 320-by-20 RGB565 DMA
+buffer. Measure actual allocations and peak use; cache capacity is not evidence
+that all of it is immediately allocated. Preserve the original face while
+sizing its buffers and cache from measured needs. Keep the hot arena in SRAM.
 
-Add bounded USB `text`, `volume`, `cancel` and `status` handling for local mode.
-Drive the existing avatar speaking/standby states from PCM playback. Disable
-head-motion modifiers and motor power for the first local demo.
+The factory layout has two `0x4f0000` OTA slots and 4 MB of assets. It has no
+unused 3.2 MB model slot. Propose a layout only after the baseline app and assets
+are measured. Report whether retaining two OTA slots is feasible. Review the
+layout before writing it; do not silently remove recovery or assets.
 
-Inspect the app size and design a reviewed partition layout for the model and
-assets. The factory layout has two large OTA slots and assets; it has no spare
-3.2 MB model slot. Rehearse recovery before changing that layout. Complete
-native speech and memory checks before restoring optional original features.
+Before any layout change, capture the current Ito NVS safety state and retain
+its tested images/models. Rehearse the verified full factory restore and the
+return to the working Ito image. Record the commands, checksums and results.
+The original NVS partition is 16 KB; Ito's is 24 KB. Migrate only the Ito
+guard records through NVS APIs. Restore a raw NVS snapshot only with its
+matching layout, so it cannot overwrite neighboring partitions.
 
-## Decision to make
+### 3. Implement the local backend in logical commits
 
-Approve route 1 for the deadline face demo, or route 2 for integration into the
-full original app. Keep the current green-dot firmware installed until that
-choice is made and the chosen implementation passes its device checks.
+First add the raw-PCM path and playback-state hooks using a known local PCM
+reference. Verify bounded ownership, drain and cancellation. Then connect the
+Ito frontend/engine and USB commands, keeping the same output contract.
+
+Keep one synthesis worker and one active text job. Use the measured int4,
+32-frame row-split profile. Retain self-tests and short calibration; the long
+benchmark stays a manual diagnostic. Disable head-motion modifiers in local
+mode. Preserve the original mouth animation rather than writing a new face.
+Keep the engine arithmetic flags and host PCM self-test hashes unchanged.
+
+### 4. Build, review and announce the first device write
+
+Build the normal and local variants. Verify model and asset offsets, image
+bounds, RAM placement and error behavior. Present the exact candidate images,
+hashes, partition layout and rollback procedure before flashing. Tell the user
+before the first device write. Keep credentials and private backups outside Git.
+
+### 5. Validate the integrated firmware
+
+Check original face/idle behavior, greeting, numbers, a long paragraph, volume,
+cancel during playback and repeated requests. Compare a deterministic PCM case
+with the host. Exercise cancellation while producing, queued and in flight.
+
+Require zero playback underruns, no resets, stable warm-up memory and correct
+mouth start/stop behavior. Check UI responsiveness, idle power management and
+leaving/re-entering local mode through the original application lifecycle.
+Record compute RTF independently of audible stability. Test the normal build
+for changes to shared audio code. Commit and push each verified logical chunk.
+
+## Immediate next step
+
+Wait for the user's go-ahead. The first work is checkpoint 1 only: a pinned,
+reproducible unmodified build and a baseline report. Present the baseline findings and the first code-change scope before moving
+into firmware implementation. No code or device changes are part of this
+planning update.
+
+[source-version]: https://github.com/m5stack/StackChan/blob/94856a77876255ceee36f2a7ffae40f572eeb1f2/firmware/CMakeLists.txt

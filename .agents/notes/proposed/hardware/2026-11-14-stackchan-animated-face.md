@@ -1,17 +1,26 @@
-# StackChan animated face integration
+# Original StackChan firmware with local Ito
 
-Status: proposed; implementation route needs selection. The user requests the
-original talking face, or a copy, with USB text and local Ito speech.
+Status: route 2 selected; implementation is pending the user's go-ahead. The
+user requests notice before implementation. This planning change does not
+modify or flash firmware. Keep the working green-dot image installed.
 
-The original `SetStatus()` installs a timed `SpeakingModifier`; it does not
-require the external AI model for mouth animation. Neutral geometry and the
-180 ms speaking cadence are available in the supplied source.
+Use the original avatar, UI and board/codec implementation, with a local Ito
+backend feeding bounded PCM through the original audio output path. Preserve
+one I2S owner. Mouth animation follows actual playback and drain, not text
+arrival or an empty queue alone.
 
-Recommend porting that small renderer behavior into the working Ito firmware
-for the deadline. Full original-app integration also needs an audio-service
-adapter, a memory budget and a model partition. Keep one I2S owner.
+The supplied source declares 1.4.2, while the factory backup is 1.6.0. Official
+StackChan commit `94856a77876255ceee36f2a7ffae40f572eeb1f2` declares 1.6.0 and
+is the proposed baseline. The separate ignored Xiaozhi checkout also needs a
+verified revision/patch record. A parent Git commit is insufficient to reproduce
+that dependency.
 
-The current dot firmware is a tested rollback image. Preserve its native
-synthesis profile and use the existing playback-state callback for the face.
-The design, source anchors, alternatives and checks are in the
-[face integration plan](../../../../plans/2026-11-14-stackchan-animated-face-ito.md).
+Copying the face into standalone Ito was considered for speed. The user chose
+full original-firmware integration for fidelity and maintenance. Retain that
+choice; do not substitute a copied renderer to avoid integration work.
+
+The first proposed checkpoint is an unmodified source build and memory/flash
+report, without changing the device. Later work needs a PCM adapter, measured
+RAM and partition budgets, cancellation/drain handling and recovery rehearsal.
+The source anchors, boundaries and checkpoints are in the
+[integration plan](../../../../plans/2026-11-14-stackchan-animated-face-ito.md).
