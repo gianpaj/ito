@@ -1,6 +1,7 @@
 # StackChan backup preflight
 
-Status: verified backup; restore rehearsal pending. Follow the
+Status: backup and full-flash restoration verified; factory functional boot
+remains untested. Follow the
 [implementation plan](../../../../plans/2026-11-14-stackchan-standalone-ito.md)
 and [firmware port record](../../implemented/hardware/2026-11-14-stackchan-ito-port.md) for implementation
 and build progress. The device runs an Ito validation image.
@@ -50,8 +51,9 @@ embedded integrity checks. OTA metadata selects `ota_1`, StackChan 1.6.0;
 `ota_0` contains StackChan 1.5.1.
 
 The backup reads completed before the first firmware write, with the app
-stopped in download mode. No eFuse write is required. The restore rehearsal
-in plan step 1.7 remains pending.
+stopped in download mode. No eFuse write is required. Plan step 1.7 has passed
+full-factory write/verify and native-image rollback/boot checks. Factory robot
+app/settings functional verification remains untested.
 
 ## Remaining preparation
 

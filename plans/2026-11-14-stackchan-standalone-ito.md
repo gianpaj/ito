@@ -1,6 +1,6 @@
 # StackChan speech and push-to-talk conversation
 
-Status: the native USB text-to-speech demo is implemented and installed. The
+Status: the native USB text-to-speech demo is implemented and verified. The
 user confirms clear speech. Volume defaults to 35. Five repeated paragraphs
 produce 980 seconds of speech with zero underruns, no resets and unchanged
 memory after warm-up. Compute RTF is 1.000906; the DEGRADED warning remains.
@@ -8,7 +8,7 @@ StackChan skips the full boot benchmark and retains calibration and self-tests.
 Startup reaches READY in about 26 seconds and finishes its greeting in 29.
 
 The deadline deliverable is native speech from USB text. Conversation, extra
-reboot checks and the full factory-restore rehearsal are deferred. The original
+reboot checks and the factory functional-boot check are deferred. The original
 strict RTF-below-1 streaming gate remains unmet. The full backup is verified.
 See the [device preflight record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-backup-preflight.md)
 and [implemented firmware record](../.agents/notes/implemented/hardware/2026-11-14-stackchan-ito-port.md).

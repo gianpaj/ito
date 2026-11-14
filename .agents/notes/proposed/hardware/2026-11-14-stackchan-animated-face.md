@@ -1,8 +1,9 @@
 # Original StackChan firmware with local Ito
 
-Status: route 2 selected; implementation is pending the user's go-ahead. The
-user requests notice before implementation. This planning change does not
-modify or flash firmware. Keep the working green-dot image installed.
+Status: implementation is approved and in progress. The first integrated image
+verified in flash but failed its contiguous-SRAM reservation before HAL startup.
+The corrected image is built and awaits a physical download-mode reset. The
+verified green-dot firmware is the rollback target.
 
 Use the original avatar, UI and board/codec implementation, with a local Ito
 backend feeding bounded PCM through the original audio output path. Preserve
@@ -11,17 +12,16 @@ arrival or an empty queue alone.
 
 The supplied source declares 1.4.2, while the factory backup is 1.6.0. Official
 StackChan commit `94856a77876255ceee36f2a7ffae40f572eeb1f2` declares 1.6.0 and
-is the proposed baseline. The separate ignored Xiaozhi checkout also needs a
-verified revision/patch record. A parent Git commit is insufficient to reproduce
-that dependency.
+is the pinned baseline. Git revisions, registry components and the Xiaozhi patch
+are pinned in the StackChan implementation branch. A parent Git commit alone is
+insufficient to reproduce the ignored dependency checkouts.
 
 Copying the face into standalone Ito was considered for speed. The user chose
 full original-firmware integration for fidelity and maintenance. Retain that
 choice; do not substitute a copied renderer to avoid integration work.
 
-The first proposed checkpoint is an unmodified source build and memory/flash
-report, without changing the device. Later work needs a PCM adapter, measured
-RAM and partition budgets, cancellation/drain handling and recovery rehearsal.
+The baseline build, local PCM adapter, normal/local builds and flash-recovery
+checks pass. Integrated device memory and playback checks remain pending.
 The source anchors, boundaries and checkpoints are in the
 [integration plan](../../../../plans/2026-11-14-stackchan-animated-face-ito.md).
 
@@ -69,3 +69,27 @@ to `0x10000`. Two 4.75 MiB OTA slots start at `0x20000` and `0x4e0000`.
 One int4 model occupies `0x9a0000`, capacity `0x310000`; assets have 3 MiB at
 `0xcb0000`. Image size and runtime memory checks must pass before deployment.
 A verified private NVS snapshot is retained with the device backups.
+
+## Device checkpoint
+
+The StackChan branch is pushed through `c8a8e92`. Its runtime dependency is Ito
+`b741244`. Candidate 1 exposed fragmentation: 296,439 internal bytes free but
+only 167,936 contiguous bytes. It did not reach HAL initialization.
+
+The correction reserves the hot arena at IDF CORE priority 106, before C++
+constructors and DMA-pool subdivision. It uses a 32 KB DMA reserve, flash-resident
+heap/non-ISR ring-buffer functions, an eight-row LCD buffer and a USB-only
+console with external text storage. Static DIRAM drops from 135,375 to 108,179
+bytes. The engine arithmetic and hot-arena size stay unchanged.
+
+The full candidate-1 image set verified in flash. Candidate 2 is an app-only
+update at `0x20000`, SHA256
+`161b580fa6448988d6245f9e0f06bc4c66f1039322820f7988de1973b8ca0127`.
+Its private manifest is in the device backup's `original-ito-candidate-2/`.
+Physical recovery is required after three software connection methods failed.
+Hold bottom RST until its indicator turns green, release and wait for it to go
+off. Do not open a serial monitor before the download-mode probe and update.
+
+The full factory flash was restored and verified without booting it. The tested
+native image, models and matching NVS were restored, verified and boot-checked.
+This verifies flash recovery. Factory cloud/motor behavior remains untested.

@@ -1,12 +1,12 @@
 # StackChan native Ito speech
 
-Status: the native USB text-to-speech demo is implemented and installed.
+Status: the native USB text-to-speech demo is implemented and verified.
 The user confirms clear speech. Five repeated paragraphs produce 980 seconds
 of speech with zero underruns, no resets and unchanged memory after warm-up.
 Compute RTF is 1.000906, so the firmware retains its DEGRADED warning.
 
 The deadline scope is native speech from USB text. Conversation, extra reboot
-cycles and the full factory-restore rehearsal are deferred. This delivers the
+cycles and the factory functional-boot check are deferred. This delivers the
 requested demo without claiming the original strict streaming gate passes.
 
 ## Decisions
