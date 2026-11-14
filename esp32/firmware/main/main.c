@@ -1599,7 +1599,7 @@ static void fe_task(void *arg)
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM) / 1024),
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024));
         if (j.mode == FE_IDS || s_fe_abort || j.job != atomic_load(&s_job_generation)) fe_release(j.job);
-        else {
+        else if (j.mode != FE_AUTO) {
             s_fe_req->kind = 24; s_fe_req->job = j.job;
             xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);
             if (j.job != atomic_load(&s_job_generation)) fe_release(j.job);
