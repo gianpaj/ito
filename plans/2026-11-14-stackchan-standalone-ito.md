@@ -1,12 +1,15 @@
 # StackChan speech and push-to-talk conversation
 
-Status: phase 1 implementation. Bootloader access and the full-flash backup are
-verified. The StackChan target builds and the serial monitor passes its host
-integration check. Flash writes and device speech validation have not started.
-Continue phase 1, then phase 2 after its entry checks pass. See the
-[device preflight record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-backup-preflight.md).
-Implementation decisions and checks are in the
-[firmware port record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-ito-port.md).
+Status: the native USB text-to-speech demo is implemented and installed. The
+user confirms clear speech. Volume defaults to 35. Five repeated paragraphs
+produce 980 seconds of speech with zero underruns, no resets and unchanged
+memory after warm-up. Compute RTF is 1.000906; the DEGRADED warning remains.
+
+The deadline deliverable is native speech from USB text. Conversation, extra
+reboot checks and the full factory-restore rehearsal are deferred. The original
+strict RTF-below-1 streaming gate remains unmet. The full backup is verified.
+See the [device preflight record](../.agents/notes/proposed/hardware/2026-11-14-stackchan-backup-preflight.md)
+and [implemented firmware record](../.agents/notes/implemented/hardware/2026-11-14-stackchan-ito-port.md).
 
 ## Outcome
 

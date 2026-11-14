@@ -1,8 +1,11 @@
 # Ito on M5Stack StackChan
 
-Status: the phase 1 image is installed. Main and int4 self-tests match the host.
-All 26 utterances of a 196-second paragraph match host tokens and PCM. The user confirms clear speech. Sustained playback and restore validation
-are in progress; compute RTF remains slightly above the plan's strict limit.
+Status: the native USB text-to-speech demo is installed and the user confirms
+clear speech. Five repeated paragraphs produce 16 minutes 20 seconds of speech
+with zero underruns, no resets and unchanged memory after warm-up.
+
+The deadline scope is USB text-to-speech. Conversation, extra reboot cycles and
+the factory-restore rehearsal are deferred. The full factory backup is verified.
 
 Ito runs the English text frontend and speech model on the ESP32-S3. The Mac
 sends text and records USB logs. This target uses the built-in AW88298 speaker,

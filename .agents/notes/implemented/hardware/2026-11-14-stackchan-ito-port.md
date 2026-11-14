@@ -1,9 +1,13 @@
 # StackChan native Ito speech
 
-Status: native text-to-speech is installed and audible. The current long-run
-compute RTF is about 1.001 with zero playback underruns. This misses the plan's
-RTF-below-1 gate. Stability and recovery checks are in progress; phase 2 is
-unimplemented.
+Status: the native USB text-to-speech demo is implemented and installed.
+The user confirms clear speech. Five repeated paragraphs produce 980 seconds
+of speech with zero underruns, no resets and unchanged memory after warm-up.
+Compute RTF is 1.000906, so the firmware retains its DEGRADED warning.
+
+The deadline scope is native speech from USB text. Conversation, extra reboot
+cycles and the full factory-restore rehearsal are deferred. This delivers the
+requested demo without claiming the original strict streaming gate passes.
 
 ## Decisions
 
@@ -53,8 +57,9 @@ All 26 utterances of the 196-second paragraph match host token and PCM hashes.
 The core-1 comparison measures silent RTF 0.998 and speaker RTF 1.001. Twenty
 spoken prompts on core 0 measure aggregate RTF 0.999 with zero underruns.
 Three core-0 speaker paragraphs each measure about 1.002 with zero underruns.
-The core-1 repeated-speech run is in progress. Timing margin remains small,
-and the firmware reports `DEGRADED`.
+Five core-1 speaker paragraphs measure aggregate RTF 1.000906 across
+980 seconds of generated speech. There are zero underruns or I2S errors and
+no resets. Timing margin remains small; `DEGRADED` stays visible.
 
 Free internal SRAM stays near 32 KB after warm-up, with a measured minimum of
 8 KB. The silent PCM scratch ring accounts for about 576 KB of persistent
@@ -68,7 +73,7 @@ unchanged; the default DevKit and QEMU configurations build independently.
 
 ## Artifacts and execution
 
-Use the [backup record](2026-11-14-stackchan-backup-preflight.md) for the private
+Use the [backup record](../../proposed/hardware/2026-11-14-stackchan-backup-preflight.md) for the private
 original flash, checksum and restore runbook. The full factory restore rehearsal
 is pending. Preserve Ito's NVS safety counters when returning from that test.
 
@@ -77,12 +82,12 @@ Builds, model checks, reference audio and measurements are under
 images, configurations and models. The installed merged image SHA-256 is
 `6338216a1e94e3872846680106654133e0ed54ce0e54d0955e3fb999ad6ff7e6`.
 
-The active monitor is exec session 52022. It owns `/dev/cu.usbmodem1101` and logs
-to `esp32/logs/stackchan/20261114T201157.747967Z/serial.log`. Its FIFO and process
-IDs are in the artifact directory's `monitor-pipe-process.json`. Long commands
-use this FIFO to avoid terminal line limits. Do not open a second serial owner.
+The serial monitor owns the port while running and prints its private session
+folder. Close it before another serial tool opens the device. Opening native
+USB serial can reset the chip; boot benchmarking and calibration take about
+two minutes. Wait for the stored greeting to finish before sending text.
 
-Complete five repeated speaker paragraphs, five reset/boot checks, the factory
-restore rehearsal and a final Ito reinstall. Report the RTF gate separately
-from playback stability before changing the acceptance condition or proceeding
-to phase 2. Keep the watchdog and brownout protection enabled.
+The full backup is verified. Recovery rehearsal and additional boot-cycle
+checks remain deferred. Retain the original backup and do not force full split
+or disable watchdog and brownout checks. The larger plan keeps the strict
+streaming gate for future work.

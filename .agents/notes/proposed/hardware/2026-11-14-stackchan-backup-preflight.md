@@ -2,7 +2,7 @@
 
 Status: verified backup; restore rehearsal pending. Follow the
 [implementation plan](../../../../plans/2026-11-14-stackchan-standalone-ito.md)
-and [firmware port record](2026-11-14-stackchan-ito-port.md) for implementation
+and [firmware port record](../../implemented/hardware/2026-11-14-stackchan-ito-port.md) for implementation
 and build progress. The device runs an Ito validation image.
 
 ## Device and tools
@@ -59,5 +59,5 @@ The Xtensa compiler, CMake and Ninja are available. Ito's existing Python
 environment is `/Users/gianpaj_it/tmp/ito/.venv/`; reuse it for host work.
 
 Model access and firmware validation are tracked in the
-[firmware port record](2026-11-14-stackchan-ito-port.md). A separate flash format
+[firmware port record](../../implemented/hardware/2026-11-14-stackchan-ito-port.md). A separate flash format
 or full erase is unnecessary; the write operation erases the sectors it replaces.
