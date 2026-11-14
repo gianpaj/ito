@@ -1438,7 +1438,13 @@ static int s_fe_fast_first = 0;
 enum { FE_SPEAK = 0, FE_SILENT = 1, FE_IDS = 2, FE_PHRASES = 3, FE_PHRASES_SILENT = 4, FE_PACED = 5, FE_AUTO = 6 };
 typedef struct { int mode; int64_t t_arrive; uint32_t job; } fejob_t;
 static QueueHandle_t s_fe_q;
-static volatile int s_fe_busy, s_fe_abort, s_fe_up;
+static atomic_uint s_fe_job;
+static atomic_int s_fe_abort, s_fe_up;
+static int fe_busy(void) { return atomic_load(&s_fe_job) != 0; }
+static void fe_release(uint32_t job)
+{
+    atomic_compare_exchange_strong(&s_fe_job, &job, 0);
+}
 static char *s_fe_text;                 // PSRAM: the text of the current job
 static itofe_stream *s_fe_st;
 static req_t *s_fe_req;
@@ -1565,7 +1571,7 @@ static void fe_task(void *arg)
     for (;;) {
         fejob_t j;
         if (xQueueReceive(s_fe_q, &j, pdMS_TO_TICKS(2000)) != pdTRUE) continue;
-        if (j.job != atomic_load(&s_job_generation)) { s_fe_busy = 0; continue; }
+        if (j.job != atomic_load(&s_job_generation)) { fe_release(j.job); continue; }
         s_fe_abort = 0;
         s_fe_req->job = j.job;
         int seed_ctr = 0;
@@ -1592,11 +1598,11 @@ static void fe_task(void *arg)
         printf("FE done (stack high-water: %u bytes of %u; free PSRAM %u KB (min %u), free internal SRAM %u KB (min %u))\n", (unsigned)(FE_STACK_BYTES - uxTaskGetStackHighWaterMark(NULL) * sizeof(StackType_t)), FE_STACK_BYTES,
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM) / 1024),
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024));
-        if (j.mode == FE_IDS || s_fe_abort || j.job != atomic_load(&s_job_generation)) s_fe_busy = 0;
+        if (j.mode == FE_IDS || s_fe_abort || j.job != atomic_load(&s_job_generation)) fe_release(j.job);
         else {
             s_fe_req->kind = 24; s_fe_req->job = j.job;
             xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);
-            if (j.job != atomic_load(&s_job_generation)) s_fe_busy = 0;
+            if (j.job != atomic_load(&s_job_generation)) fe_release(j.job);
         }
         if (j.mode == FE_IDS) printf("READY\n");
     }
@@ -1666,7 +1672,7 @@ static void autotest_begin(void)
     b.uptime_ms = (uint32_t)(esp_timer_get_time() / 1000); b.texts_fnv = s_at_fnv;
     at_append(&b);
     printf("AUTOTEST: boot %u, texts %u..%u of %u, set %d, %s split, reset %u\n", (unsigned)boots, (unsigned)s_at_start, (unsigned)s_at_end, (unsigned)s_at_n, s_active, s3_gemm_dual ? "full" : "row", (unsigned)b.reset_reason);
-    s_at_on = 1; s_fe_busy = 1; s_at_sent = s_at_done = 0;
+    s_at_on = 1; atomic_store(&s_fe_job, atomic_load(&s_job_generation)); s_at_sent = s_at_done = 0;
     fejob_t j = { FE_AUTO, esp_timer_get_time(), atomic_load(&s_job_generation) };
     xQueueSend(s_fe_q, &j, 0);
 }
@@ -1699,7 +1705,7 @@ static void at_finish(void)
         d.texts_fnv = s_at_fnv;
         at_append(&d);
     }
-    s_at_on = 0; s_fe_busy = 0;
+    s_at_on = 0; fe_release(s_req_tmp.job);
 #ifdef CONFIG_ITOFS_AUTOTEST_SELFRESET
     if (!last) {                                                       // the next boot of the reboot loop
         vTaskDelay(pdMS_TO_TICKS(200));
@@ -1735,16 +1741,21 @@ static int fe_start(void)
 static int fe_submit(const char *text, int mode)
 {
     if (!s_fe_up) { printf("ERROR front end not ready\n"); return -1; }
-    if (s_fe_busy) { printf("ERROR front end busy (cancel first)\n"); return -1; }
     if (text) {
         size_t l = strlen(text);
         if (l >= FE_TEXT_MAX) { printf("ERROR text longer than %d bytes\n", FE_TEXT_MAX - 1); return -1; }
-        memcpy(s_fe_text, text, l + 1);
     }
-    fejob_t j = { mode, esp_timer_get_time(), atomic_load(&s_job_generation) };
-    s_fe_busy = 1;
+    const uint32_t job = atomic_load(&s_job_generation);
+    unsigned expected = 0;
+    if (!atomic_compare_exchange_strong(&s_fe_job, &expected, job)) {
+        printf("ERROR front end busy (cancel first)\n"); return -1;
+    }
+    if (text) memcpy(s_fe_text, text, strlen(text) + 1);
+    fejob_t j = { mode, esp_timer_get_time(), job };
     printf("OK text queued (%u bytes)\n", text ? (unsigned)strlen(text) : (unsigned)(phrases_end - phrases_start));
-    xQueueSend(s_fe_q, &j, 0);
+    if (xQueueSend(s_fe_q, &j, 0) != pdTRUE) {
+        fe_release(job); printf("ERROR front end queue full\n"); return -1;
+    }
     return 0;
 }
 #endif
@@ -1797,13 +1808,13 @@ static void synth_task(void *arg)
         guard_wdt_feed();
         if (s_req_tmp.job && s_req_tmp.job != atomic_load(&s_job_generation)) {
 #ifdef CONFIG_ITOFS_FRONTEND
-            if (s_req_tmp.kind == 24 && s_fe_req->job == s_req_tmp.job) s_fe_busy = 0;
+            if (s_req_tmp.kind == 24) fe_release(s_req_tmp.job);
 #endif
             continue;
         }
         s_active_job = (s_req_tmp.kind == 0 || s_req_tmp.kind == 20 || s_req_tmp.kind == 21) ? s_req_tmp.job : 0;
 #ifdef CONFIG_ITOFS_FRONTEND
-        if (s_req_tmp.kind == 24) { s_fe_busy = 0; printf("READY\n"); continue; }
+        if (s_req_tmp.kind == 24) { fe_release(s_req_tmp.job); printf("READY\n"); continue; }
 #endif
         if (s_req_tmp.kind == 0) {
             for (int i = 0; i < s_req_tmp.n; i++) s_tok_buf[i] = s_req_tmp.tok[i];
@@ -1916,7 +1927,7 @@ static void synth_task(void *arg)
         }
         if (s_req_tmp.kind != 21 && s_req_tmp.kind != 23
 #ifdef CONFIG_ITOFS_FRONTEND
-            && !s_fe_busy
+            && !fe_busy()
 #endif
         ) printf("READY\n");
     }
