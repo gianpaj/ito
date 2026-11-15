@@ -1,41 +1,21 @@
-# StackChan conversation through Tailscale
+# StackChan conversation research and plan index
 
-Status: native Tailscale option selected. The [detailed execution plan][execution]
-defines the implementation tasks, memory probes and acceptance gates. Source
-research and read-only inspection of `gianrtx` are complete. Device experiments,
-service deployment and firmware changes are not started. This research record
-extends the working [original-face Ito mode][baseline].
+Status: native tailnet membership selected; implementation has not started.
+Execution is defined in two independent plans:
 
-## Goal and recommendation
+1. [Native Tailscale and remote LLM][execution] owns enrollment, Wi-Fi/VPN,
+   the text gateway, network tests and the final joint integration gate.
+2. [Local STT and Ito TTS][speech] owns microphone capture, the possible Oído
+   model, Ito memory ownership, the original face, hardware-control probes and
+   the selected Parakeet fallback if local recognition fails.
 
-Add a separate conversation mode. The preferred final path is:
+Networking can pass with typed USB text and console answers. Local speech can
+pass with microphone input and fixture/USB answer text. Combine them only after
+both independent results and their measured memory budgets are available.
 
-```text
-StackChan microphone -> local STT -> transcript
-    -> MicroLink / Tailscale -> gianrtx text gateway -> local Ollama LLM
-    <- bounded answer text <- gateway
-    -> local Ito TTS -> original speaker and animated face
-```
-
-Only the LLM runs on the computer in that target. The robot joins the tailnet
-itself and reaches `gianrtx.tail8e80d.ts.net`, without a nearby Mac or phone.
-Tailscale direct peer transport is preferred, but encrypted DERP relay must
-also work when direct connectivity is unavailable.
-
-Keep the working USB speech profile as the recovery and comparison baseline.
-Begin with half-duplex, explicit start/stop recording and short replies. Wake
-words, always-listening operation, simultaneous listening/speaking and motor
-movement are outside the first conversation milestone.
-
-The user selected existing Parakeet on `gianrtx` as the preferred fallback if
-local STT cannot fit or meet accuracy needs. In that fallback only, captured
-audio crosses the tailnet for recognition. Ito TTS and face animation remain
-on the robot. Report this distinction in the demo and results.
-
-Recommendation: prove a host-driven text loop first, then measure local STT and
-native Tailscale independently. Combine only after the memory gates pass. Use
-a LAN relay as the deadline fallback if native tailnet membership fails. Do not
-quietly turn the requested direct connection into a permanent relay dependency.
+This document preserves inspected facts, alternatives and shared measurement
+rules. Use the linked execution plans for tasks and acceptance gates. The
+[working speech results][baseline] remain the baseline and recovery reference.
 
 ## What the inspection establishes
 
@@ -216,228 +196,6 @@ them merely because they are present in the dependency lock. [Official scope][mu
 [BabyTalk][babytalk] describes a 6 MB int4 model and shared workspace; its claims
 are a reason for a later probe, not evidence of fit with Ito or native Tailscale.
 
-## Proposed service and device behavior
-
-The smallest first gateway accepts one bounded text turn and returns one bounded
-answer. Use HTTP over the private tunnel for the first experiment. WebSocket is
-an option if measured streaming or cancellation needs justify a persistent
-channel. The original firmware's use of WebSocket does not require this mode to
-carry Opus, cloud activation or the complete Xiaozhi protocol.
-
-Candidate gateway contract, finalized in phase 1:
-
-- `GET /health` distinguishes process alive, model warming and model ready.
-- `POST /v1/turn` accepts a session ID, turn ID and English text, with a 4 KiB
-  request cap. Response contains the same IDs, bounded answer text and timings.
-  Start with a 2 KiB answer cap and the existing 128-token reply policy.
-- One active turn per device, one inference admission initially, a 30-second
-  timeout and bounded server-side history. A repeated turn ID cannot trigger
-  duplicate inference/playback. Retry only before confirmed acceptance or use
-  an explicit idempotency lookup. Disconnect cancels owned work.
-- The robot parses JSON before passing validated text to the Ito API. Network
-  text is never a raw console command, so it cannot become `volume` or another
-  diagnostic command. Respect Ito's busy state and READY gate.
-- Start with a complete short reply before synthesis. This makes backpressure
-  and network/inference phase separation straightforward. It does not buffer
-  whole generated audio. Add sentence streaming only after this path works.
-- Use a separate device credential and tailnet access rule limited to the
-  gateway. Native `http/ws` over WireGuard avoids another device TLS handshake;
-  use verified `https/wss` if the threat model or route requires it. A plaintext
-  LAN relay hop is not encrypted by the later Tailscale hop; protect that hop
-  appropriately if the LAN is untrusted.
-
-If selected, the Parakeet endpoint accepts only a short bounded PCM utterance.
-Ten seconds of signed 16-bit mono at 16 kHz is 320,000 B. Validate rate, length,
-encoding, timeout and busy limits. Reuse the existing worker without starting
-Phonon, browser WebRTC or an unrelated app. Model warmup and worker supervision
-must have independent readiness. Audio and transcripts stay out of routine logs.
-
-The alternative [Xiaozhi Python server][xiao-server] supports Ollama and accepts
-text through `listen/state=detect`. Its normal reply path still invokes server
-TTS and sends Opus. Suppressing that work and adapting sentence text/cancel
-would be required. Choose it only if compatibility with normal Xiaozhi clients
-becomes a requirement. The bundled StackChan app relay solves a different task.
-
-The proposed user interaction is tap to start recording, tap to submit, and tap
-while speaking to cancel. Use an existing face touch event if suitable, with a
-minimal existing status label: `Listening`, `Thinking`, `Speaking`, `Offline`.
-Begin with USB `listen`, `send`, `cancel` diagnostics before wiring touch. Keep
-the original mouth animation tied to actual PCM playback, not LLM generation.
-Do not restore head-touch/IMU services solely to obtain a trigger.
-
-Initially make this a separate opt-in build profile. A single image with a
-launcher choice is a later milestone after mode exit/re-entry and allocation
-ownership pass. Motors remain off. Microphone power is enabled only during the
-conversation capture phase and must return off on cancel, error and mode exit.
-
-## Phases, experiments and exit gates
-
-### 0. Preserve the reference and establish the budget
-
-Completed here: source audit, host connectivity, model inventory and service/
-port inspection. No inference requests, device connections, firmware writes,
-tailnet enrollment or service/network changes were made.
-
-Before implementation:
-
-1. Pin sources and record app/model hashes, SDK configuration and current NVS
-   layout. Reuse the verified private device backup and rollback instructions.
-2. Inventory task stacks, static memory, largest internal/DMA blocks and PSRAM
-   peaks by stage. Reserve explicit radio, capture and transport budgets rather
-   than subtracting published example totals from physical RAM.
-3. Inspect safe reduction of unused runtime tasks/buffers. Test a targeted
-   lifecycle or phase-owned workspace only if measured needs require it. Keep
-   Ito's hot SRAM requirement and golden checks intact in its speech phase.
-4. Define candidate flash maps for the Parakeet path and local-Oído path. Build
-   both size reports before considering partition changes.
-
-Exit gate: a conservative static and estimated allocation budget for each
-isolated diagnostic profile, plus reviewed candidate images and recovery.
-Instrumented device experiments then establish actual peaks. Maintain a table
-for idle, recording, STT, LLM request and playback, including allocation
-size/heap, peak/minimum, largest block, stacks and a justified safety margin.
-Require positive measured headroom before combining tested subsystems. Unknown
-allocations remain unknown; never count them as zero or flash the full stack
-just to see whether it boots.
-
-### 1. Reuse Linux inference and prove the text loop through USB
-
-1. Work on a feature branch in `local-voice-agent`, respecting its no-PR rule.
-   Choose an unused loopback gateway port after checking listeners. Reach that
-   first host test from the Mac through an SSH local forward over Tailscale.
-   Before direct device tests, publish a dedicated authenticated listener bound
-   to the Linux Tailscale address on an unused port. Keep Ollama calls loopback.
-   If HTTPS is chosen, use a separate new Serve route and test that exact URL.
-   Preserve shared Ollama settings and all existing Serve routes.
-2. Add the small gateway and host tests for health/readiness, bounded input,
-   wrong credentials, busy, duplicate IDs, timeout, cancellation and empty output.
-3. Run a real local request against the installed Nanbeige alias. Record cold
-   load, warmed first-answer and completion timings, model/context and GPU memory.
-   Validate reasoning suppression, plain spoken answer text and output limits.
-4. Use the Mac as a temporary host test client over its existing Tailscale route.
-   Feed a returned short answer through the working USB `text` command. This
-   validates remote reasoning plus local Ito/face without adding radio memory.
-5. Delay/reorder a response, cancel, then issue a new turn. Require no stale
-   answer playback and no duplicated sentence.
-
-Exit gate: repeatable host text -> Linux LLM -> USB Ito speech with correct face
-and cancellation. This is a useful early demonstration, explicitly host-assisted.
-
-### 2. Prove device Wi-Fi and microphone capture separately
-
-1. Build an experimental conversation profile, without MicroLink or STT first.
-   Retain the original codec, face, USB diagnostics and motor power clamps.
-2. Bring up Wi-Fi, resolve an ordinary LAN endpoint and exchange bounded text.
-   Measure association/reconnect and transport peaks with Ito absent, then with
-   Ito present only after measured headroom exists. The baseline's 13,202 B free
-   does not meet that gate; first reclaim enough memory in the experimental
-   profile. If necessary test closing network resources before speaking.
-   A low-memory allocator failure must remain recoverable and visible.
-3. Enable ES7210 and RX through the existing codec. Identify microphone versus
-   speaker-reference channels, verify signed PCM and test a 24-to-16 kHz path.
-4. Capture bounded 1-, 3- and 10-second clips, with the speaker muted. Check
-   clipping, channel selection, dropped samples, sample count and capture rate.
-   Use a known synthetic input for repeatability and human speech for the actual
-   microphone check. Keep private speech recordings outside Git.
-5. Exercise repeated capture/cancel and capture -> playback transitions. Check
-   both rates, DMA release, microphone rail shutdown and original mouth behavior.
-
-Exit gate: correct real microphone audio and bounded Wi-Fi/codec resources on
-this board. Half-duplex is intentional; acoustic echo cancellation is deferred.
-
-### 3. Test direct tailnet membership in an isolated profile
-
-1. Integrate pinned MicroLink with optional config server/cellular features off.
-   Begin without Ito or STT. Audit IDF 5.5 compatibility, task placement, global
-   JSON allocation hooks and control/DERP TLS verification.
-2. Prepare a narrowly scoped test identity and grant. Provision credentials
-   privately over USB; inspect key persistence and redaction before enrollment.
-3. Join the tailnet and make an outbound TCP echo request. Then run the actual
-   gateway HTTP request over the VPN. Test both the peer IP and MagicDNS name.
-   A successful ping is insufficient.
-4. Test direct transport and a controlled relay-only condition. Test a second
-   Wi-Fi network, reconnect, server restart, cold boot, revoked identity and
-   expired enrollment credentials. Record route and recovery time for each.
-5. If WSS is selected, separately prove verified certificates, time setup, SNI,
-   reconnect and heap peaks. Do not treat TCP support as WSS validation.
-6. Add the original face, then Ito. Measure speech performance during normal
-   traffic and coordination refresh. Compare persistent VPN against an explicit
-   request-then-release lifecycle if memory demands it; verify released heaps
-   and measure the reconnection cost instead of assuming resources disappear.
-
-Exit gate: real text requests from the robot to `gianrtx`, on a different LAN,
-through both direct and relayed tailnet paths, plus a measured fit with playback.
-If this fails, retain the result and select a LAN relay for the first voice demo.
-Do not weaken golden correctness, bypass memory checks or disable certificate
-checks to declare success.
-
-### 4. Decide local STT from a bounded Oído experiment
-
-1. Build the pinned Oído host and ESP32 engine with exact model hashes. Test v2b
-   from flash first, then optional caching/LM only when justified by results.
-   Confirm terms for the intended use before distributing combined firmware.
-2. On the StackChan, configure **quad** PSRAM correctly and test deterministic
-   prerecorded 16 kHz input before the real microphone. Report full streaming
-   feed plus finish time; do not use the skipped utterance-pass RTF field.
-3. Measure accuracy on at least 20 fixed public English prompts and a separate
-   set of intended-user microphone phrases. Include names, numbers, longer
-   questions, silence and room noise. Keep public corpus WER separate from
-   private human acceptance. Compare with Parakeet on the same public clips.
-4. Add face/capture, then Wi-Fi/native networking. Measure audio overflow and
-   final-transcript delay. Investigate STT/TTS arena ownership if simultaneous
-   residency fails. Run at least 100 listen/speak allocation cycles, checking
-   heap return, largest block and golden Ito output after reuse.
-5. Inject allocation and initialization failures at each phase. Require bounded
-   cleanup, no use of released buffers, and a working retry or explicit safe
-   restart path. Include failure during partial startup, not just successful
-   stop/start cycles.
-
-Exit gate: acceptable measured English recognition, fit with the chosen network
-path, and repeatable phase transitions. Candidate targets are no input overflow,
-streaming RTF below 1, and p95 final-text delay below 2 seconds after submit.
-These are proposed targets, not measured capabilities or guaranteed quality.
-Review actual error examples with the user before choosing local STT.
-
-If fit or accuracy fails, use the user-selected Parakeet fallback. Add and test
-the bounded PCM endpoint with cancellation, worker recovery and real robot audio.
-This avoids the Oído flash-layout change. It still needs the measured Wi-Fi/VPN
-and capture budget; remote STT does not resolve all networking memory pressure.
-Time-box a BabyTalk investigation only if it addresses a specific blocker.
-
-### 5. Assemble the conversation mode
-
-1. Connect the proven pieces with one active turn and explicit states:
-   idle, recording, recognizing, waiting for LLM, speaking, error.
-2. Use USB diagnostic triggers first, then the chosen minimal touch interaction.
-   Keep mode configuration separate from factory cloud/OTA NVS keys.
-3. Reject old turn IDs after cancel/reconnect. Bound captured audio, history,
-   input/answer text and queues. Keep HTTP/network callbacks off synthesis/UI.
-4. Verify correct resource ownership and allocation return at each state change.
-   If phase switching is required, wait for workers to stop before reusing their
-   memory. Keep only the smallest necessary lifecycle API.
-5. Confirm local TTS and original face with the physical robot. Run deterministic
-   PCM checks, a short conversation and long replies with zero underruns.
-
-Exit gate: speak a question at the robot, receive an answer from the selected
-local Linux model, hear local Ito synthesis and see correct mouth animation.
-Report explicitly whether STT and tailnet membership are local or fallback paths.
-
-### 6. Validate recovery, modes and handoff
-
-Run 100 consecutive turns and a 30-minute idle/reconnect session. Cover cancel
-while recording/recognizing/requesting/speaking, Wi-Fi loss, DERP recovery, LLM
-timeout, malformed response, busy backend, microphone failure, service restart
-and cold power cycle. Require no unexpected resets, stale speech or growing
-allocation counts; investigate trends rather than rounding them away.
-
-Only then combine USB speech and conversation into a launcher choice if both
-fit in one image. Test entry, exit, microphone-off USB mode, Home and re-entry.
-Retain the normal cloud build as a separate buildable profile. Recheck recovery
-with the exact new layout; a second empty OTA slot is not a recovery image.
-
-Exit gate: documented start/stop commands, configuration, exact firmware/model
-artifacts, measured results and a verified way back to the working USB image.
-
 ## Results, performance and logs
 
 For every experiment record commit/config/model hashes, board and PSRAM mode,
@@ -467,27 +225,6 @@ Ito RTF/underruns with the fixed baseline; keep `degraded=1` truthful.
   Ito. Keep raw private audio, transcripts, keys, device identity and NVS out of Git.
 - Archive raw evidence, binaries and manifests with checksums beside the existing
   private device backups. Do not leave the only copy under a build directory.
-
-## Work boundaries and commits
-
-The plan and canonical measured reports live in Ito. Device integration lives
-in StackChan. Gateway and optional Parakeet adapter changes live in
-`local-voice-agent`, whose existing workflow requires a feature branch and no PR.
-Use Worktrunk to reuse/create task worktrees and preserve unrelated work.
-
-Commit independently reviewable chunks: gateway contract/tests; host USB demo;
-capture and Wi-Fi diagnostics; isolated MicroLink proof; local STT findings;
-chosen conversation path; lifecycle/UI integration; final measurements. Record
-decisions under `.agents/notes/{proposed|implemented}/architecture/` and hardware
-results under the existing hardware class. Link canonical reports instead of
-copying their numbers into several guides. Do not commit failed experiments as
-working product features.
-
-This is an investigation and implementation plan. Approval of a connection
-option selects the next implementation scope. Public exposure and changing the
-flash recovery layout need explicit decisions. Parakeet is already selected
-conditionally and becomes the STT path if local recognition fails its fit or
-accuracy gate. None of those choices is a side effect of installing a server.
 
 ## Sources
 
@@ -522,4 +259,4 @@ upstream observations until reproduced on this StackChan.
 [oido-engine]: https://github.com/lokutor-ai/oido/blob/c8d60325ba8bffd4bad65a9ac63c713ee64d1aae/esp32/components/tinyasr/tasr_nemo.c#L215
 [multinet]: https://docs.espressif.com/projects/esp-sr/en/latest/esp32s3/speech_command_recognition/README.html
 [babytalk]: https://github.com/tlack/babytalk
-[xiao-server]: https://github.com/xinnan-tech/xiaozhi-esp32-server/tree/2dfaf44269e651775f2011162f8967d9fc3fdd5f
+[speech]: 2026-11-15-stackchan-local-stt-ito-implementation.md
