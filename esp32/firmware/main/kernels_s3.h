@@ -17,6 +17,9 @@ extern volatile int s3_dma_errors;
 int s3_set_wmode(int m);                  // 0 or -1 if the mode is unavailable
 void s3_prefetch(const int8_t *w, int in, int out, int rows, int rb, void *user);   // itofs_qnext_fn: only acts in mode 3
 void s3_stream_reset(void);
+/* Call only after the synthesis call has returned. Drain pending prefetch and
+ * clear helper descriptors before lending or freeing inference storage. */
+int s3_kernels_park(void); /* -1: DMA error makes inference ownership uncertain */
 int s3_dma_ok(void);
 const char *s3_wmode_name(int m);
 typedef struct { int64_t us; double macs, wbytes; long calls, pf_hit, pf_miss, pf_free; } s3_stats_t;   // pf_*: staged calls whose weights were already announced / announced differently / not announced

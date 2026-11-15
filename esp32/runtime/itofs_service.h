@@ -35,6 +35,28 @@ esp_err_t itofs_service_reserve_hot(size_t bytes);
  * calibration. Repeated calls return ESP_ERR_INVALID_STATE. There is no second
  * codec or I2S initialization in this component. */
 esp_err_t itofs_service_start(const itofs_service_config_t *config);
+/* Close admission, cancel and flush output, then park inference workers before
+ * freeing weights, bulk, PCM and quiet-text scratch. The early hot reservation,
+ * frontend state/stack, worker stacks, queues, kernel tiles and GDMA stay owned.
+ * Initial calibration or an application callback can delay parking. A timeout
+ * leaves admission closed and all memory owned; retry stop before borrowing or
+ * resuming. A DMA error returns ESP_FAIL and retains inference storage until
+ * reboot because completion cannot be proved. Application callbacks must finish
+ * cooperatively. The console stays
+ * alive, so the control task may call stop without deleting its own task. */
+esp_err_t itofs_service_stop(uint32_t timeout_ms);
+/* Reacquire inference storage and reinitialize the engine over the retained hot
+ * reservation. Calibration and guard records persist. Does not reopen the
+ * codec or change volume. Allocation failure leaves workers stopped and can be
+ * retried. A timeout during failure cleanup requires another successful stop.
+ * These calls serialize with commands. Do not call from runtime callbacks. */
+esp_err_t itofs_service_resume(void);
+/* Borrow only after successful stop. The caller exclusively owns these bytes
+ * until returning the same pointer, and must not retain derived pointers after
+ * return. Resume rejects an outstanding borrow. This memory never enters the
+ * general heap; the application must not free it. */
+esp_err_t itofs_service_borrow_hot(void **workspace, size_t *bytes);
+esp_err_t itofs_service_return_hot(void *workspace);
 /* Submit a serial command without owning UART/USB. Calls are serialized inside
  * the runtime. Text is rejected while another text job remains active.
  * This function can wait for the bounded request queue; call it off the UI. */

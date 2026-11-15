@@ -369,6 +369,22 @@ static job_t s_job;
 static volatile int s_kind;
 static itofs_body_fn s_body; static void *s_barg; static int s_b0, s_b1;
 
+int s3_kernels_park(void)
+{
+    for (int k = 0; k < 2; k++) drain(k);
+    if (s3_dma_errors) return -1;
+    memset(&s_job, 0, sizeof s_job);
+    s_waiter = NULL; s_body = NULL; s_barg = NULL; s_kind = 0;
+    for (int k = 0; k < 2; k++) {
+        memset(g_cc[k].cq, 0, sizeof g_cc[k].cq);
+        memset(g_cc[k].slot, 0, sizeof g_cc[k].slot);
+#ifdef ITOFS_EMU_DMA
+        memset(g_cc[k].emu, 0, sizeof g_cc[k].emu); g_cc[k].emu_n = 0;
+#endif
+    }
+    return 0;
+}
+
 #ifdef ITOFS_ICPROF
 // QEMU -icount profiling build only: QEMU's virtual clock advances with the instructions of BOTH cores, so to get exact
 // per-core counts the dual-core split is serialised (core 1's half first while core 0 sleeps in WAITI, then core 0's
@@ -460,15 +476,16 @@ static int w4_pie_check(int *ngroups)
 
 int s3_kernels_init(void)
 {
+    if (s_worker) return 0;
     g_tiles_ok = 1;
     for (int k = 0; k < 2; k++) {
         core_ctx_t *c = &g_cc[k];
         for (int i = 0; i < 2; i++) {
-            c->buf[i] = heap_caps_aligned_alloc(64, TILE_BYTES + TILE_SLACK, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+            if (!c->buf[i]) c->buf[i] = heap_caps_aligned_alloc(64, TILE_BYTES + TILE_SLACK, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
             if (!c->buf[i]) g_tiles_ok = 0;
         }
-        c->sem = xSemaphoreCreateCounting(4, 0);
-        c->pk = heap_caps_aligned_alloc(16, PACK_BYTES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);     // packed weight row (see compute())
+        if (!c->sem) c->sem = xSemaphoreCreateCounting(4, 0);
+        if (!c->pk) c->pk = heap_caps_aligned_alloc(16, PACK_BYTES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);     // packed weight row (see compute())
     }
     for (int k = 0; k < 2; k++) if (!g_cc[k].pk || !g_cc[k].sem) return -1;
     g_dma_ok = g_tiles_ok;

@@ -46,6 +46,8 @@ static queue full = QUEUE_INIT(buf_t), freeq = QUEUE_INIT(buf_t),
              done = QUEUE_INIT(buf_t), frontend = QUEUE_INIT(fejob_t);
 static queue *s_full_q = &full, *s_free_q = &freeq, *s_done_q = &done,
              *s_fe_q = &frontend;
+static atomic_uint s_park_epoch[3], s_stop_sequence;
+static void guard_wdt_feed(void) {}
 static atomic_uint s_fe_job;
 static atomic_int s_fe_up = 1;
 static char text_storage[4096], *s_fe_text = text_storage;

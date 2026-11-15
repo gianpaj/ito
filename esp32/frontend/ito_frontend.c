@@ -630,11 +630,11 @@ int itofe_init(const void *blob, size_t len)
 {
     if (inited) return ITOFE_OK;
     size_t sz_cp = MAXCP * sizeof(uint32_t);
-    C.cp = ITOFE_ALLOC(sz_cp); C.cp2 = ITOFE_ALLOC(sz_cp);
-    C.boff = ITOFE_ALLOC((MAXCP + 1) * sizeof(int)); C.mt = ITOFE_ALLOC(MAXCP * sizeof(int)); C.det = ITOFE_ALLOC(MAXCP);
-    C.pool = ITOFE_ALLOC(POOL_BYTES); C.ph = ITOFE_ALLOC(PHBUF);
-    C.line = ITOFE_ALLOC(TEXTB * 2 + 64); C.norm = ITOFE_ALLOC(TEXTB);
-    C.raw = ITOFE_ALLOC(TEXTB * 4); C.tok = ITOFE_ALLOC(TEXTB * 4); C.tmp = ITOFE_ALLOC(TEXTB * 4); C.full = ITOFE_ALLOC(FULLN);
+    if (!C.cp) C.cp = ITOFE_ALLOC(sz_cp); if (!C.cp2) C.cp2 = ITOFE_ALLOC(sz_cp);
+    if (!C.boff) C.boff = ITOFE_ALLOC((MAXCP + 1) * sizeof(int)); if (!C.mt) C.mt = ITOFE_ALLOC(MAXCP * sizeof(int)); if (!C.det) C.det = ITOFE_ALLOC(MAXCP);
+    if (!C.pool) C.pool = ITOFE_ALLOC(POOL_BYTES); if (!C.ph) C.ph = ITOFE_ALLOC(PHBUF);
+    if (!C.line) C.line = ITOFE_ALLOC(TEXTB * 2 + 64); if (!C.norm) C.norm = ITOFE_ALLOC(TEXTB);
+    if (!C.raw) C.raw = ITOFE_ALLOC(TEXTB * 4); if (!C.tok) C.tok = ITOFE_ALLOC(TEXTB * 4); if (!C.tmp) C.tmp = ITOFE_ALLOC(TEXTB * 4); if (!C.full) C.full = ITOFE_ALLOC(FULLN);
     if (!C.cp || !C.cp2 || !C.boff || !C.mt || !C.det || !C.pool || !C.ph || !C.line || !C.norm || !C.raw || !C.tok || !C.tmp || !C.full) return ITOFE_E_NOMEM;
     if (itoes_init(blob, len) != 0) return ITOFE_E_BLOB;
     inited = 1;

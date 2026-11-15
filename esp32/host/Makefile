@@ -6,6 +6,7 @@
 #   make test_split        the verdict state machine of the runtime split choice (engine/itofs_split.c) with simulated resets and test results
 #   make test_frontend   the on-chip text front end (esp32/frontend: espeak-ng 1.52.0 en-us port + phonemizer / nltk logic) against golden ids made by the Python front end; needs no weights
 #   make test_sched        the boot calibration / start-delay policy (engine/itofs_sched.c) against a model of the speaker, with simulated timings (no weights needed)
+#   make test_runtime_golden MODEL=/abs/model.bin  real engine PCM after hot-memory overwrite (optional weights, ASan/UBSan)
 #   make test_runtime      the firmware's playback and frontend ownership functions with POSIX queue/codec mocks (no IDF or weights needed)
 CC ?= cc
 CFLAGS = -std=c99 -D_DEFAULT_SOURCE -O2 -ffp-contract=off -Wall -Wno-unused-function -I../engine
@@ -50,6 +51,13 @@ test_split: host_test_split
 test_runtime:
 	python3 test_runtime.py
 
+# Explicit opt-in; this target never fetches weights.
+host_test_runtime_golden: host_test_runtime_golden.c $(ENGINE)
+	$(CC) $(CFLAGS) -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ host_test_runtime_golden.c ../engine/itofs.c -lm
+test_runtime_golden: host_test_runtime_golden
+	@test -n "$(MODEL)" || { echo 'Pass MODEL=/absolute/path/to/model.bin'; exit 2; }
+	./host_test_runtime_golden "$(MODEL)"
+
 
 # ---- on-chip text front end (esp32/frontend) ----
 FE = ../frontend
@@ -71,6 +79,6 @@ test: test_frontend host_test_v3 host_test_v3_asan $(BLOB)
 	  else tail -1 asan.log; echo "ASan/UBSan: clean"; fi
 
 clean:
-	rm -f ito_batch host_test_frontend host_test_split host_test_sched w4_dump ito_cli host_test_v3 host_test_v3_asan gen_selftest opcount_v3 asan.log golden/*.wav
+	rm -f host_test_runtime_golden ito_batch host_test_frontend host_test_split host_test_sched w4_dump ito_cli host_test_v3 host_test_v3_asan gen_selftest opcount_v3 asan.log golden/*.wav
 
-.PHONY: all test test_sched test_split test_frontend test_runtime clean
+.PHONY: all test test_sched test_split test_frontend test_runtime test_runtime_golden clean

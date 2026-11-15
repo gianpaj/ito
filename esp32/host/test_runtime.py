@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the firmware's C playback functions against POSIX queue/codec mocks."""
+"""Run production C playback, lifecycle and worker checkpoints with host mocks."""
 import os
 from pathlib import Path
 import re
@@ -10,14 +10,21 @@ import tempfile
 HOST = Path(__file__).resolve().parent
 MAIN = HOST.parent / "firmware/main/main.c"
 FUNCTIONS = (
-    "audio_mute", "cancel_flush", "audio_write", "play_task", "cancel_job",
+    "service_stopping", "service_checkpoint", "audio_mute", "cancel_flush", "audio_write", "play_task", "cancel_job",
     "fe_busy", "fe_release", "fe_submit",
+)
+
+LIFECYCLE_FUNCTIONS = (
+    "request_stop", "cancel_job", "itofs_service_reserve_hot", "workers_parked", "wait_parked",
+    "reset_playback_queues", "release_inference", "itofs_service_stop",
+    "itofs_service_resume", "itofs_service_borrow_hot", "itofs_service_return_hot",
+    "itofs_service_start",
 )
 
 
 def function(source, name):
     matches = list(re.finditer(
-        rf"^static (?:esp_err_t|int|void) {name}\([^\n]*\)\s*\{{",
+        rf"^(?:static )?(?:esp_err_t|int|void) {name}\([^\n]*\)\s*\{{",
         source, re.MULTILINE,
     ))
     if len(matches) != 1:
@@ -39,7 +46,7 @@ def main():
     compiler = shlex.split(os.environ.get("CC", "cc"))
     # The compiler selects the embedded branches and expands firmware constants.
     # Includes are supplied by the fixture instead of ESP-IDF. Function bodies
-    # come directly from main.c, so the test has no copy of the playback logic.
+    # come directly from main.c, so the fixtures do not copy runtime logic.
     source = re.sub(r"^\s*#\s*include[^\n]*", "", MAIN.read_text(), flags=re.MULTILINE)
     selected = subprocess.run(
         compiler + ["-E", "-P", "-x", "c", "-DITOFS_EMBEDDED=1",
@@ -48,19 +55,22 @@ def main():
     ).stdout
     with tempfile.TemporaryDirectory(prefix="ito-runtime-test-") as directory:
         temporary = Path(directory)
-        (temporary / "production_functions.inc").write_text(
-            "\n\n".join(function(selected, name) for name in FUNCTIONS)
-        )
-        executable = temporary / "runtime-test"
-        subprocess.run(
-            compiler + ["-std=c11", "-pthread", "-Wall", "-Wextra", "-Werror",
-                        "-Wno-unused-function", "-I", str(temporary),
-                        "-I", str(HOST / "runtime_mock"),
-                        "-I", str(HOST.parent / "runtime"),
-                        str(HOST / "host_test_runtime.c"), "-o", str(executable)],
-            check=True,
-        )
-        subprocess.run([str(executable)], check=True, timeout=15)
+        for fixture, functions in (("host_test_runtime.c", FUNCTIONS),
+                                   ("host_test_lifecycle.c", LIFECYCLE_FUNCTIONS),
+                                   ("host_test_checkpoint.c", ("service_stopping", "request_stop", "workers_parked", "service_checkpoint"))):
+            (temporary / "production_functions.inc").write_text(
+                "\n\n".join(function(selected, name) for name in functions)
+            )
+            executable = temporary / fixture.removesuffix(".c")
+            subprocess.run(
+                compiler + ["-std=c11", "-pthread", "-Wall", "-Wextra", "-Werror",
+                            "-Wno-unused-function", "-I", str(temporary),
+                            "-I", str(HOST / "runtime_mock"),
+                            "-I", str(HOST.parent / "runtime"),
+                            str(HOST / fixture), "-o", str(executable)],
+                check=True,
+            )
+            subprocess.run([str(executable)], check=True, timeout=15)
 
 
 if __name__ == "__main__":
