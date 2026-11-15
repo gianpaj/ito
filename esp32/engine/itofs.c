@@ -1061,11 +1061,25 @@ void itofs_arena_bytes(const itofs_model_t *m, const itofs_limits_t *lim, size_t
     *bulk_bytes = b.used + 16;
 }
 
-int itofs_init(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim,
-               void *hot, size_t hot_bytes, void *bulk, size_t bulk_bytes)
+typedef struct { uint32_t magic, n_fft; float tables[]; } init_cache_t;
+#define INIT_CACHE_MAGIC UINT32_C(0x49544643)
+
+size_t itofs_init_cache_bytes(const itofs_model_t *m)
+{
+    if (!m || m->n_fft < 2 || (size_t)m->n_fft > (SIZE_MAX - 16) / 12) return 0;
+    const size_t N = (size_t)m->n_fft, M = N / 2;
+    return sizeof(init_cache_t) + (N + 2 * (M + 1) + 2 * M) * sizeof(float);
+}
+
+int itofs_init_cached(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim,
+                      void *hot, size_t hot_bytes, void *bulk, size_t bulk_bytes,
+                      void *cache, size_t cache_bytes)
 {
     if (!c || !m || !lim || lim->max_tokens < 1 || lim->chunk_frames < 1 || (lim->act_bits && lim->act_bits != 8 && lim->act_bits != 16))
         return E_ARG;
+    const size_t required_cache = itofs_init_cache_bytes(m);
+    if (cache && ((uintptr_t)cache % sizeof(float) || !required_cache)) return E_ARG;
+    if (cache && cache_bytes < required_cache) return E_ARENA;
     size_t hb, bb;
     itofs_arena_bytes(m, lim, &hb, &bb);
     if (hot_bytes < hb || bulk_bytes < bb) return E_ARENA;
@@ -1081,25 +1095,50 @@ int itofs_init(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim
     c->hot_used = h.used; c->bulk_used = b.used;
     // tables (double-precision sin/cos from + - * / only: identical on every IEEE target)
     const int N = m->n_fft, M = N / 2;
-    for (int n = 0; n < N; n++) {
-        double s, co; itf_sincos2pi_d(n, N, &s, &co);
-        c->win[n] = (float)(0.5 - 0.5 * co);          // periodic Hann
-        c->win2[n] = c->win[n] * c->win[n];
+    init_cache_t *saved = cache;
+    const int reuse = saved && saved->magic == INIT_CACHE_MAGIC && saved->n_fft == (uint32_t)N;
+    if (saved && !reuse) saved->magic = 0;
+    if (reuse) {
+        memcpy(c->win, saved->tables, (size_t)N * sizeof(float));
+        memcpy(c->rtw, saved->tables + N, (size_t)2 * (M + 1) * sizeof(float));
+    } else {
+        for (int n = 0; n < N; n++) {
+            double s, co; itf_sincos2pi_d(n, N, &s, &co);
+            c->win[n] = (float)(0.5 - 0.5 * co);          // periodic Hann
+        }
+        for (int k = 0; k <= M; k++) {
+            double s, co; itf_sincos2pi_d(k, N, &s, &co);
+            c->rtw[2 * k] = (float)co; c->rtw[2 * k + 1] = (float)s;
+        }
     }
-    for (int k = 0; k <= M; k++) {
-        double s, co; itf_sincos2pi_d(k, N, &s, &co);
-        c->rtw[2 * k] = (float)co; c->rtw[2 * k + 1] = (float)s;
-    }
+    for (int n = 0; n < N; n++) c->win2[n] = c->win[n] * c->win[n];
     for (int j = 0; j < m->hop; j++) c->src_w[j] = ((float)j + 0.5f) / (float)m->hop;
     c->fft->n = M;
     if (fft_factor(M, c->fft->fac)) return E_CONFIG;
     c->fft_b->n = M;
     memcpy(c->fft_b->fac, c->fft->fac, sizeof c->fft->fac);
-    for (int k = 0; k < M; k++) {
-        double s, co; itf_sincos2pi_d(k, M, &s, &co);
-        c->fft->tw[k].r = (float)co; c->fft->tw[k].i = (float)-s;   // exp(-2 pi i k / M)
+    const size_t tw_offset = (size_t)N + 2 * (M + 1);
+    if (reuse) memcpy(c->fft->tw, saved->tables + tw_offset, (size_t)M * sizeof(cpx));
+    else {
+        for (int k = 0; k < M; k++) {
+            double s, co; itf_sincos2pi_d(k, M, &s, &co);
+            c->fft->tw[k].r = (float)co; c->fft->tw[k].i = (float)-s;   // exp(-2 pi i k / M)
+        }
+        if (saved) {
+            memcpy(saved->tables, c->win, (size_t)N * sizeof(float));
+            memcpy(saved->tables + N, c->rtw, (size_t)2 * (M + 1) * sizeof(float));
+            memcpy(saved->tables + tw_offset, c->fft->tw, (size_t)M * sizeof(cpx));
+            saved->n_fft = (uint32_t)N;
+            saved->magic = INIT_CACHE_MAGIC;
+        }
     }
     return E_OK;
+}
+
+int itofs_init(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim,
+               void *hot, size_t hot_bytes, void *bulk, size_t bulk_bytes)
+{
+    return itofs_init_cached(c, m, lim, hot, hot_bytes, bulk, bulk_bytes, NULL, 0);
 }
 
 // ======================================================================================================================

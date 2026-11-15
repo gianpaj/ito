@@ -44,6 +44,8 @@ static int s_weight_copy_valid;
 static const void *s_weight_copy_partition;
 static size_t s_weight_copy_extent;
 static itofs_workspace_t s_memory_lease;
+static void *s_init_cache;
+static size_t s_init_cache_bytes;
 static void audio_mute(int muted);
 #endif
 #include "freertos/FreeRTOS.h"
@@ -1355,7 +1357,18 @@ static int activate_tier(int i)
     }
     int e = itofs_model_init(&s_model, blob, T->ext);
     if (e) { printf("ERROR model: %s\n", itofs_strerror(e)); return -1; }
-    if ((e = itofs_init(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb))) { printf("ERROR engine init: %s\n", itofs_strerror(e)); return -1; }
+#ifdef ITOFS_EMBEDDED
+    const size_t cache_bytes = itofs_init_cache_bytes(&s_model);
+    if (!s_init_cache && cache_bytes) {
+        s_init_cache = heap_caps_calloc(1, cache_bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (s_init_cache) s_init_cache_bytes = cache_bytes;
+    }
+    void *cache = cache_bytes && s_init_cache_bytes >= cache_bytes ? s_init_cache : NULL;
+    e = itofs_init_cached(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb, cache, s_init_cache_bytes);
+#else
+    e = itofs_init(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb);
+#endif
+    if (e) { printf("ERROR engine init: %s\n", itofs_strerror(e)); return -1; }
     s_ctx.qgemm = s3_qgemm;
     s_ctx.qgemm4 = s3_qgemm4;
     s_ctx.par = s3_par;                                   // row-parallel float work on both cores (bit-identical to one core)

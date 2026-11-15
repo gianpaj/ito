@@ -70,6 +70,17 @@ discovery. Pool provisioning and full model/context initialization still run.
 Cold or failed startup, destructive borrowing and invalid retained metadata use
 the full discovery path.
 
+The runtime keeps one optional 14,416-byte PSRAM cache outside both lent ranges
+for the 1,200-point FFT's immutable Hann, real-FFT and complex-FFT trig tables.
+`itofs_init_cache_bytes` sizes the caller-owned buffer; `itofs_init_cached`
+populates a zeroed buffer after successful initialization and reuses exact bytes
+when the FFT size matches. The ordinary `itofs_init` API stays compatible.
+Window squares, hop-dependent interpolation weights and FFT factorization use
+the same arithmetic on every initialization. Context and arena layout still
+rebuild in full. Cache allocation failure falls back to ordinary initialization.
+This costs 14,416 bytes of retained PSRAM to avoid 2,401 software double-precision
+trig evaluations on each native resume. The cache is never lent or freed by stop.
+
 PCM capacity stays at 32 frames even when the active chunk size is smaller.
 Stop snapshots the active chunk profile, style and activation precision. Resume
 restores them after full-capacity provisioning, so retained calibration uses the
@@ -111,6 +122,9 @@ or limits, and insufficient hot/PSRAM capacity.
 The portable engine reproduces the golden PCM while alternating preserved-weight
 rebuilds and destructive reloads under ASan/UBSan. Scratch-resume device latency
 is measured separately from the full-pool results below.
+The same harness compares ordinary initialization, cache creation and warm-cache
+rebuilds after arena overwrite. It checks exact public table bytes, golden PCM,
+cache capacity/alignment rejection and recomputation of changed-hop weights.
 
 The [manual Oído run](../../../../results/stackchan/2026-11-15-manual-oido/README.md)
 records 91 completed STT/Ito cycles: 20 public clips matching the host, 20 real
