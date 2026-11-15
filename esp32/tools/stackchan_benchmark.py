@@ -31,7 +31,7 @@ def interval(events, first, last):
 class Trial:
     def __init__(self, number, mode):
         self.number, self.mode = number, mode
-        self.events, self.device_ms = {}, {}
+        self.events, self.device_ms, self.device_us = {}, {}, {}
         self.turn = None
         self.stt, self.tts, self.capture = {}, {}, {}
         self.transcript_kind = None
@@ -77,6 +77,11 @@ class Trial:
         match = re.match(r"TURN (\d+) state=restoring ", line)
         if match:
             self.check_turn(match[1])
+        if line.startswith("TURN_TIMING "):
+            fields = dict(re.findall(r"(\w+)=(\d+)", line))
+            self.check_turn(fields.pop("turn"))
+            self.device_us.update({key: int(value) for key, value in fields.items() if key.endswith("_us")})
+            self.capture["backlog_samples"] = int(fields["backlog_samples"])
         match = re.fullmatch(r"TRANSCRIPT turn=(\d+): (.*)", line)
         if match:
             self.check_turn(match[1])
@@ -106,6 +111,9 @@ class Trial:
                 self.tts["utterances"] = self.tts.get("utterances", 0) + 1
                 self.tts["underruns"] = self.tts.get("underruns", 0) + int(match[4])
             if line.startswith("I2S_START:"):
+                stamp = re.search(r"submit_us=(\d+)", line)
+                if stamp:
+                    self.device_us.setdefault("first_i2s_us", int(stamp[1]))
                 match = re.search(r"text received -> first PCM submission ([\d.]+) ms", line)
                 if match:
                     self.tts.setdefault("text_to_first_i2s_ms", float(match[1]))
@@ -132,7 +140,20 @@ class Trial:
             device_gap = self.device_ms["playback_start_log"] - self.device_ms["capture_end_log"]
             if device_gap < 0:
                 raise RuntimeError("Device clock reset during the trial")
+        def device_interval(first, last):
+            if not self.device_us.get(first) or not self.device_us.get(last):
+                return None
+            value = self.device_us[last] - self.device_us[first]
+            if value < 0:
+                raise RuntimeError(f"Invalid device timestamp order: {first}, {last}")
+            return round(value / 1000, 3)
         return {
+            "events_device_monotonic_us": self.device_us.copy(),
+            "last_input_read_to_first_i2s_device_ms": device_interval("last_input_us", "first_i2s_us"),
+            "last_input_read_to_final_transcript_device_ms": device_interval("last_input_us", "final_transcript_us"),
+            "last_input_read_to_drained_device_ms": device_interval("last_input_us", "input_drained_us"),
+            "final_transcript_to_resume_device_ms": device_interval("final_transcript_us", "resume_done_us"),
+            "final_transcript_to_first_i2s_device_ms": device_interval("final_transcript_us", "first_i2s_us"),
             "trial": self.number, "mode": self.mode, "turn": self.turn,
             "transcript_kind": self.transcript_kind, "capture": self.capture,
             "events_host_monotonic_ns": self.events.copy(), "events_device_log_ms": self.device_ms.copy(),
@@ -185,6 +206,8 @@ def validate(args):
         raise ValueError("reply exceeds the USB command limit")
     if args.volume is not None and not 0 <= args.volume <= 100:
         raise ValueError("volume must be 0..100")
+    if getattr(args, "first_frames", None) is not None and not 1 <= args.first_frames <= 32:
+        raise ValueError("first-frames must be 1..32")
     return load_pcm16_wav(args.wav.expanduser()) if args.wav else None
 
 
@@ -206,7 +229,7 @@ def benchmark(args):
     session.mkdir(parents=True, mode=0o700)
     reply = args.reply.encode("ascii")
     results = {
-        "schema_version": 1, "started_utc": utc_now(), "requested_runs": args.runs,
+        "schema_version": 2, "started_utc": utc_now(), "requested_runs": args.runs,
         "responder": {"mode": "fixed_supplied_text", "llm_called": False,
                       "reply_bytes": len(reply), "reply_sha256": hashlib.sha256(reply).hexdigest()},
         "input": {"mode": "wav_upload" if pcm is not None else "microphone", "capture_seconds": seconds if pcm is None else None,
@@ -214,12 +237,15 @@ def benchmark(args):
         "tool_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_revision": git_output("rev-parse", "HEAD").decode().strip(),
         "source_dirty": bool(git_output("status", "--porcelain")), "port": args.port, "volume_requested": args.volume,
+        "first_frames_requested": getattr(args, "first_frames", None),
         "python_version": sys.version, "pyserial_version": serial.__version__,
         "trials": [], "limits": [
             "No LLM is timed; supplied reply is sent automatically after conversation READY.",
             "Firmware text-to-first-I2S timing excludes DMA and acoustic latency.",
             "Playback logs mark the callback after the first successful I2S write, not acoustic onset.",
             "Host intervals include USB/log delivery and scheduling; device log intervals have millisecond log resolution.",
+            "Last input timestamp marks completion of the final RX read, not measured acoustic end of speech.",
+            "Streaming STT compute overlaps capture; summed STT stages are not post-capture latency.",
             "Capture ends at the configured cap, not detected end of speech. Boot time is excluded from trials.",
             "TTS compute/audio fields describe the first utterance; underruns sum all reply utterances.",
             "Private serial/command logs can contain speech and reply text; metric rows omit transcript text.",
@@ -250,6 +276,9 @@ def benchmark(args):
             if args.volume is not None:
                 channel.send(f"volume {args.volume}")
                 channel.wait(lambda line: line == f"OK volume {args.volume}", 2)
+            if getattr(args, "first_frames", None) is not None:
+                channel.send(f"first {args.first_frames}")
+                channel.wait(lambda line: line.startswith(f"OK first chunk {args.first_frames} frames"), 5)
             for number in range(1, args.runs + 1):
                 trial = channel.trial = Trial(number, results["input"]["mode"])
                 if pcm is None:
@@ -268,6 +297,10 @@ def benchmark(args):
                 results["trials"].append(row)
                 save()
                 gap = row["capture_end_log_to_playback_log_device_ms"]
+                if row["last_input_read_to_first_i2s_device_ms"] is not None:
+                    print(f"Trial {number}: last RX read -> first I2S {row['last_input_read_to_first_i2s_device_ms']:.1f} ms; "
+                          f"STT tail {row['last_input_read_to_final_transcript_device_ms']:.1f} ms; "
+                          f"restore {row['final_transcript_to_resume_device_ms']:.1f} ms", flush=True)
                 print(f"Trial {number}: STT {row['stt_total_ms']:.1f} ms; "
                       f"Ito restore/control {row['stt_report_to_conversation_ready_host_ms']:.1f} ms observed; "
                       f"text -> first I2S {row['tts_text_to_first_i2s_ms']:.1f} ms; "
@@ -299,6 +332,7 @@ def main():
     source.add_argument("--wav", type=Path, help="Use a fixed mono PCM16 16 kHz WAV instead of capture")
     parser.add_argument("--runs", type=int, default=1, help="Default one turn; more runs are explicit")
     parser.add_argument("--reply", default=DEFAULT_REPLY, help="Supplied English reply replacing the manual LLM step")
+    parser.add_argument("--first-frames", type=int, help="Probe the first TTS chunk, 1..32; 32 disables the startup ramp")
     parser.add_argument("--volume", type=int)
     parser.add_argument("--firmware", type=Path)
     parser.add_argument("--log-root", type=Path, default=ROOT / "esp32/logs/stackchan-benchmark")

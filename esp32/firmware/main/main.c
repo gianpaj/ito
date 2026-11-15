@@ -628,7 +628,8 @@ static void print_timing(const char *what, const stats_t *S, int n_tok, int styl
     if (s_first_i2s_submit_us) {
         printf("I2S_START: engine begin -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_utt_t0));
         if (s_req_tmp.t0) printf(", text received -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_req_tmp.t0));
-        printf(" (successful I2S API call; DMA and acoustic latency excluded)\n");
+        printf(" (successful I2S API call; DMA and acoustic latency excluded) submit_us=%lld\n",
+               (long long)s_first_i2s_submit_us);
     }
 #endif
     mem_report(what);

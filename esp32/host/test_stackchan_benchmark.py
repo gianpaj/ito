@@ -94,6 +94,18 @@ class Tests(unittest.TestCase):
         self.assertNotIn(PRIVATE, json.dumps(row))
         self.assertEqual(bench.summary([row])['tts_text_to_first_i2s_ms']['n'], 1)
 
+    def test_streaming_device_clock_metrics(self):
+        t = self.recording_trial()
+        t.observe('TURN_TIMING turn=3 last_input_us=20000000 input_drained_us=20100000 final_transcript_us=20400000 resume_done_us=20600000 backlog_samples=320', 10726 * 1000000)
+        complete(t)
+        t.observe(I2S + ' submit_us=21450000', 12855 * 1000000)
+        row = t.result()
+        self.assertEqual(row['last_input_read_to_first_i2s_device_ms'], 1450)
+        self.assertEqual(row['last_input_read_to_final_transcript_device_ms'], 400)
+        self.assertEqual(row['last_input_read_to_drained_device_ms'], 100)
+        self.assertEqual(row['final_transcript_to_resume_device_ms'], 200)
+        self.assertEqual(row['capture']['backlog_samples'], 320)
+
     def test_wrong_turn_and_missing_metrics(self):
         t = self.recording_trial()
         with self.assertRaisesRegex(RuntimeError, 'Expected turn'):

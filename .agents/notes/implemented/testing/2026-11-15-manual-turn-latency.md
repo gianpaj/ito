@@ -1,6 +1,6 @@
 # Agent Note: Manual speech-turn latency
 
-Status: implemented — Host timing tests and one native five-second benchmark pass.
+Status: implemented — Host timing tests and the native batch baseline and streaming timing parser pass.
 
 ## Problem
 
@@ -13,12 +13,15 @@ cannot be timestamped as though it were the first audio event.
 A host benchmark runs one turn by default through the existing USB interface.
 It sends a supplied reply immediately after the transcript and conversation
 READY, preserving the manual responder boundary without invoking an LLM.
-The firmware remains unchanged. Explicit runs can repeat the same case.
+Explicit runs can repeat the same case. Streaming firmware supplies device
+monotonic timestamps for the final RX read, drained PCM, final transcript and
+completed restoration. Ito reports the absolute first successful I2S submission
+time after playback. These timestamps share one clock.
 
 Firmware counters supply STT stages, first PCM readiness and text-to-first-I2S
 time. A single host monotonic clock supplies observer intervals. Device log
 capture-end/playback-start timestamps supply a separate device-clock interval.
-Durations from different clocks are not combined into an exact total. Acoustic
+Durations from different clocks are not combined into an exact total. Completion of the last RX read is a software input boundary. Acoustic
 onset and detected end of speech remain unmeasured. Canonical commands and metric
 definitions are in [Benchmarking](../../../../esp32/BENCHMARKING.md#stackchan-manual-speech-latency).
 
@@ -26,8 +29,9 @@ definitions are in [Benchmarking](../../../../esp32/BENCHMARKING.md#stackchan-ma
 
 Timing manual console entry includes human delay and cannot isolate the model
 pipeline. Treating arrival of the delayed I2S summary as first audio overstates
-latency. Adding new firmware markers would require a build/flash cycle when the
-existing stage counters and playback callback already support this benchmark.
+latency. Existing stage counters and playback callbacks support the batch baseline.
+Streaming overlaps computation with recording, so device microsecond markers
+separate the remaining tail from work already performed during capture.
 Acoustic loopback can measure a different endpoint but is outside this small slice.
 
 ## Consequences
@@ -44,5 +48,4 @@ restoration/control at 728.3 ms and supplied reply text to first I2S submission
 at 1,073.1 ms. Device capture-end to playback-start logs span 6,790 ms, with zero
 output underruns. This trial returns no speech and makes no accuracy claim.
 The [result](../../../../results/stackchan/2026-11-15-manual-oido/latency-benchmark.json)
-retains the tool/image hashes and exact measurement boundaries. No firmware
-change or additional repeated device pass is needed for this slice.
+retains the tool/image hashes and exact measurement boundaries. The batch baseline is independent of later streaming measurements.

@@ -316,15 +316,19 @@ selects that text; it stands in for the manual LLM step. No LLM is called or tim
 `--wav path.wav` uses fixed mono PCM16 at 16 kHz instead of the microphone.
 `--runs N` explicitly requests more turns. `--firmware path.bin` records an
 image hash, and `--volume 50` optionally selects playback volume. Boot and
-startup calibration are excluded from the trial.
+startup calibration are excluded from the trial. `--first-frames N` probes a
+first TTS chunk of 1..32 frames; 32 disables the startup ramp.
 
 The script prints its private session directory and writes `results.json`,
 `trials.csv`, raw serial output and commands. Raw logs can contain personal
 speech and supplied replies; metric rows omit transcript text. JSON retains
-host monotonic event timestamps and device log timestamps for timing review.
+host monotonic event timestamps, device log timestamps and optional device
+microsecond markers for timing review.
 
 - STT setup, feed and finish come from the firmware. Their sum excludes Ito
-  restoration. The transcript becomes available after Ito restoration.
+  restoration. Streaming feed overlaps recording, so their sum is compute
+  time rather than post-recording delay. The transcript is printed after Ito
+  restoration.
 - STT-report to conversation-READY is a host-observed restoration/control
   interval, including USB delivery and scheduling.
 - Reply dispatch is automatic after READY. Its delay measures the benchmark
@@ -335,10 +339,16 @@ host monotonic event timestamps and device log timestamps for timing review.
 - Capture-end log to playback-start log uses one device clock. The callback
   follows the first successful I2S write. Log timestamps have firmware-dependent
   tick resolution, and capture-end is the end of the recording cap, not VAD.
+- `last_input_read_to_first_i2s_device_ms` uses `TURN_TIMING` and the absolute
+  `I2S_START submit_us` marker on the same device monotonic clock. It includes
+  the STT tail, restoration, reply dispatch and TTS startup. The input endpoint
+  is completion of the final RX read, not measured acoustic speech end. Separate
+  fields report input drain, final transcript and restoration. Older firmware
+  leaves these fields null.
 - Host intervals include USB/log delivery. TTS compute/audio fields describe
   the first utterance; underruns sum all reply utterances. Total speech-ready
   time covers the whole reply. Summary statistics are min/median/max with sample
   counts; one run does not establish a latency distribution.
 
-Compare the same input length and reply text. Streaming capture/STT and a real
-LLM responder are separate milestones.
+Compare the same input length and reply text. Automatic speech endpointing and
+a real LLM responder remain separate milestones.

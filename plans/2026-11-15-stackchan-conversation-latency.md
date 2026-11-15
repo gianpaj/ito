@@ -40,10 +40,12 @@ Use the existing two task worktrees and retain the working firmware image.
   the batch wrapper for uploaded WAV diagnostics and existing tests.
 - Complete model validation and setup before the LISTENING cue. Capture must
   continue while a feed call runs an encoder chunk. Use the existing bounded PCM
-  buffer with a dedicated capture producer and one recognition consumer.
-- Reserve any producer stack early. Keep it small and measure its high-water
-  mark. Never infer directly in the microphone read loop, since chunk work can
-  exceed the RX DMA window. Publish samples only after their writes complete.
+  buffer with the USB control task as capture producer and the recognition
+  worker as consumer. Poll USB without waiting while capture is active, and
+  give its producer priority over recognition. This adds no task stack.
+- Never infer directly in the microphone read loop, since chunk work can exceed
+  the RX DMA window. Publish samples only after their writes complete. Measure
+  the existing control stack high-water mark after its capture responsibilities.
 - On `send` or the recording cap, finish capture, drain published PCM, finish
   recognition, close all Oido users and return the lease before Ito resumes.
   Cancellation and failed capture also join the producer before returning memory.
