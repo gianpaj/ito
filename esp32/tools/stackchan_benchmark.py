@@ -211,8 +211,6 @@ def validate(args):
         raise ValueError("reply exceeds the USB command limit")
     if args.volume is not None and not 0 <= args.volume <= 100:
         raise ValueError("volume must be 0..100")
-    if getattr(args, "first_frames", None) is not None and not 1 <= args.first_frames <= 32:
-        raise ValueError("first-frames must be 1..32")
     return load_pcm16_wav(args.wav.expanduser()) if args.wav else None
 
 
@@ -242,7 +240,6 @@ def benchmark(args):
         "tool_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_revision": git_output("rev-parse", "HEAD").decode().strip(),
         "source_dirty": bool(git_output("status", "--porcelain")), "port": args.port, "volume_requested": args.volume,
-        "first_frames_requested": getattr(args, "first_frames", None),
         "python_version": sys.version, "pyserial_version": serial.__version__,
         "trials": [], "limits": [
             "No LLM is timed; supplied reply is sent automatically after conversation READY.",
@@ -281,9 +278,6 @@ def benchmark(args):
             if args.volume is not None:
                 channel.send(f"volume {args.volume}")
                 channel.wait(lambda line: line == f"OK volume {args.volume}", 2)
-            if getattr(args, "first_frames", None) is not None:
-                channel.send(f"first {args.first_frames}")
-                channel.wait(lambda line: line.startswith(f"OK first chunk {args.first_frames} frames"), 5)
             for number in range(1, args.runs + 1):
                 trial = channel.trial = Trial(number, results["input"]["mode"])
                 if pcm is None:
@@ -337,7 +331,6 @@ def main():
     source.add_argument("--wav", type=Path, help="Use a fixed mono PCM16 16 kHz WAV instead of capture")
     parser.add_argument("--runs", type=int, default=1, help="Default one turn; more runs are explicit")
     parser.add_argument("--reply", default=DEFAULT_REPLY, help="Supplied English reply replacing the manual LLM step")
-    parser.add_argument("--first-frames", type=int, help="Probe the first TTS chunk, 1..32; 32 disables the startup ramp")
     parser.add_argument("--volume", type=int)
     parser.add_argument("--firmware", type=Path)
     parser.add_argument("--log-root", type=Path, default=ROOT / "esp32/logs/stackchan-benchmark")

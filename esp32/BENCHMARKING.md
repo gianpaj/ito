@@ -316,8 +316,7 @@ selects that text; it stands in for the manual LLM step. No LLM is called or tim
 `--wav path.wav` uses fixed mono PCM16 at 16 kHz instead of the microphone.
 `--runs N` explicitly requests more turns. `--firmware path.bin` records an
 image hash, and `--volume 50` optionally selects playback volume. Boot and
-startup calibration are excluded from the trial. `--first-frames N` probes a
-first TTS chunk of 1..32 frames; 32 disables the startup ramp.
+startup calibration are excluded from the trial.
 
 The script prints its private session directory and writes `results.json`,
 `trials.csv`, raw serial output and commands. Raw logs can contain personal
