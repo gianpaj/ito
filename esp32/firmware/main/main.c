@@ -2388,9 +2388,6 @@ static esp_err_t runtime_start(void)
         s_hop = hop; s_sr = sr;
     }
     if (!s_hb || !s_bb || !s_hop || !s_sr) return ESP_ERR_INVALID_SIZE;
-    // the active set's weights live in PSRAM next to the arenas (+ margin for the self-test buffer); else they run memory-mapped from flash (slow)
-    if (!allocate_weight_copy(max_ext, s_bb))
-        printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
     s_chunk_frames = STEADY_FRAMES;
     s_chunk_samples = s_chunk_frames * s_hop;
     s_style = demo_style[0];   // replaced by the first blob demo's style once the demos are loaded
@@ -2408,6 +2405,11 @@ static esp_err_t runtime_start(void)
 #else
     printf("QEMU build: I2S disabled (audio is generated and discarded)\n");
 #endif
+    /* Persistent codec storage precedes the phase-owned weight and bulk blocks,
+     * so stopping inference can coalesce those blocks for the next resume. */
+    // the active set's weights live in PSRAM next to the arenas (+ margin for the self-test buffer); else they run memory-mapped from flash (slow)
+    if (!allocate_weight_copy(max_ext, s_bb))
+        printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
     // leave room in internal RAM for the task stacks, the staging tiles and the I2S slice (about 24 KB more than the arena itself)
     const char *hot_where = "internal SRAM";
     printf("internal SRAM before the hot arena: largest free block %u KB, free %u KB\n", (unsigned)(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) >> 10),

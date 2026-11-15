@@ -48,6 +48,14 @@ Resume rejects an outstanding borrow and reinitializes the engine before use.
 Codec open/volume and guard records persist; calibration remains tied to the
 same fixed voice, precision and scheduling profile.
 
+Persistent codec initialization precedes the phase-owned weight copy and bulk
+arena. Keeping retained codec objects outside that group lets released inference
+blocks coalesce. Weight-copy admission uses total free PSRAM, then attempts the
+aligned allocation; total capacity alone does not establish TLSF fit. A device
+resume failed to reacquire the 3,196,160-byte copy with 7,979,556 bytes free and
+a 3,145,728-byte reported largest block. The allocation-order candidate needs
+device confirmation before claiming repeatable PSRAM-backed resume.
+
 ## Alternatives considered
 
 Full task, frontend and GDMA teardown would recover more memory, but needs a
