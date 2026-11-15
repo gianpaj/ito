@@ -58,3 +58,14 @@ input-end target by 148.1 ms. The 7.05-second supplied fixture reply has zero
 underruns, as do the microphone replies. A failed upload before recognition is
 recorded separately. TTS scheduling remains unchanged; startup is the remaining
 measured bottleneck. These bounded checks do not establish a latency percentile.
+
+The [four-run user result](../../../../results/stackchan/2026-11-15-user-four-run/README.md)
+uses the same five-second cap, volume 100 and a fixed 55-byte two-sentence reply
+in every run. Its final-read to first-I2S average is 1,465.7 ms and nearest-rank
+sample p95 is 1,474.2 ms, with zero underruns. All four are below 1,500 ms for
+this workload. Three return text and one returns no speech; input transcripts
+remain private. The different reply prevents pooling with the 38-byte baseline.
+The nearest-rank rule is explicit because four samples make p95 the maximum.
+Boot ELF prefixes identify three pre-LED and one LED image through retained
+manifests; full image hashes were not recorded by these commands. README claims
+link to sanitized numeric results and retain the acoustic/LLM limitations.

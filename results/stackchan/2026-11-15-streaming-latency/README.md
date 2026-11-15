@@ -1,5 +1,10 @@
 # Local conversation latency
 
+A separate [four-run user benchmark](../2026-11-15-user-four-run/README.md) with a
+two-sentence reply measures 1,465.7 ms average and 1,474.2 ms sample p95. Its
+reply differs from the single-sentence development workload below; the results
+are kept separate.
+
 The final image measures **1,648.1 ms from the last microphone read to first I2S
 submission**, compared with the batch baseline's 6,800 ms device-log interval.
 Final transcript to first I2S is **1,109.4 ms**. The stricter 1,500 ms input-end
