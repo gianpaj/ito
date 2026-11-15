@@ -1,8 +1,10 @@
 # StackChan conversation through Tailscale
 
-Status: proposed. Source research and read-only inspection of `gianrtx` are
-complete. Device experiments, service deployment and firmware changes are not
-started. This plan extends the working [original-face Ito mode][baseline].
+Status: native Tailscale option selected. The [detailed execution plan][execution]
+defines the implementation tasks, memory probes and acceptance gates. Source
+research and read-only inspection of `gianrtx` are complete. Device experiments,
+service deployment and firmware changes are not started. This research record
+extends the working [original-face Ito mode][baseline].
 
 ## Goal and recommendation
 
@@ -493,6 +495,7 @@ Source snapshots were inspected on 15 November 2026. Upstream benchmarks remain
 upstream observations until reproduced on this StackChan.
 
 [baseline]: ../results/stackchan/2026-11-15-original-face/README.md
+[execution]: 2026-11-15-stackchan-native-tailnet-implementation.md
 [ito-life]: https://github.com/gianpaj/ito/blob/b7412446a19e88bce34021d95c47d2bb81b2a953/esp32/firmware/main/main.c#L2352
 [xiaozhi-ws]: https://github.com/78/xiaozhi-esp32/blob/e77dedb1309153bb63fed285772962c920c97dd4/main/protocols/websocket_protocol.cc
 [mobile]: https://github.com/gianpaj/StackChan/blob/a9218e1f9518891a2e71b399de73fe5c94f24eb4/app/lib/view/popup/device_wifi_config.dart#L303
