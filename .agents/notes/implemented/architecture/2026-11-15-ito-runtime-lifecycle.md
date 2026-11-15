@@ -72,9 +72,10 @@ resident without phase ownership does not provide the intended shared budget.
 
 ## Consequences
 
-The device completes 100 stop/borrow/full-overwrite/return/resume loops. Every
-resume restores PSRAM weights without recalibration. Eleven explicit golden
-commands yield 33 passing 8-/16-bit cases after reuse. A separate long-diagnostic
+The reserved-workspace baseline completes 100 stop/borrow/full-overwrite/return/
+resume loops without an STT engine. Every resume restores PSRAM weights without
+recalibration. Eleven explicit golden commands yield 33 passing 8-/16-bit cases
+after reuse in that baseline. A separate long-diagnostic
 test rejects borrowing after three stop timeouts, then stops successfully and
 resumes on the same connection. Golden output and spoken greeting pass afterward.
 
@@ -82,8 +83,17 @@ The [measurement report](../../../../results/stackchan/2026-11-15-local-stt-ito/
 records every loop, heap ranges, timing method and failed candidates. Reserved
 storage is separate from free heap. Global heap varies by small amounts with
 live UI/allocator activity; exact zero global heap drift is not established.
-The pool itself is not reallocated across transitions. Actual Oido recognition,
-microphone capture and native Tailscale remain independent integration gates.
+The pool itself is not reallocated across transitions.
+
+The [manual Oído run](../../../../results/stackchan/2026-11-15-manual-oido/README.md)
+records 91 completed STT/Ito cycles: 20 public clips matching the host, 20 real
+microphone captures at 1, 3 and 10 seconds, and 51 digital-silence cycles with Ito
+replies. Nine explicit golden commands produced 27 passing cases, plus one boot
+PASS. The user confirmed audible speech after capture, transcript echo, mouth
+animation and stationary motors. The user requested fewer passes, so the full
+100-cycle target is deferred. An unobserved 92nd recognition is excluded.
+Further native cancellation, battery/reset, Parakeet comparison and recovery
+rehearsal are unrun. Native Tailscale remains an independent integration gate.
 
 A 4,096-byte USB control task overflowed during model layout. Sizing runs on
 the caller despite synthesis owning a worker. The application uses an 8,192-byte
@@ -101,6 +111,8 @@ Partial required frontend/kernel allocations are reused on retry. Full espeak
 internal OOM teardown is outside this bounded implementation.
 
 Initial calibration and explicit long diagnostics can delay parking. Callbacks
-must finish cooperatively. Parked workers feed the application watchdog callback.
-A recognizer integration must gate it by active phase/owner so parked TTS workers
-cannot hide stalled STT work. That recognizer watchdog handoff is not implemented.
+must finish cooperatively. Parked workers can invoke the application watchdog
+callback. StackChan uses that callback to yield to subscribed idle tasks; it does
+not reset the recognizer's watchdog subscription. The separate conversation
+worker subscribes to the task watchdog and resets its own subscription after
+capture or recognition progress. Parked Ito workers cannot hide stalled STT work.

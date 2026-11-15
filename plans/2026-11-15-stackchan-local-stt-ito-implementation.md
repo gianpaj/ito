@@ -1,8 +1,21 @@
 # Local STT and Ito TTS plan
 
-Status: local STT is an investigation candidate. Ito TTS with the original face
-is working. Touch/menu removal and the reserved Ito workspace lifecycle are implemented
-and device-tested. Local STT and microphone integration have not started.
+Status: the manual local STT/Ito milestone is complete and user-accepted. USB
+`listen`, `send`, `cancel`, `echo` and `text <reply>` control one half-duplex turn.
+The user confirmed audible post-capture speech, transcript echo, mouth animation
+and stationary motors. No external LLM or Tailscale is involved. The saved run
+contains 91 completed cycles: 20 public clips matching the host, 20 microphone
+captures at 1, 3 and 10 seconds, and 51 digital-silence cycles with Ito replies.
+Nine explicit golden commands produced 27 passing cases, plus one boot PASS.
+The user requested fewer passes; the full 100-cycle target is deferred. A 92nd
+recognition started without an observed completion and is excluded.
+
+The human microphone test captured 128,000 samples in 8 seconds, with peak 7,908
+and no clipping. Oído used 204,720 bytes of borrowed internal memory and
+1,309,152 bytes of borrowed PSRAM. The 12 KiB recognition worker retained
+5,760 bytes of unused stack. Touch/menu removal and reserved Ito workspaces are
+implemented and device-tested.
+The [manual speech results][manual-results] record the completed run and limits.
 This plan is independent of the [native Tailscale plan][network].
 The [research record][research] supplies pinned sources and alternatives.
 Keep the [working speech baseline][baseline] for comparison and recovery.
@@ -104,6 +117,8 @@ resident 2 MiB allocation. Removing it cannot be booked as a guaranteed saving.
 | B: face and hardware controls | Same renderer, PMIC, watchdog, codec hooks, USB | No touch polling/input, Home/status widgets or launcher integration | Measure the user's proposed simpler shell without copying the face. |
 | C: phase-owned speech workspace | Selected candidate B | Release or lend TTS resources only while synthesis is stopped | Recover the large inference budget for STT and networking. |
 
+Candidate A remains deferred. The combined native capture/Oído/Ito profile proves
+the selected engines fit without a separate no-Ito footprint measurement.
 Candidate B is selected for the local profile. Keep the
 one-time FT6336 controller identification needed to select ILI9342C versus
 ILI9342E initialization, or replace it with a verified board-specific choice.
@@ -132,9 +147,9 @@ Grove button and USB navigation rather than assuming RST is available as input.
 ## Phase 1. Measure the base firmware and simple-control candidate
 
 The touch-free local profile uses the existing `build_local_ito.sh`.
-Future microphone/STT profile files are `sdkconfig.conversation.defaults`,
-`build_conversation.sh` and a small `main/conversation/` directory. Start with
-diagnostic startup selection. Keep `build-local-ito` and `sdkconfig.ito` separate.
+The microphone/STT profile uses `sdkconfig.conversation.defaults`,
+`build_conversation.sh` and `main/conversation/`. Keep `build-local-ito` and
+`sdkconfig.ito` separate from the conversation build and configuration.
 Do not add a generic plugin system or duplicate the board implementation.
 Audit the existing local-mode compile guards before changing them. A no-TTS
 probe must preserve motor/microphone power policy and cannot fall through into
@@ -155,24 +170,27 @@ normal cloud startup merely because the Ito runtime component is omitted.
   records, partition data, model bytes and VPN identity. Configuration-reset
   functionality is a separate decision if it is needed later.
 
-Gate: measured candidate A base memory and working hardware controls. If
-candidate B is selected, also compare its actual savings and frame cadence.
-Choose the smallest approved shell that preserves the required face and hardware
-controls. Do not budget a UI saving before that comparison.
+Candidate B and combined-engine fit are measured. Candidate A's isolated base
+measurement and the full physical-control matrix remain deferred or pending.
+Do not budget an unmeasured UI saving or claim untested hardware controls.
 
 ## Phase 2. Validate bounded microphone capture without networking
 
-- [ ] Through the original codec, enable ES7210 and I2S RX only for capture.
+- [x] Through the original codec, enable ES7210 and I2S RX only for capture.
   Identify real microphone versus reference channels and signed sample format.
-- [ ] Test 24-to-16 kHz conversion or coordinated codec rate switching. Retain one
+- [x] Test 24-to-16 kHz conversion or coordinated codec rate switching. Retain one
   I2S owner and mute output while recording. Do not start cloud audio tasks.
-- [ ] Capture 1-, 3- and 10-second clips. Verify exact sample counts, clipping,
-  overflow counters and resampling with synthetic input and the physical mic.
-- [ ] Bound the first utterance to 10 seconds of 16 kHz mono int16 PCM, 320,000 B.
+- [x] Capture 1-, 3- and 10-second microphone clips with exact sample counts.
+  Twenty capture cycles completed. Coordinated rate switching supplies 16 kHz
+  PCM directly; the human 8-second clip had no clipping.
+- [x] Bound the first utterance to 10 seconds of 16 kHz mono int16 PCM, 320,000 B.
   Stop visibly at the cap rather than silently truncating.
-- [ ] Exercise capture/cancel and capture -> playback transitions at least 20
-  times. Check rate changes, DMA release, microphone-off error paths and face
-  responsiveness. Keep private human speech recordings outside Git.
+- [x] Exercise capture -> playback transitions at least 20 times. Check rate
+  restoration, DMA release, microphone-off cleanup and face responsiveness.
+  Keep private human speech recordings outside Git.
+
+Further native capture cancellation and error-path checks are deferred at the
+user's request. Host failure tests do not replace those device checks.
 
 Gate: correct real audio and measured capture/codec resources with no networking
 needed. Preserve board safety when separating local-mode compile guards from
@@ -185,19 +203,22 @@ Start with Oído v2b, 5,931,424 B, SHA256
 Keep its weights flash-resident and disable optional LM/caching in the first
 fit probe. Confirm intended-use terms before distributing a combined artifact.
 
-- [ ] Build host reference and an isolated instrumented StackChan profile with
+- [x] Build host reference and an isolated instrumented StackChan profile with
   correct quad PSRAM settings. Upstream octal timings are comparison data only.
-- [ ] Before a layout change, present exact aligned partitions, new application
+- [x] Before a layout change, present exact aligned partitions, new application
   bounds, model/assets hashes and the tested USB restoration procedure.
   Two current 4.75 MiB app slots plus ASR/Ito/assets do not fit this flash.
-- [ ] Run at least 20 fixed public English clips and a separate intended-user mic
-  set, including noise, silence, names and numbers. Compare public clip outputs
-  and latency with Parakeet. Retain failures, not just successful examples.
+- [x] Run 20 fixed public English clips and a separate intended-user microphone
+  test. All 20 public outputs match the pinned host reference. Retain failures,
+  not just successful examples; host parity does not establish perfect accuracy.
+- [ ] Compare public outputs and latency with Parakeet. This comparison and the
+  conditional fallback remain unrun and deferred.
 - [ ] Report streaming feed plus finish time, WER and post-submit final-text delay.
   Do not use the deliberately skipped utterance-pass RTF field.
 - [ ] Add face and capture one at a time. Test 100 allocation transitions,
   including failure during partial initialization and retry/recovery. Adding
   native networking belongs to the final joint check.
+  The integrated run completed 91 cycles; the user deferred the full 100 target.
 
 Proposed local-STT targets are zero input overflow, streaming RTF below 1 and
 p95 post-submit final text below 2 seconds. Evaluate transcription errors with
@@ -234,11 +255,17 @@ Oído arena-sharing work. Preserve local recognition failures as results.
 - [x] Preserve the early contiguous-allocation requirement. Repeatedly freeing
   and hoping a 239,948-byte block reappears is not a design. Compare a reserved
   phase-owned arena against measured safe reacquisition; choose one small path.
-- [ ] Audit Oído relocated-weight/LM allocation ownership. Its stock free calls
-  do not establish that all optional cached allocations return.
+- [x] Audit Oído allocation ownership. Matrices stay flash-backed without optional
+  relocation and the LM is disabled. Mandatory transposed depthwise weights and
+  stream state count in the lease. Zeroed arena allocations use it; model and
+  stream destructors run before hooks restore and the lease returns. The patched
+  initializer passes host fault injection at all 59 allocation sites.
 - [ ] Test failed startup, partial task creation, cancellation at each stage and
   100 STT/mock-response/TTS transitions. Compare free heap and largest blocks at the same
   idle state. Golden Ito PCM must still match after memory reuse.
+  Host ownership/failure tests and 91 device cycles pass. The user deferred the
+  full 100 target and further native cancellation/failure checks. The run records
+  27 explicit passing golden cases and one boot PASS.
 
 Gate: the face, selected local engine/capture resources and Ito fit through
 every transition with justified headroom, no stale pointers and no heap drift.
@@ -246,21 +273,22 @@ Keep the original speech profile's hot-arena location and correctness unchanged.
 
 ## Phase 5. Validate local turn control and hardware controls
 
-Proposed `conversation_controller` states are idle, recording, recognizing,
-waiting for a supplied answer, speaking and error. One owner controls a turn's
-generation.
-Existing Ito busy/READY checks remain authoritative for its speech phase.
+The USB controller owns idle, uploading, preparing, recording, recognizing,
+restoring and fault states. It returns to idle after recognition and Ito
+restoration, then accepts transcript echo or a supplied answer. One worker owns
+the turn. Existing Ito busy/READY checks govern its speech phase.
 
-- [ ] Begin with proposed USB diagnostics `listen`, `send`, `cancel`, `status`
-  and `memory`. Names must be checked against existing command semantics before
-  adding them. Keep credentials on a separate non-logging provisioning path.
-- [ ] Verify turn IDs on every completion and reject events from cancelled work.
+- [x] Provide USB `listen`, `send`, `cancel`, `status`, `memory`, `echo` and
+  `text <reply>` diagnostics. Keep credentials on a separate non-logging
+  provisioning path.
+- [x] Verify turn IDs on every completion and reject events from cancelled work.
   Send only parsed validated answer text to Ito, never raw protocol messages.
 - [ ] Wire the approved hardware-button mapping after its PMIC event test. For
   the minimal-shell candidate, disable touch interaction and show only necessary
   state/menu text. Keep original face geometry and speaking modifier behavior.
-- [ ] Tie mouth animation to PCM reaching output and closing after drain/cancel.
-  Keep I2C/PMIC/display work responsive while inference and networking block.
+- [x] Tie mouth animation to PCM reaching output and closing after drain/cancel.
+  Keep I2C/PMIC/display work responsive during local inference. Native networking
+  remains a separate integration test.
 - [ ] Keep physical off/reboot working in every state. Error recovery cannot
   require a touchscreen that the selected profile has disabled.
 
@@ -280,11 +308,16 @@ wireless recognition upload are integration tests after the networking milestone
 - [ ] Run 100 local listen/respond/speak cycles using fixed answers. Test silence,
   bad audio, maximum utterance length, STT failure, late completion, cancel and
   partial initialization failure. Require bounded recovery and no heap drift.
+  Deferred at the user's request after 91 completed cycles. Do not count the
+  unobserved 92nd recognition or claim the full error matrix passed.
 - [ ] Verify physical power-off/reboot in every state and cold-boot recovery.
   Test the selected shell; errors cannot require disabled touchscreen controls.
 - [ ] Preserve microphone-off behavior in USB speech mode. Separate diagnostic
   builds are acceptable until combined mode entry/exit is proven safe.
 - [ ] Restore and boot the known USB profile with matching partition/NVS data.
+
+Further native cancellation, battery/power/reset checks, Parakeet comparison and
+the recovery rehearsal are unrun and deferred. No more passes are scheduled.
 
 Follow the [shared measurement rules][measurement]. Record public-fixture WER,
 recognizer feed/finish time, post-submit final text, resampling, Ito generation/
@@ -324,3 +357,4 @@ logical commit after both plans pass their independent gates.
 
 [ownership]: ../.agents/notes/implemented/architecture/2026-11-15-ito-runtime-lifecycle.md
 [memory-results]: ../results/stackchan/2026-11-15-local-stt-ito/README.md
+[manual-results]: ../results/stackchan/2026-11-15-manual-oido/README.md

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "upstream_revision": "c8d60325ba8bffd4bad65a9ac63c713ee64d1aae",
   "model_sha256": "9e8b40913f532fb44b716a1f882f38b3b21e220713e417899aba32ace8c35066",
-  "mode": "greedy streaming, chunk 8 / left 64, no LM, flash-backed model, no acoustic weight copies",
+  "mode": "greedy streaming, chunk 8 / left 64, no LM, flash-backed model, no optional acoustic-weight relocation",
   "host_build_flags": [
     "-O2",
     "-std=c11",

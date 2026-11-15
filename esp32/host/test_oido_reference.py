@@ -148,7 +148,7 @@ def main():
                 oom_cases += 1
         report = {"schema_version": 1, "upstream_revision": PIN, "model_sha256": MODEL_SHA, "safety_patch_sha256": patch_sha,
                   "allocation_failure_cases": oom_cases,
-                  "engine": "Oido v2b, greedy, no LM, flash-backed model, no acoustic weight copy",
+                  "engine": "Oido v2b, greedy, no LM, flash-backed model, no optional acoustic-weight relocation",
                   "flags": FLAGS, "host_pointer_bytes": C.sizeof(C.c_void_p),
                   "borrowed_psram_bytes": capacities[0], "borrowed_hot_bytes": capacities[1],
                   "bump_high_water_psram_bytes": high_water[0], "bump_high_water_hot_bytes": high_water[1],

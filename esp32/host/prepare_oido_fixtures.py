@@ -88,7 +88,7 @@ def main():
         errors += edit_count
         words += word_count
     report = {"schema_version": 1, "upstream_revision": revision, "model_sha256": MODEL_SHA,
-              "mode": "greedy streaming, chunk 8 / left 64, no LM, flash-backed model, no acoustic weight copies",
+              "mode": "greedy streaming, chunk 8 / left 64, no LM, flash-backed model, no optional acoustic-weight relocation",
               "host_build_flags": flags, "source_diff_sha256": hashlib.sha256(subprocess.check_output(["git", "-C", str(root), "diff", "HEAD"])).hexdigest(),
               "ffmpeg_version": subprocess.check_output(["ffmpeg", "-version"], text=True).splitlines()[0],
               "wer_normalization": "lowercase [a-z0-9']+ words, Levenshtein edits divided by reference words",
