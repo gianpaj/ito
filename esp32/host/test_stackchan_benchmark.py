@@ -106,6 +106,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(row['final_transcript_to_resume_device_ms'], 200)
         self.assertEqual(row['capture']['backlog_samples'], 320)
 
+    def test_reject_unsupported_device_timestamps(self):
+        t = self.recording_trial()
+        with self.assertRaisesRegex(RuntimeError, 'TURN_TIMING'):
+            t.observe('TURN_TIMING turn=3 last_input_us=ld backlog_samples=19346826', 10726 * 1000000)
+        t.observe('OK text queued', 10728 * 1000000)
+        with self.assertRaisesRegex(RuntimeError, 'submission timestamp'):
+            t.observe(I2S + ' submit_us=ld', 12000 * 1000000)
+
     def test_wrong_turn_and_missing_metrics(self):
         t = self.recording_trial()
         with self.assertRaisesRegex(RuntimeError, 'Expected turn'):

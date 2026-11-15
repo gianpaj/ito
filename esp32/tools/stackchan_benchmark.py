@@ -79,6 +79,9 @@ class Trial:
             self.check_turn(match[1])
         if line.startswith("TURN_TIMING "):
             fields = dict(re.findall(r"(\w+)=(\d+)", line))
+            required = {"turn", "last_input_us", "input_drained_us", "final_transcript_us", "resume_done_us", "backlog_samples"}
+            if not required.issubset(fields):
+                raise RuntimeError("Unsupported TURN_TIMING timestamp format")
             self.check_turn(fields.pop("turn"))
             self.device_us.update({key: int(value) for key, value in fields.items() if key.endswith("_us")})
             self.capture["backlog_samples"] = int(fields["backlog_samples"])
@@ -112,6 +115,8 @@ class Trial:
                 self.tts["underruns"] = self.tts.get("underruns", 0) + int(match[4])
             if line.startswith("I2S_START:"):
                 stamp = re.search(r"submit_us=(\d+)", line)
+                if "submit_us=" in line and not stamp:
+                    raise RuntimeError("Unsupported I2S submission timestamp format")
                 if stamp:
                     self.device_us.setdefault("first_i2s_us", int(stamp[1]))
                 match = re.search(r"text received -> first PCM submission ([\d.]+) ms", line)
