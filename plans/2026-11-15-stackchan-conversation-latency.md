@@ -64,6 +64,19 @@ Use the existing two task worktrees and retain the working firmware image.
 - If the remaining Oido finish cost dominates, evaluate a smaller streaming
   encoder chunk against the same speech fixture and memory bounds.
 
+An eight-frame native streaming turn reduces the legacy device-log interval to
+1,820 ms with zero output underruns. Four-frame chunks take 5,606.6 ms of feed
+work for five seconds of audio and leave a backlog, increasing the interval to
+2,520 ms. Use six frames as the next bounded candidate. Its host fixture differs
+by one word from chunk eight; keep the batch diagnostic at eight frames.
+
+Retained-layout restoration still takes about 244 ms. Cache the immutable
+trigonometric initialization tables in a separate optional 14,416-byte PSRAM
+block. Rebind every context pointer and preserve exact table bytes. Keep full
+initialization as the fallback. Verify cached initialization against ordinary
+initialization and golden PCM before flashing. Keep TTS buffering unchanged if
+this candidate meets the latency target.
+
 ## 4. Minimal validation and saved results
 
 - Run only the affected runtime, adapter/controller and benchmark host checks.
