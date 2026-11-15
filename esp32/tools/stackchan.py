@@ -223,7 +223,15 @@ class TranscriptionSerial:
             if re.fullmatch(r"CONVERSATION turn=\d+ state=idle", line):
                 idle = True
             elif idle and (line == "READY" or line.startswith("READY ")):
-                return
+                # Boot can leave queued status reports printing in fragments.
+                # Drain them before a PCM acknowledgement can interleave with one.
+                while time.monotonic() < deadline:
+                    try:
+                        self.line(min(deadline, time.monotonic() + 0.2))
+                    except TimeoutError:
+                        if not self.buffer:
+                            return
+                break
         raise TimeoutError("Conversation firmware did not become ready within 90 seconds")
 
     def transcribe(self, pcm, echo=False):

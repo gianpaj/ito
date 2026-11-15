@@ -74,6 +74,19 @@ class SerialTests(unittest.TestCase):
         self.assertEqual(sum(c.startswith("pcm data ") for c in port.commands), 3)
         self.assertIn("hello café", channel.log.getvalue())
 
+    def test_ready_drains_queued_boot_status_before_upload(self):
+        class BootTail(FakeSerial):
+            def write(self, data):
+                count = super().write(data)
+                if data == b"status\n":
+                    self.pending.extend(b"STATUS pending report\nREADY\n")
+                return count
+        port = BootTail(fragment=1)
+        channel = console.TranscriptionSerial(port, io.StringIO(), io.StringIO())
+        channel.ready()
+        self.assertFalse(channel.buffer or port.pending)
+        self.assertEqual(channel.transcribe(b"\x00\x00")["turn"], 7)
+
     def test_bad_ack_stops_before_send(self):
         port, channel = self.channel(bad_ack=True)
         with self.assertRaisesRegex(RuntimeError, "Expected"):

@@ -35,3 +35,10 @@ from recognition timing. Tests exercise byte-exact chunk reconstruction,
 fragmented UTF-8 output, wrong acknowledgements/turns, device errors, deadlines
 and invalid/truncated/overlong WAV files. A successful host test does not prove
 firmware recognition or microphone quality.
+
+Readiness requires an idle conversation, a READY line and 200 ms with no partial
+or queued output. Boot status reports print in fragments and can otherwise
+interleave with a PCM acknowledgement. The deadline still bounds the whole
+startup wait. The failed fixture upload stops before recognition and is retained
+as a transport failure, separate from completed inference turns. A host protocol
+case verifies that pending status output drains before upload begins.
