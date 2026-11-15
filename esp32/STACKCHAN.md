@@ -1,5 +1,8 @@
 # Ito on M5Stack StackChan
 
+This guide covers the standalone green-dot profile. The deployed original-face
+profile is documented in the [StackChan local-mode guide](https://github.com/gianpaj/StackChan/blob/feat/local-ito/firmware/LOCAL_ITO.md).
+
 Status: the native USB text-to-speech demo is verified and the user confirms
 clear speech. Five repeated paragraphs produce 16 minutes 20 seconds of speech
 with zero underruns, no resets and unchanged memory after warm-up.

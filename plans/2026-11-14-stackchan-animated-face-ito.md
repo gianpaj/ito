@@ -1,9 +1,11 @@
 # Local Ito speech in the original StackChan firmware
 
-Status: route 2 approved for implementation. The user authorized implementation
-and coordinated sub-agents on 2026-11-14. Work proceeds through the checkpoints
-below. Announce candidate images and the layout before the first device write.
-The tested green-dot Ito image remains the rollback target.
+Status: implemented and device-verified. The original face speaks local Ito
+output from USB text, with motors and microphone power off. Golden PCM,
+cancellation, a 196-second paragraph and launcher re-entry pass. The
+[implementation record](../.agents/notes/implemented/hardware/2026-11-14-stackchan-animated-face.md)
+contains source/image hashes and results. Compute RTF is 1.0352; the degraded
+warning remains. Conversation remains outside this phase.
 
 ## Goal and boundary
 
@@ -123,9 +125,10 @@ layout before writing it; do not silently remove recovery or assets.
 Before any layout change, capture the current Ito NVS safety state and retain
 its tested images/models. Rehearse the verified full factory restore and the
 return to the working Ito image. Record the commands, checksums and results.
-The original NVS partition is 16 KB; Ito's is 24 KB. Migrate only the Ito
-guard records through NVS APIs. Restore a raw NVS snapshot only with its
-matching layout, so it cannot overwrite neighboring partitions.
+The local layout keeps Ito's 24 KB NVS partition at `0x9000`, preserving guard
+records without migration. OTA metadata starts at `0x10000`. The factory NVS is
+16 KB. Restore a raw NVS snapshot only with its matching layout, so it cannot
+overwrite neighboring partitions.
 
 ### 3. Implement the local backend in logical commits
 
@@ -158,10 +161,11 @@ leaving/re-entering local mode through the original application lifecycle.
 Record compute RTF independently of audible stability. Test the normal build
 for changes to shared audio code. Commit and push each verified logical chunk.
 
-## Immediate next step
+## Use the deployed profile
 
-Reproduce the pinned baseline, record its budgets, then implement the approved
-local profile in logical commits. Keep source, dependency revisions and device
-validation in the linked Agent Notes. Announce each device-write checkpoint.
+Use the [StackChan local-mode guide](https://github.com/gianpaj/StackChan/blob/feat/local-ito/firmware/LOCAL_ITO.md)
+for build and monitor commands. The robot is left on the original face with
+local speech ready and the USB port released. Conversation and additional
+performance work are separate follow-up work.
 
 [source-version]: https://github.com/m5stack/StackChan/blob/94856a77876255ceee36f2a7ffae40f572eeb1f2/firmware/CMakeLists.txt

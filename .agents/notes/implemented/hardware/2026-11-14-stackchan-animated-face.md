@@ -1,9 +1,9 @@
 # Original StackChan firmware with local Ito
 
-Status: implementation is approved and in progress. The first integrated image
-verified in flash but failed its contiguous-SRAM reservation before HAL startup.
-The corrected image is built and awaits a physical download-mode reset. The
-verified green-dot firmware is the rollback target.
+Status: implemented and verified on the robot. Local English speech drives the
+original face, with motors and microphone power off. The user confirms clear
+speech, mouth animation and launcher re-entry. The deployed StackChan code is
+`f799097`, using Ito runtime `b741244`.
 
 Use the original avatar, UI and board/codec implementation, with a local Ito
 backend feeding bounded PCM through the original audio output path. Preserve
@@ -21,7 +21,7 @@ full original-firmware integration for fidelity and maintenance. Retain that
 choice; do not substitute a copied renderer to avoid integration work.
 
 The baseline build, local PCM adapter, normal/local builds and flash-recovery
-checks pass. Integrated device memory and playback checks remain pending.
+checks pass. Integrated memory, playback, cancellation and launcher re-entry checks pass.
 The source anchors, boundaries and checkpoints are in the
 [integration plan](../../../../plans/2026-11-14-stackchan-animated-face-ito.md).
 
@@ -53,8 +53,7 @@ restart after cancel. Playback callbacks run after the first output submission
 and after final drain or flush. The original avatar owns its rendering and lock.
 
 Validation passed for the standalone and embedded IDF builds, scheduler/split
-host tests, 2,337 frontend utterances and 169 frontend streams. Device behavior
-for the shared-runtime extraction remains to be checked with the integration.
+host tests, 2,337 frontend utterances and 169 frontend streams. Device behavior for the shared runtime is verified by the integration below.
 
 ## Baseline and storage decision
 
@@ -70,26 +69,37 @@ One int4 model occupies `0x9a0000`, capacity `0x310000`; assets have 3 MiB at
 `0xcb0000`. Image size and runtime memory checks must pass before deployment.
 A verified private NVS snapshot is retained with the device backups.
 
-## Device checkpoint
+## Device validation
 
-The StackChan branch is pushed through `c8a8e92`. Its runtime dependency is Ito
-`b741244`. Candidate 1 exposed fragmentation: 296,439 internal bytes free but
-only 167,936 contiguous bytes. It did not reach HAL initialization.
+The deployed app is 2,867,152 bytes, SHA256
+`a5690f3955fe2f3b0ce360cbd7d0d2bdb31c3eda55dbb30a8146e99be59a0a1e`.
+Its hot arena remains 239,948 bytes in internal SRAM. Ordinary UI allocation
+prefers PSRAM; task stacks and DMA request internal memory. Initialization uses
+an IDF CORE priority-106 reservation hook, a 32 KB DMA reserve, flash-resident
+heap/non-ISR ring-buffer functions and an eight-row LCD buffer. Engine arithmetic
+is unchanged. Failed-full guard counters are preserved.
 
-The correction reserves the hot arena at IDF CORE priority 106, before C++
-constructors and DMA-pool subdivision. It uses a 32 KB DMA reserve, flash-resident
-heap/non-ISR ring-buffer functions, an eight-row LCD buffer and a USB-only
-console with external text storage. Static DIRAM drops from 135,375 to 108,179
-bytes. The engine arithmetic and hot-arena size stay unchanged.
+The user confirms the original face, clear speech and mouth start/stop behavior.
+The golden self-test matches PCM `363d7d98`; quiet numbers match `c4472e58`.
+Greeting and spoken numbers have zero underruns. Cancel flushes in 19.8 ms,
+discards queued sentences and allows a following request. A 26-utterance,
+196-second paragraph passes with zero underruns, no unexpected resets and stable
+warm memory. Aggregate compute RTF is 1.0352; `degraded=1` remains truthful.
 
-The full candidate-1 image set verified in flash. Candidate 2 is an app-only
-update at `0x20000`, SHA256
-`161b580fa6448988d6245f9e0f06bc4c66f1039322820f7988de1973b8ca0127`.
-Its private manifest is in the device backup's `original-ito-candidate-2/`.
-Physical recovery is required after three software connection methods failed.
-Hold bottom RST until its indicator turns green, release and wait for it to go
-off. Do not open a serial monitor before the download-mode probe and update.
+Home returns to the original launcher. AI.AGENT restores the face, reruns its
+self-test and calibration, and speaks another greeting with zero underruns.
+Final free internal memory is 13,242 bytes, with a 5,414-byte minimum. The USB
+monitor is closed so the user can open it directly.
 
-The full factory flash was restored and verified without booting it. The tested
-native image, models and matching NVS were restored, verified and boot-checked.
-This verifies flash recovery. Factory cloud/motor behavior remains untested.
+Logs and JSON results are in the StackChan worktree's
+`firmware/build-local-ito/device-tests/`, session `20261115T075242.489421Z`.
+Private candidate 3, rollback manifests and the NVS snapshot stay with the
+verified device backup. The full factory flash was restored and verified without
+booting it. Native rollback images and matching NVS were restored, verified and
+boot-checked. Factory cloud/motor operation is outside this validation.
+
+The [StackChan local-mode guide][local-guide] owns build, monitor and boot
+commands. USB-only resets can preserve the cached download strap on this unit;
+the guide uses esptool's whole-chip reset after flashing.
+
+[local-guide]: https://github.com/gianpaj/StackChan/blob/feat/local-ito/firmware/LOCAL_ITO.md
