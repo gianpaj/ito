@@ -1,4 +1,4 @@
-/* Portable production engine rebuild after another owner overwrites both retained pools. */
+/* Portable engine rebuild after destructive and weight-preserving scratch leases. */
 #include "itofs.h"
 #include <assert.h>
 #include <stdint.h>
@@ -43,8 +43,10 @@ int main(int argc,char **argv)
     free(initial_blob);memset(&model,0,sizeof model);
     uint32_t baseline_hash=0;size_t baseline_samples=0;
     for (int cycle=0;cycle<4;cycle++) {
-        memset(hot,0xa5,hot_bytes);memset(psram,0xa5,psram_bytes);
-        read_into(argv[1],psram,blob_bytes);
+        const int scratch_only=cycle&1;
+        memset(hot,0xa5,hot_bytes);
+        if (scratch_only) memset((unsigned char *)psram+bulk_offset,0xa5,psram_bytes-bulk_offset);
+        else { memset(psram,0xa5,psram_bytes);read_into(argv[1],psram,blob_bytes); }
         assert(itofs_model_init(&model,psram,blob_bytes)==0);
         const int32_t *reference=NULL;size_t record_bytes=0;int dtype=0;
         assert(itofs_blob_find(psram,blob_bytes,"selftest",(const void **)&reference,&record_bytes,&dtype)==0);
@@ -64,8 +66,8 @@ int main(int argc,char **argv)
         assert(samples==(size_t)reference[4] && hash==(uint32_t)reference[5]);
         if (!cycle) { baseline_hash=hash;baseline_samples=samples; }
         assert(hash==baseline_hash && samples==baseline_samples);
-        printf("PASS real engine pool cycle %d: %zu samples, PCM fnv32 %08x, hot %zu / PSRAM %zu bytes\n",
-               cycle,samples,hash,hot_bytes,psram_bytes);
+        printf("PASS real engine %s cycle %d: %zu samples, PCM fnv32 %08x, hot %zu / PSRAM %zu bytes\n",
+               scratch_only ? "preserved weights" : "destructive reload",cycle,samples,hash,hot_bytes,psram_bytes);
         memset(&context,0,sizeof context);memset(&model,0,sizeof model);
     }
     free(psram);free(hot);

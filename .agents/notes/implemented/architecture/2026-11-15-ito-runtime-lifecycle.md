@@ -45,11 +45,23 @@ The native 32-frame female int4 PSRAM workspace has this layout:
 | Total reserved PSRAM pool | 4,891,328 |
 
 The separate hot reservation is 239,948 bytes. `borrow_memory` grants exclusive
-use of both ranges only while workers are stopped. `return_memory` validates
-both addresses and lengths. Callers must not free either range or retain
-pointers after returning the lease. Resume rejects an outstanding lease, restores
-weights from flash, reinitializes model/bulk state and rebuilds PCM descriptors.
-It fails closed if its PSRAM workspace is unavailable.
+use of both ranges only while workers are stopped and invalidates the copied
+weights. `borrow_scratch` instead lends hot storage and the PSRAM tail after the
+padded weight region, 1,695,168 bytes in this profile. The copied prefix stays
+owned by Ito. Scratch borrowing requires a known intact weight copy.
+
+Both leases use `return_memory`, which validates the exact granted addresses
+and lengths. Callers must not free either range or retain derived pointers after
+returning the lease. Resume rejects an outstanding lease, reinitializes model/
+bulk state and rebuilds PCM descriptors. It reloads weights after destructive
+borrowing, and reuses a matching intact copy after scratch borrowing or a stop
+without a lease. It fails closed if its PSRAM workspace is unavailable.
+
+The copy becomes valid only after every flash read and cache synchronization
+succeeds. Its partition identity and extent must match the activated tier.
+Destructive borrowing invalidates it before returning memory to the caller.
+Pool provisioning sets aliases without clearing the weight prefix. Hot/bulk
+initialization is separate, so rebuilding the engine cannot erase copied weights.
 
 PCM capacity stays at 32 frames even when the active chunk size is smaller.
 Stop snapshots the active chunk profile, style and activation precision. Resume
@@ -84,6 +96,12 @@ records every loop, heap ranges, timing method and failed candidates. Reserved
 storage is separate from free heap. Global heap varies by small amounts with
 live UI/allocator activity; exact zero global heap drift is not established.
 The pool itself is not reallocated across transitions.
+
+Production-function host tests cover exact scratch leases, preservation across
+scratch overwrite, destructive reload, and failed read/cache-sync recovery.
+The portable engine reproduces the golden PCM while alternating preserved-weight
+rebuilds and destructive reloads under ASan/UBSan. Scratch-resume device latency
+is measured separately from the full-pool results below.
 
 The [manual Oído run](../../../../results/stackchan/2026-11-15-manual-oido/README.md)
 records 91 completed STT/Ito cycles: 20 public clips matching the host, 20 real

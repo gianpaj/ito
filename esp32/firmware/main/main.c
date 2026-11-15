@@ -39,7 +39,11 @@ static void service_checkpoint(unsigned worker);
 static int service_stopping(void);
 static size_t s_hot_reserved;
 static void *s_psram_pool;
-static size_t s_psram_pool_bytes;
+static size_t s_psram_pool_bytes, s_psram_weights_bytes;
+static int s_weight_copy_valid;
+static const void *s_weight_copy_partition;
+static size_t s_weight_copy_extent;
+static itofs_workspace_t s_memory_lease;
 static void audio_mute(int muted);
 #endif
 #include "freertos/FreeRTOS.h"
@@ -1219,6 +1223,7 @@ static int allocate_inference_pool(size_t extent, size_t bulk_bytes, int chunk_s
         s_psram_pool_bytes = bytes;
     }
     if (s_psram_pool_bytes < bytes) return 0;
+    s_psram_weights_bytes = weights;
     s_wbuf = s_psram_pool;
     s_bulk = (uint8_t *)s_psram_pool + weights;
     for (int i = 0; i < NBUF; i++)
@@ -1280,6 +1285,30 @@ static int tier_dims(int i, size_t *hb, size_t *bb, int *hop, int *sr)
     return e ? -1 : 0;
 }
 
+static int load_weight_copy(const esp_partition_t *partition, size_t extent)
+{
+#ifdef ITOFS_EMBEDDED
+    if (s_weight_copy_valid && s_weight_copy_partition == partition && s_weight_copy_extent == extent) return 1;
+    s_weight_copy_valid = 0;
+#endif
+    for (size_t offset = 0; offset < extent; offset += 65536) {
+        guard_wdt_feed();
+        const size_t bytes = extent - offset < 65536 ? extent - offset : 65536;
+        if (esp_partition_read(partition, offset, s_wbuf + offset, bytes) != ESP_OK) return -1;
+    }
+    memset(s_wbuf + extent, 0, 64);
+    const esp_err_t error = esp_cache_msync(s_wbuf, (extent + 64 + 63) & ~(size_t)63, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+#ifdef ITOFS_EMBEDDED
+    if (error != ESP_OK) return -1;
+    s_weight_copy_partition = partition;
+    s_weight_copy_extent = extent;
+    s_weight_copy_valid = 1;
+#else
+    (void)error;
+#endif
+    return 0;
+}
+
 // make set i the active one: weights into PSRAM (or the flash mapping), model parsed, engine context initialised over the shared arenas
 static int activate_tier(int i)
 {
@@ -1292,15 +1321,11 @@ static int activate_tier(int i)
     int64_t t0 = esp_timer_get_time();
     if (s_mapped) { esp_partition_munmap(s_map_h); s_mapped = 0; }
     if (s_wbuf) {
-        for (size_t o = 0; o < T->ext; o += 65536) {      // flash read API in 64 KB pieces
-            guard_wdt_feed();
-            size_t n = T->ext - o < 65536 ? T->ext - o : 65536;
-            if (esp_partition_read(T->p, o, s_wbuf + o, n) != ESP_OK) { printf("ERROR reading weights '%s'\n", T->p->label); return -1; }
-        }
-        memset(s_wbuf + T->ext, 0, 64);
-        esp_cache_msync(s_wbuf, (T->ext + 64 + 63) & ~(size_t)63, ESP_CACHE_MSYNC_FLAG_DIR_C2M);   // GDMA staging reads PSRAM directly
+        const int reused = load_weight_copy(T->p, T->ext);
+        if (reused < 0) { printf("ERROR loading weights '%s'\n", T->p->label); return -1; }
         blob = s_wbuf;
-        printf("weights: set %d ('%s'): %u bytes copied flash -> PSRAM in %.0f ms\n", i, T->p->label, (unsigned)T->ext, ms(esp_timer_get_time() - t0));
+        printf("weights: set %d ('%s'): %u bytes %s in %.0f ms\n", i, T->p->label, (unsigned)T->ext,
+               reused ? "retained in PSRAM" : "copied flash -> PSRAM", ms(esp_timer_get_time() - t0));
     } else {
         const void *map;
         if (esp_partition_mmap(T->p, 0, (T->ext + 0xFFFF) & ~(size_t)0xFFFF, ESP_PARTITION_MMAP_DATA, &map, &s_map_h) != ESP_OK) { printf("ERROR mmap weights\n"); return -1; }
@@ -2623,20 +2648,28 @@ esp_err_t itofs_service_resume(void)
     return error;
 }
 
-esp_err_t itofs_service_borrow_memory(itofs_workspace_t *workspace)
+static esp_err_t borrow_workspace(itofs_workspace_t *workspace, int scratch_only)
 {
     if (!workspace) return ESP_ERR_INVALID_ARG;
     if (!s_service_started) return ESP_ERR_INVALID_STATE;
     xSemaphoreTake(s_command_mutex, portMAX_DELAY);
     esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (s_stopped && !s_memory_borrowed && !s_park_error && s_hot && s_psram_pool && workers_parked()) {
+    if (s_stopped && !s_memory_borrowed && !s_park_error && s_hot && s_psram_pool && workers_parked() &&
+        (!scratch_only || (s_weight_copy_valid && s_psram_weights_bytes && s_psram_weights_bytes < s_psram_pool_bytes))) {
         s_memory_borrowed = 1;
-        *workspace = (itofs_workspace_t){ s_hot, s_hot_reserved, s_psram_pool, s_psram_pool_bytes };
+        const size_t offset = scratch_only ? s_psram_weights_bytes : 0;
+        s_memory_lease = (itofs_workspace_t){ s_hot, s_hot_reserved,
+            (uint8_t *)s_psram_pool + offset, s_psram_pool_bytes - offset };
+        if (!scratch_only) s_weight_copy_valid = 0;
+        *workspace = s_memory_lease;
         error = ESP_OK;
     }
     xSemaphoreGive(s_command_mutex);
     return error;
 }
+
+esp_err_t itofs_service_borrow_memory(itofs_workspace_t *workspace) { return borrow_workspace(workspace, 0); }
+esp_err_t itofs_service_borrow_scratch(itofs_workspace_t *workspace) { return borrow_workspace(workspace, 1); }
 
 esp_err_t itofs_service_return_memory(const itofs_workspace_t *workspace)
 {
@@ -2644,9 +2677,10 @@ esp_err_t itofs_service_return_memory(const itofs_workspace_t *workspace)
     if (!s_service_started) return ESP_ERR_INVALID_STATE;
     xSemaphoreTake(s_command_mutex, portMAX_DELAY);
     esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (s_memory_borrowed && workspace->hot == s_hot && workspace->hot_bytes == s_hot_reserved &&
-        workspace->psram == s_psram_pool && workspace->psram_bytes == s_psram_pool_bytes) {
+    if (s_memory_borrowed && workspace->hot == s_memory_lease.hot && workspace->hot_bytes == s_memory_lease.hot_bytes &&
+        workspace->psram == s_memory_lease.psram && workspace->psram_bytes == s_memory_lease.psram_bytes) {
         s_memory_borrowed = 0; error = ESP_OK;
+        memset(&s_memory_lease, 0, sizeof s_memory_lease);
     }
     xSemaphoreGive(s_command_mutex);
     return error;

@@ -57,7 +57,8 @@ esp_err_t itofs_service_start(const itofs_service_config_t *config);
  * cooperatively. The console stays alive, so the control task may call stop
  * without deleting its own task. */
 esp_err_t itofs_service_stop(uint32_t timeout_ms);
-/* Reinitialize the engine and copy weights over the reserved workspace.
+/* Reinitialize the engine over the reserved workspace. Reload weights after a
+ * destructive lease; reuse an intact copy after stopping or a scratch lease.
  * Calibration, active chunk size and guard records persist. Does not reopen the
  * codec or change volume. Pool allocation or model initialization failure leaves
  * workers stopped and can be retried. A cleanup timeout requires another stop.
@@ -69,6 +70,12 @@ esp_err_t itofs_service_resume(void);
  * derived pointers afterward. Resume rejects an outstanding lease. These ranges
  * never enter the general heap; the application must not free them. */
 esp_err_t itofs_service_borrow_memory(itofs_workspace_t *workspace);
+/* Borrow hot storage and only the PSRAM tail after the padded copied weights.
+ * Requires a valid weight copy and the same stopped/exclusive ownership rules.
+ * For the native 32-frame female int4 profile this lends 1695168 PSRAM bytes.
+ * The copied prefix stays owned by Ito and must not be accessed by the borrower.
+ * Return the exact lease through return_memory before resuming. */
+esp_err_t itofs_service_borrow_scratch(itofs_workspace_t *workspace);
 esp_err_t itofs_service_return_memory(const itofs_workspace_t *workspace);
 /* Submit a serial command without owning UART/USB. Calls are serialized inside
  * the runtime. Text is rejected while another text job remains active.
