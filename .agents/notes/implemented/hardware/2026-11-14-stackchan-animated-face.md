@@ -103,3 +103,13 @@ commands. USB-only resets can preserve the cached download strap on this unit;
 the guide uses esptool's whole-chip reset after flashing.
 
 [local-guide]: https://github.com/gianpaj/StackChan/blob/feat/local-ito/firmware/LOCAL_ITO.md
+
+## Saved measurement artifacts
+
+The [dated results report](../../../../results/stackchan/2026-11-15-original-face/README.md)
+owns the performance tables, exact sample-based RTF calculation, memory units,
+per-utterance JSON, extracted serial measurements and provenance hashes.
+The complete raw session, metadata, individual results, test helpers, reference
+records, linker map, ELF, SDK configuration and build logs are copied out of the
+build tree into `original-ito-candidate-3/validation-artifacts` in the private
+device backup. Its archive manifest checksums every retained artifact.

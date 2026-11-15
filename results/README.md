@@ -1,5 +1,11 @@
 # Results
 
+## StackChan: original-face local speech, 15 November 2026
+
+[Report, machine-readable metrics and measurement trace](stackchan/2026-11-15-original-face/README.md)
+from the physical robot. Includes per-utterance performance, heap snapshots,
+golden PCM checks, cancellation, launcher re-entry and exact source/image hashes.
+
 ## blind10/: listening test #10 (5 October 2026)
 
 `ratings.json`: the lighter vocoder. One listener (an author of the accompanying paper) rated 16 clips (4 systems x the same 4 sentences as #9) of the female voice for
