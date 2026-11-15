@@ -64,6 +64,7 @@ reuse transitions. Real checkpoint threads must reject stale epochs. Golden
 PCM must match after overwriting and reinitializing the hot arena. Device tests
 must confirm the same idle heap/largest blocks, original face, cancellation,
 volume and deterministic PCM through 100 transitions.
+Measure the control task's stack high-water use during start and resume.
 
 ## Risks
 
@@ -71,3 +72,12 @@ Initial calibration and explicit long diagnostics can delay worker parking.
 Application callbacks must finish cooperatively. Host allocation seams do not
 prove every IDF allocation or espeak internal failure. Static external BSS,
 retained frontend memory and retained SRAM tasks/tiles still count in STT fit.
+
+The first device stop/borrow probe succeeded, but resume from a 4,096-byte USB
+control task overflowed its stack in model layout. Sizing runs on the caller,
+even though synthesis uses its own worker stack. Use at least 8,192 bytes of
+internal caller stack for this profile and measure the remaining headroom.
+The startup baseline uses an 8,192-byte main stack. Host mocks and portable
+engine tests do not reproduce ESP32 caller stack limits; they did not establish
+that a 4 KiB control task could resume safely. Keep flash-calling control tasks
+off PSRAM stacks.
