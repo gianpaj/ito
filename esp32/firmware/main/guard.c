@@ -3,7 +3,7 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "nvs.h"
-#ifndef ITOFS_QEMU
+#if !defined(ITOFS_QEMU) && !defined(ITOFS_EMBEDDED)
 #include "hal/wdt_hal.h"
 #include "soc/rtc.h"
 #endif
@@ -28,12 +28,27 @@ itofs_rst_t guard_reset_class(const char **name)
 
 static int nvs_begin(nvs_handle_t *h, nvs_open_mode_t mode)
 {
+#ifndef ITOFS_EMBEDDED
     esp_err_t e = nvs_flash_init();
     if (e == ESP_ERR_NVS_NO_FREE_PAGES || e == ESP_ERR_NVS_NEW_VERSION_FOUND) { nvs_flash_erase(); e = nvs_flash_init(); }
     if (e != ESP_OK) return -1;
-    e = nvs_open(NVS_NS, mode, h);
-    if (e != ESP_OK) { nvs_flash_deinit(); return -1; }
+#endif
+    esp_err_t opened = nvs_open(NVS_NS, mode, h);
+    if (opened != ESP_OK) {
+#ifndef ITOFS_EMBEDDED
+        nvs_flash_deinit();
+#endif
+        return -1;
+    }
     return 0;
+}
+
+static void nvs_end(nvs_handle_t h)
+{
+    nvs_close(h);
+#ifndef ITOFS_EMBEDDED
+    nvs_flash_deinit();
+#endif
 }
 
 int guard_rec_load(itofs_split_rec_t *r)
@@ -43,7 +58,7 @@ int guard_rec_load(itofs_split_rec_t *r)
     itofs_split_rec_t t;
     size_t n = sizeof t;
     const int ok = nvs_get_blob(h, NVS_KEY, &t, &n) == ESP_OK && n == sizeof t && itofs_split_valid(&t);
-    nvs_close(h); nvs_flash_deinit();
+    nvs_end(h);
     if (ok) *r = t;
     return ok ? 0 : -1;
 }
@@ -54,7 +69,7 @@ int guard_rec_save(itofs_split_rec_t *r)
     nvs_handle_t h;
     if (nvs_begin(&h, NVS_READWRITE)) return -1;
     const int ok = nvs_set_blob(h, NVS_KEY, r, sizeof *r) == ESP_OK && nvs_commit(h) == ESP_OK;
-    nvs_close(h); nvs_flash_deinit();
+    nvs_end(h);
     return ok ? 0 : -1;
 }
 
@@ -64,7 +79,7 @@ int guard_u8_load(const char *key, uint8_t *v)
     if (nvs_begin(&h, NVS_READWRITE)) return -1;
     uint8_t t = 0;
     const int ok = nvs_get_u8(h, key, &t) == ESP_OK;
-    nvs_close(h); nvs_flash_deinit();
+    nvs_end(h);
     if (ok) *v = t;
     return ok ? 0 : -1;
 }
@@ -74,11 +89,21 @@ int guard_u8_save(const char *key, uint8_t v)
     nvs_handle_t h;
     if (nvs_begin(&h, NVS_READWRITE)) return -1;
     const int ok = nvs_set_u8(h, key, v) == ESP_OK && nvs_commit(h) == ESP_OK;
-    nvs_close(h); nvs_flash_deinit();
+    nvs_end(h);
     return ok ? 0 : -1;
 }
 
-#ifndef ITOFS_QEMU
+#ifdef ITOFS_EMBEDDED
+static void *s_wdt_user;
+static void (*s_wdt_arm)(void *, uint32_t);
+static void (*s_wdt_feed)(void *);
+void guard_set_watchdog_hooks(void *user, void (*arm)(void *, uint32_t), void (*feed)(void *))
+{
+    s_wdt_user = user; s_wdt_arm = arm; s_wdt_feed = feed;
+}
+void guard_wdt_arm(uint32_t ms) { if (s_wdt_arm) s_wdt_arm(s_wdt_user, ms); }
+void guard_wdt_feed(void) { if (s_wdt_feed) s_wdt_feed(s_wdt_user); }
+#elif !defined(ITOFS_QEMU)
 static wdt_hal_context_t s_rwdt = RWDT_HAL_CONTEXT_DEFAULT();
 void guard_wdt_arm(uint32_t ms)
 {

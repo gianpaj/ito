@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "upstream_revision": "c8d60325ba8bffd4bad65a9ac63c713ee64d1aae",
+  "model_sha256": "9e8b40913f532fb44b716a1f882f38b3b21e220713e417899aba32ace8c35066",
+  "safety_patch_sha256": "c76ac37d3d5f61185a94e5606b1cd4d765cbbf73e1807588c807854b2d804746",
+  "allocation_failure_cases": 59,
+  "engine": "Oido v2b, greedy, no LM, flash-backed model, no optional acoustic-weight relocation",
+  "flags": [
+    "-O2",
+    "-std=c11",
+    "-D_DEFAULT_SOURCE",
+    "-ffp-contract=off",
+    "-shared",
+    "-fPIC"
+  ],
+  "host_pointer_bytes": 8,
+  "borrowed_psram_bytes": 4891328,
+  "borrowed_hot_bytes": 239948,
+  "bump_high_water_psram_bytes": 1309440,
+  "bump_high_water_hot_bytes": 211488,
+  "after_free_tracked_allocations": 0,
+  "feed_block_samples": 320,
+  "scope": "Host scalar C reference and bounded allocator fit; target PIE/libm/DMA/capture not tested",
+  "fixtures": [
+    {
+      "fixture": "b05",
+      "source_path": "docs/demo/examples/b05.wav",
+      "sha256": "66c6582b36f92d2e62e2103dccb999a55c01eb237c6e5aa60fa0ed3548233854",
+      "samples": 138240,
+      "sample_rate_hz": 16000,
+      "corpus_id": "commonvoice17-en-3dba1f93cc211a12",
+      "reference": "this is best done in the spring when disturbed plants can recover",
+      "greedy_streaming_host_transcript": "this is best done in these spring when disturbed plants can recover",
+      "cycles": 3,
+      "all_cycles_match": true
+    },
+    {
+      "fixture": "b14",
+      "source_path": "docs/demo/examples/b14.wav",
+      "sha256": "d32a966cb9aeb13f4c33da901a05b4fb07cc76434e42246c3800f98766804851",
+      "samples": 80960,
+      "sample_rate_hz": 16000,
+      "corpus_id": "260-123286-0031",
+      "reference": "as for the ichthyosaurus has he returned to his submarine cavern",
+      "greedy_streaming_host_transcript": "as for the isaurus has he returned to submarine cabn",
+      "cycles": 3,
+      "all_cycles_match": true
+    },
+    {
+      "fixture": "b16",
+      "source_path": "docs/demo/examples/b16.wav",
+      "sha256": "2b138df7e2bdf5c54c99c7a6b9878efffdd112eb3591ac4cb21c42950eb91ed8",
+      "samples": 101440,
+      "sample_rate_hz": 16000,
+      "corpus_id": "3331-159609-0023",
+      "reference": "for ned was so absorbed in business that he ignored the whole bailey question and left them in utter darkness",
+      "greedy_streaming_host_transcript": "for ne was so absorbed in business that he had notred the whole baily question and left them in at a durkness",
+      "cycles": 3,
+      "all_cycles_match": true
+    }
+  ]
+}

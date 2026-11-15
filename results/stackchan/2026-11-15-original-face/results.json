@@ -1,0 +1,1920 @@
+{
+  "schema_version": 1,
+  "test_date_utc": "2026-11-15",
+  "scope": "physical StackChan original-face local Ito profile",
+  "hardware": {
+    "soc": "ESP32-S3 QFN56 revision0.2",
+    "cpu_mhz": 240,
+    "flash_bytes": 16777216,
+    "flash_mode": "QIO",
+    "flash_mhz": 80,
+    "psram_bytes": 8388608,
+    "psram_mode": "quad",
+    "psram_mhz": 80,
+    "data_cache_bytes": 32768,
+    "sample_rate_hz": 24000,
+    "codec": "AW88298"
+  },
+  "software": {
+    "stackchan_code_commit": "f799097c265d8c3c5c7980704c4a14dfcd0f6218",
+    "stackchan_baseline_commit": "94856a77876255ceee36f2a7ffae40f572eeb1f2",
+    "ito_commit": "b7412446a19e88bce34021d95c47d2bb81b2a953",
+    "esp_idf_version": "5.5.4",
+    "profile": "1.6.0-ito",
+    "artifacts": [
+      {
+        "offset": "0x0",
+        "bytes": 23792,
+        "sha256": "b07524cac661fdad2c9d5804690a5fdc2bd7cb43f803be5ef93a549522b45294",
+        "file": "bootloader.bin"
+      },
+      {
+        "offset": "0x8000",
+        "bytes": 3072,
+        "sha256": "5269599c6636774b00314888f404033c13a421d7dbbdf6f8ec41219c70d05137",
+        "file": "partition-table.bin"
+      },
+      {
+        "offset": "0x10000",
+        "bytes": 8192,
+        "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f",
+        "file": "ota_data_initial.bin"
+      },
+      {
+        "offset": "0x9a0000",
+        "bytes": 3196096,
+        "sha256": "155da4f3c58266ab49c0b885caff08d02d72be5635d5bc960c86ed055d529b27",
+        "file": "female-int4.bin"
+      },
+      {
+        "offset": "0xcb0000",
+        "bytes": 2298029,
+        "sha256": "2b6fa2d4c2c630c692380e27a46c0e7d46b57bfd7a3c5cf94b0a6fa2ed29637e",
+        "file": "generated_assets.bin"
+      },
+      {
+        "offset": "0x20000",
+        "bytes": 2867152,
+        "sha256": "a5690f3955fe2f3b0ce360cbd7d0d2bdb31c3eda55dbb30a8146e99be59a0a1e",
+        "file": "stack-chan.bin"
+      }
+    ]
+  },
+  "configuration": {
+    "chunk_frames": 32,
+    "first_chunk_frames": 32,
+    "hop_samples": 300,
+    "pcm_buffers": 6,
+    "activation_bits": 8,
+    "model": "approved female int4",
+    "split": "row",
+    "failed_full_verdict_preserved": true,
+    "weight_staging": "gdma+prefetch",
+    "hot_arena_internal_bytes": 239948,
+    "bulk_arena_psram_bytes": 1579920,
+    "dma_reserve_bytes": 32768,
+    "lcd_dma_rows": 8,
+    "frontend_core": 1,
+    "synthesis_core": 0,
+    "kernel_helper_core": 1,
+    "malloc_psram_threshold_bytes": 0,
+    "volume_default": 35,
+    "volume_during_spoken_checks": 50,
+    "freertos_tick_hz": 100,
+    "motors_powered": false,
+    "microphones_powered": false
+  },
+  "cases": [
+    {
+      "name": "greeting",
+      "mode": "text",
+      "text": "Hello, I am StackChan.",
+      "utterances": [
+        {
+          "index": 0,
+          "tokens": 28,
+          "style": 0,
+          "samples": 59700,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 2.4875,
+          "audio_seconds_log_rounded": 2.49,
+          "compute_ms": 2526.3,
+          "rtf_log_reported": 1.016,
+          "rtf_exact_audio": 1.015597989949749,
+          "first_chunk_ms": 577.8,
+          "planned_start_delay_ms": 823.0,
+          "underruns": 0,
+          "token_ids_fnv32": "ebe50d44",
+          "pcm_fnv32": "8d8f7a35",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 822.5,
+          "text_received_to_first_i2s_submission_ms": 828.3
+        }
+      ],
+      "audio_samples": 59700,
+      "audio_seconds_exact": 2.4875,
+      "compute_ms": 2526.3,
+      "compute_rtf_exact_audio": 1.0155979899497487,
+      "compute_rtf_rounded_log_audio": 1.014578313253012,
+      "underruns": 0,
+      "token_ids_match_host": true,
+      "pcm_comparison": "not_compared_random_seed"
+    },
+    {
+      "name": "numbers_quiet",
+      "mode": "textq",
+      "text": "The coffee costs $3.50, and the appointment is at 7:30 on Tuesday.",
+      "utterances": [
+        {
+          "index": 0,
+          "tokens": 106,
+          "style": 0,
+          "samples": 166200,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.925,
+          "audio_seconds_log_rounded": 6.92,
+          "compute_ms": 7037.5,
+          "rtf_log_reported": 1.016,
+          "rtf_exact_audio": 1.016245487364621,
+          "first_chunk_ms": 575.0,
+          "planned_start_delay_ms": -1.0,
+          "underruns": 0,
+          "token_ids_fnv32": "dc83ce13",
+          "pcm_fnv32": "c4472e58",
+          "pcm_comparison": "matched"
+        }
+      ],
+      "audio_samples": 166200,
+      "audio_seconds_exact": 6.925,
+      "compute_ms": 7037.5,
+      "compute_rtf_exact_audio": 1.016245487364621,
+      "compute_rtf_rounded_log_audio": 1.016979768786127,
+      "underruns": 0,
+      "token_ids_match_host": true,
+      "pcm_comparison": "matched",
+      "observer_wall_seconds": 7.558780291001312
+    },
+    {
+      "name": "numbers_spoken",
+      "mode": "text",
+      "text": "The coffee costs $3.50, and the appointment is at 7:30 on Tuesday.",
+      "utterances": [
+        {
+          "index": 0,
+          "tokens": 106,
+          "style": 0,
+          "samples": 166200,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.925,
+          "audio_seconds_log_rounded": 6.92,
+          "compute_ms": 7115.9,
+          "rtf_log_reported": 1.028,
+          "rtf_exact_audio": 1.02756678700361,
+          "first_chunk_ms": 577.6,
+          "planned_start_delay_ms": 1067.0,
+          "underruns": 0,
+          "token_ids_fnv32": "dc83ce13",
+          "pcm_fnv32": "e32e2751",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1065.9,
+          "text_received_to_first_i2s_submission_ms": 1081.9
+        }
+      ],
+      "audio_samples": 166200,
+      "audio_seconds_exact": 6.925,
+      "compute_ms": 7115.9,
+      "compute_rtf_exact_audio": 1.02756678700361,
+      "compute_rtf_rounded_log_audio": 1.0283092485549132,
+      "underruns": 0,
+      "token_ids_match_host": true,
+      "pcm_comparison": "not_compared_random_seed",
+      "observer_wall_seconds": 8.063372749951668
+    },
+    {
+      "name": "paragraph",
+      "mode": "text",
+      "text": "The small robot on my desk can turn written English into speech without sending the text to a remote server. A short greeting should begin promptly, while a longer reply should continue at a steady pace until the final word. Please put the blue notebook beside the keyboard, close the window, and leave the reading lamp switched on. We have three apples, twelve oranges, and twenty-five empty boxes ready for the visitors who arrive tomorrow morning. Dr. Smith lives at 221B Baker Street and walks 12.5 kilometers before breakfast whenever the weather is clear. Is the train arriving on platform four, or should we cross the bridge and wait on the other side? I would like a cup of tea, a glass of water, and a quiet place to read for half an hour. When the test finishes, the computer will save the timing measurements and the robot will return to a silent idle state. A careful check of every cable and power connection makes it easier to understand an unexpected result during development. The speaker should say each sentence clearly, with natural pauses after commas and a complete stop at the end. Today is Saturday, November fourteenth, and the meeting starts at nine fifteen in the morning rather than in the evening. Can you remind me to stretch my legs after I finish this chapter, and then help me choose a simple recipe? The garden looked different after the rain, with bright leaves, clean paths, and a few small puddles beside the gate. If you press cancel while I am speaking, the queued sound should stop and the next request should still work. For this experiment, we will repeat several ordinary sentences and compare the available memory before and after the run. The microphone and the motors remain inactive during the speech test, so the robot only needs its processor and speaker. One hundred and twenty people visited the museum yesterday, but fewer than forty arrived before the doors opened at ten. Thank you for listening to this test, which checks that a small device can speak a complete paragraph without audible gaps. The small robot on my desk can turn written English into speech without sending the text to a remote server. A short greeting should begin promptly, while a longer reply should continue at a steady pace until the final word. Please put the blue notebook beside the keyboard, close the window, and leave the reading lamp switched on. We have three apples, twelve oranges, and twenty-five empty boxes ready for the visitors who arrive tomorrow morning. Dr. Smith lives at 221B Baker Street and walks 12.5 kilometers before breakfast whenever the weather is clear. Is the train arriving on platform four, or should we cross the bridge and wait on the other side? I would like a cup of tea, a glass of water, and a quiet place to read for half an hour. When the test finishes, the computer will save the timing measurements and the robot will return to a silent idle state.",
+      "utterances": [
+        {
+          "index": 0,
+          "tokens": 120,
+          "style": 0,
+          "samples": 171300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.1375,
+          "audio_seconds_log_rounded": 7.14,
+          "compute_ms": 7440.0,
+          "rtf_log_reported": 1.042,
+          "rtf_exact_audio": 1.0423817863397549,
+          "first_chunk_ms": 622.4,
+          "planned_start_delay_ms": 1112.0,
+          "underruns": 0,
+          "token_ids_fnv32": "c7c856bd",
+          "pcm_fnv32": "f8049f9c",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1110.6,
+          "text_received_to_first_i2s_submission_ms": 1124.7
+        },
+        {
+          "index": 1,
+          "tokens": 125,
+          "style": 0,
+          "samples": 186300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.7625,
+          "audio_seconds_log_rounded": 7.76,
+          "compute_ms": 7984.9,
+          "rtf_log_reported": 1.029,
+          "rtf_exact_audio": 1.0286505636070853,
+          "first_chunk_ms": 576.1,
+          "planned_start_delay_ms": 1065.0,
+          "underruns": 0,
+          "token_ids_fnv32": "92cdc4b3",
+          "pcm_fnv32": "a56d3e2c",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1064.2
+        },
+        {
+          "index": 2,
+          "tokens": 114,
+          "style": 0,
+          "samples": 165900,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.9125,
+          "audio_seconds_log_rounded": 6.91,
+          "compute_ms": 7164.9,
+          "rtf_log_reported": 1.037,
+          "rtf_exact_audio": 1.0365135623869801,
+          "first_chunk_ms": 675.9,
+          "planned_start_delay_ms": 1165.0,
+          "underruns": 0,
+          "token_ids_fnv32": "1f923e22",
+          "pcm_fnv32": "42bc2acc",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1164.2
+        },
+        {
+          "index": 3,
+          "tokens": 138,
+          "style": 0,
+          "samples": 198600,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.275,
+          "audio_seconds_log_rounded": 8.28,
+          "compute_ms": 8574.1,
+          "rtf_log_reported": 1.036,
+          "rtf_exact_audio": 1.0361450151057403,
+          "first_chunk_ms": 663.6,
+          "planned_start_delay_ms": 1123.0,
+          "underruns": 0,
+          "token_ids_fnv32": "b3faa353",
+          "pcm_fnv32": "d79b53a7",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1124.5
+        },
+        {
+          "index": 4,
+          "tokens": 152,
+          "style": 0,
+          "samples": 207300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.6375,
+          "audio_seconds_log_rounded": 8.64,
+          "compute_ms": 9000.3,
+          "rtf_log_reported": 1.042,
+          "rtf_exact_audio": 1.0420028943560058,
+          "first_chunk_ms": 579.0,
+          "planned_start_delay_ms": 1069.0,
+          "underruns": 0,
+          "token_ids_fnv32": "7674d311",
+          "pcm_fnv32": "89050baf",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1067.5
+        },
+        {
+          "index": 5,
+          "tokens": 102,
+          "style": 0,
+          "samples": 160200,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.675,
+          "audio_seconds_log_rounded": 6.67,
+          "compute_ms": 6850.5,
+          "rtf_log_reported": 1.026,
+          "rtf_exact_audio": 1.0262921348314606,
+          "first_chunk_ms": 581.4,
+          "planned_start_delay_ms": 1071.0,
+          "underruns": 0,
+          "token_ids_fnv32": "c682e675",
+          "pcm_fnv32": "1f2814f2",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1069.7
+        },
+        {
+          "index": 6,
+          "tokens": 100,
+          "style": 0,
+          "samples": 157500,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.5625,
+          "audio_seconds_log_rounded": 6.56,
+          "compute_ms": 6764.3,
+          "rtf_log_reported": 1.031,
+          "rtf_exact_audio": 1.0307504761904762,
+          "first_chunk_ms": 664.0,
+          "planned_start_delay_ms": 1153.0,
+          "underruns": 0,
+          "token_ids_fnv32": "ae7b03d9",
+          "pcm_fnv32": "3defa0e4",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1152.1
+        },
+        {
+          "index": 7,
+          "tokens": 129,
+          "style": 0,
+          "samples": 183000,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.625,
+          "audio_seconds_log_rounded": 7.62,
+          "compute_ms": 7888.8,
+          "rtf_log_reported": 1.035,
+          "rtf_exact_audio": 1.0345967213114755,
+          "first_chunk_ms": 653.8,
+          "planned_start_delay_ms": 1143.0,
+          "underruns": 0,
+          "token_ids_fnv32": "42af4112",
+          "pcm_fnv32": "b9c4876b",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1141.9
+        },
+        {
+          "index": 8,
+          "tokens": 133,
+          "style": 0,
+          "samples": 197100,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.2125,
+          "audio_seconds_log_rounded": 8.21,
+          "compute_ms": 8469.8,
+          "rtf_log_reported": 1.031,
+          "rtf_exact_audio": 1.0313302891933027,
+          "first_chunk_ms": 588.5,
+          "planned_start_delay_ms": 1078.0,
+          "underruns": 0,
+          "token_ids_fnv32": "5858df8e",
+          "pcm_fnv32": "9c67f72d",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1076.9
+        },
+        {
+          "index": 9,
+          "tokens": 118,
+          "style": 0,
+          "samples": 182100,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.5875,
+          "audio_seconds_log_rounded": 7.59,
+          "compute_ms": 7800.1,
+          "rtf_log_reported": 1.028,
+          "rtf_exact_audio": 1.028019769357496,
+          "first_chunk_ms": 657.9,
+          "planned_start_delay_ms": 1117.0,
+          "underruns": 0,
+          "token_ids_fnv32": "7454f168",
+          "pcm_fnv32": "074b7d2d",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1116.2
+        },
+        {
+          "index": 10,
+          "tokens": 126,
+          "style": 0,
+          "samples": 188100,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.8375,
+          "audio_seconds_log_rounded": 7.84,
+          "compute_ms": 8093.0,
+          "rtf_log_reported": 1.033,
+          "rtf_exact_audio": 1.0325996810207336,
+          "first_chunk_ms": 587.3,
+          "planned_start_delay_ms": 1076.0,
+          "underruns": 0,
+          "token_ids_fnv32": "d5b5be3c",
+          "pcm_fnv32": "dd1f9ab7",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1075.5
+        },
+        {
+          "index": 11,
+          "tokens": 123,
+          "style": 0,
+          "samples": 180000,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.5,
+          "audio_seconds_log_rounded": 7.5,
+          "compute_ms": 7771.6,
+          "rtf_log_reported": 1.036,
+          "rtf_exact_audio": 1.0362133333333334,
+          "first_chunk_ms": 658.6,
+          "planned_start_delay_ms": 1148.0,
+          "underruns": 0,
+          "token_ids_fnv32": "3532b381",
+          "pcm_fnv32": "f7d67404",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1147.0
+        },
+        {
+          "index": 12,
+          "tokens": 125,
+          "style": 0,
+          "samples": 175500,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.3125,
+          "audio_seconds_log_rounded": 7.31,
+          "compute_ms": 7611.5,
+          "rtf_log_reported": 1.041,
+          "rtf_exact_audio": 1.040888888888889,
+          "first_chunk_ms": 654.3,
+          "planned_start_delay_ms": 1143.0,
+          "underruns": 0,
+          "token_ids_fnv32": "24be3ae6",
+          "pcm_fnv32": "1a69e24f",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1142.4
+        },
+        {
+          "index": 13,
+          "tokens": 114,
+          "style": 0,
+          "samples": 163800,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.825,
+          "audio_seconds_log_rounded": 6.83,
+          "compute_ms": 7081.4,
+          "rtf_log_reported": 1.038,
+          "rtf_exact_audio": 1.0375677655677655,
+          "first_chunk_ms": 658.9,
+          "planned_start_delay_ms": 1108.0,
+          "underruns": 0,
+          "token_ids_fnv32": "0fdf3300",
+          "pcm_fnv32": "97a6bf02",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1107.3
+        },
+        {
+          "index": 14,
+          "tokens": 133,
+          "style": 0,
+          "samples": 193800,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.075,
+          "audio_seconds_log_rounded": 8.07,
+          "compute_ms": 8359.1,
+          "rtf_log_reported": 1.035,
+          "rtf_exact_audio": 1.0351826625386997,
+          "first_chunk_ms": 657.1,
+          "planned_start_delay_ms": 1116.0,
+          "underruns": 0,
+          "token_ids_fnv32": "ba2d4cab",
+          "pcm_fnv32": "7be1bfb1",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1115.4
+        },
+        {
+          "index": 15,
+          "tokens": 134,
+          "style": 0,
+          "samples": 187800,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.825,
+          "audio_seconds_log_rounded": 7.83,
+          "compute_ms": 8147.4,
+          "rtf_log_reported": 1.041,
+          "rtf_exact_audio": 1.0412012779552715,
+          "first_chunk_ms": 656.8,
+          "planned_start_delay_ms": 1116.0,
+          "underruns": 0,
+          "token_ids_fnv32": "cfc1d9ab",
+          "pcm_fnv32": "73258bb0",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1115.2
+        },
+        {
+          "index": 16,
+          "tokens": 137,
+          "style": 0,
+          "samples": 188700,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.8625,
+          "audio_seconds_log_rounded": 7.86,
+          "compute_ms": 8183.2,
+          "rtf_log_reported": 1.041,
+          "rtf_exact_audio": 1.0407885532591414,
+          "first_chunk_ms": 653.3,
+          "planned_start_delay_ms": 1142.0,
+          "underruns": 0,
+          "token_ids_fnv32": "e3d70f36",
+          "pcm_fnv32": "db91242c",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1141.5
+        },
+        {
+          "index": 17,
+          "tokens": 132,
+          "style": 0,
+          "samples": 187200,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.8,
+          "audio_seconds_log_rounded": 7.8,
+          "compute_ms": 8106.1,
+          "rtf_log_reported": 1.039,
+          "rtf_exact_audio": 1.0392435897435899,
+          "first_chunk_ms": 656.0,
+          "planned_start_delay_ms": 1145.0,
+          "underruns": 0,
+          "token_ids_fnv32": "2163d3fc",
+          "pcm_fnv32": "bb850a65",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1144.1
+        },
+        {
+          "index": 18,
+          "tokens": 120,
+          "style": 0,
+          "samples": 171300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.1375,
+          "audio_seconds_log_rounded": 7.14,
+          "compute_ms": 7399.0,
+          "rtf_log_reported": 1.037,
+          "rtf_exact_audio": 1.0366374781085814,
+          "first_chunk_ms": 592.4,
+          "planned_start_delay_ms": 1082.0,
+          "underruns": 0,
+          "token_ids_fnv32": "c7c856bd",
+          "pcm_fnv32": "10efb9dc",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1080.7
+        },
+        {
+          "index": 19,
+          "tokens": 125,
+          "style": 0,
+          "samples": 186300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.7625,
+          "audio_seconds_log_rounded": 7.76,
+          "compute_ms": 8001.6,
+          "rtf_log_reported": 1.031,
+          "rtf_exact_audio": 1.0308019323671498,
+          "first_chunk_ms": 583.1,
+          "planned_start_delay_ms": 1072.0,
+          "underruns": 0,
+          "token_ids_fnv32": "92cdc4b3",
+          "pcm_fnv32": "3999372a",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1071.4
+        },
+        {
+          "index": 20,
+          "tokens": 114,
+          "style": 0,
+          "samples": 165900,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.9125,
+          "audio_seconds_log_rounded": 6.91,
+          "compute_ms": 7181.1,
+          "rtf_log_reported": 1.039,
+          "rtf_exact_audio": 1.038857142857143,
+          "first_chunk_ms": 675.0,
+          "planned_start_delay_ms": 1164.0,
+          "underruns": 0,
+          "token_ids_fnv32": "1f923e22",
+          "pcm_fnv32": "fce67fa8",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1163.3
+        },
+        {
+          "index": 21,
+          "tokens": 138,
+          "style": 0,
+          "samples": 198600,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.275,
+          "audio_seconds_log_rounded": 8.28,
+          "compute_ms": 8580.3,
+          "rtf_log_reported": 1.037,
+          "rtf_exact_audio": 1.036894259818731,
+          "first_chunk_ms": 664.8,
+          "planned_start_delay_ms": 1124.0,
+          "underruns": 0,
+          "token_ids_fnv32": "b3faa353",
+          "pcm_fnv32": "fa7bce82",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1123.1
+        },
+        {
+          "index": 22,
+          "tokens": 152,
+          "style": 0,
+          "samples": 207300,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 8.6375,
+          "audio_seconds_log_rounded": 8.64,
+          "compute_ms": 8983.3,
+          "rtf_log_reported": 1.04,
+          "rtf_exact_audio": 1.0400347322720693,
+          "first_chunk_ms": 576.5,
+          "planned_start_delay_ms": 1066.0,
+          "underruns": 0,
+          "token_ids_fnv32": "7674d311",
+          "pcm_fnv32": "809b2e02",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1065.4
+        },
+        {
+          "index": 23,
+          "tokens": 102,
+          "style": 0,
+          "samples": 160200,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.675,
+          "audio_seconds_log_rounded": 6.67,
+          "compute_ms": 6861.6,
+          "rtf_log_reported": 1.028,
+          "rtf_exact_audio": 1.0279550561797752,
+          "first_chunk_ms": 577.9,
+          "planned_start_delay_ms": 1067.0,
+          "underruns": 0,
+          "token_ids_fnv32": "c682e675",
+          "pcm_fnv32": "81d6330e",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1066.1
+        },
+        {
+          "index": 24,
+          "tokens": 100,
+          "style": 0,
+          "samples": 157500,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 6.5625,
+          "audio_seconds_log_rounded": 6.56,
+          "compute_ms": 6726.5,
+          "rtf_log_reported": 1.025,
+          "rtf_exact_audio": 1.0249904761904762,
+          "first_chunk_ms": 643.6,
+          "planned_start_delay_ms": 1134.0,
+          "underruns": 0,
+          "token_ids_fnv32": "ae7b03d9",
+          "pcm_fnv32": "052bb2ef",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1132.6
+        },
+        {
+          "index": 25,
+          "tokens": 129,
+          "style": 0,
+          "samples": 183000,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 7.625,
+          "audio_seconds_log_rounded": 7.62,
+          "compute_ms": 7877.5,
+          "rtf_log_reported": 1.033,
+          "rtf_exact_audio": 1.0331147540983607,
+          "first_chunk_ms": 653.8,
+          "planned_start_delay_ms": 1144.0,
+          "underruns": 0,
+          "token_ids_fnv32": "42af4112",
+          "pcm_fnv32": "ceb0f18c",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 1142.8
+        }
+      ],
+      "audio_samples": 4704300,
+      "audio_seconds_exact": 196.0125,
+      "compute_ms": 202901.9,
+      "compute_rtf_exact_audio": 1.0351477584337734,
+      "compute_rtf_rounded_log_audio": 1.035213775510204,
+      "underruns": 0,
+      "token_ids_match_host": true,
+      "pcm_comparison": "not_compared_random_seed",
+      "observer_wall_seconds": 226.8048193330178
+    },
+    {
+      "name": "greeting_after_reentry",
+      "mode": "text",
+      "text": "Hello, I am StackChan.",
+      "utterances": [
+        {
+          "index": 0,
+          "tokens": 28,
+          "style": 0,
+          "samples": 59700,
+          "sample_rate_hz": 24000,
+          "audio_seconds_exact": 2.4875,
+          "audio_seconds_log_rounded": 2.49,
+          "compute_ms": 2525.3,
+          "rtf_log_reported": 1.015,
+          "rtf_exact_audio": 1.0151959798994976,
+          "first_chunk_ms": 580.3,
+          "planned_start_delay_ms": 824.0,
+          "underruns": 0,
+          "token_ids_fnv32": "ebe50d44",
+          "pcm_fnv32": "58ff8bc8",
+          "pcm_comparison": "not_compared_random_seed",
+          "engine_begin_to_first_i2s_submission_ms": 824.0,
+          "text_received_to_first_i2s_submission_ms": 829.5
+        }
+      ],
+      "audio_samples": 59700,
+      "audio_seconds_exact": 2.4875,
+      "compute_ms": 2525.3,
+      "compute_rtf_exact_audio": 1.0151959798994976,
+      "compute_rtf_rounded_log_audio": 1.014176706827309,
+      "underruns": 0,
+      "token_ids_match_host": true,
+      "pcm_comparison": "not_compared_random_seed",
+      "observer_wall_seconds": 3.5291082080220804
+    }
+  ],
+  "memory": {
+    "units": "MEM KB fields are integer-truncated KiB; SystemInfo readings are exact bytes",
+    "linker_static_diram_bytes": 108163,
+    "linker_diram_remainder_bytes": 233597,
+    "initial_after_hot_reserve_free_bytes": 85190,
+    "before_avatar_free_bytes": 66886,
+    "after_avatar_free_bytes": 66422,
+    "first_boot_warm_free_bytes": 13202,
+    "first_boot_minimum_free_bytes": 5358,
+    "after_reentry_free_bytes": 13242,
+    "after_reentry_minimum_free_bytes": 5414,
+    "snapshots": [
+      {
+        "boot": 0,
+        "tag": "boot",
+        "psram_peak_used_kib": 4809,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 343,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 3298,
+        "internal_free_kib": 34
+      },
+      {
+        "boot": 0,
+        "tag": "selftest(no playback)",
+        "psram_peak_used_kib": 5400,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 371,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2707,
+        "internal_free_kib": 13
+      },
+      {
+        "boot": 0,
+        "tag": "text",
+        "psram_peak_used_kib": 5400,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2995,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "textq",
+        "psram_peak_used_kib": 5688,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "text",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "text",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "text",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2419,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 0,
+        "tag": "say",
+        "psram_peak_used_kib": 5691,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2418,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 1,
+        "tag": "boot",
+        "psram_peak_used_kib": 4808,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 343,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 3299,
+        "internal_free_kib": 34
+      },
+      {
+        "boot": 1,
+        "tag": "selftest(no playback)",
+        "psram_peak_used_kib": 5399,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 371,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2708,
+        "internal_free_kib": 13
+      },
+      {
+        "boot": 1,
+        "tag": "text",
+        "psram_peak_used_kib": 5399,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2996,
+        "internal_free_kib": 12
+      },
+      {
+        "boot": 1,
+        "tag": "now",
+        "psram_peak_used_kib": 5399,
+        "psram_heap_total_kib": 8107,
+        "internal_peak_used_kib": 372,
+        "internal_heap_total_kib": 377,
+        "psram_free_kib": 2996,
+        "internal_free_kib": 12
+      }
+    ],
+    "system_info_samples": [
+      {
+        "device_uptime_ms": 11021,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5446
+      },
+      {
+        "device_uptime_ms": 21051,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 31071,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 41091,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 51111,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 61131,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 71141,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 81161,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 91181,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 101201,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 111221,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 121241,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 131261,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 141281,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5438
+      },
+      {
+        "device_uptime_ms": 151301,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 161321,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 171341,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 181361,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 191381,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 201401,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 211421,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 221441,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 231461,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 241481,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 251501,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 261521,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 271541,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 281561,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 291581,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 301601,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 311741,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 321771,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 331791,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 341811,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 351831,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 361851,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 371871,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 381891,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 391911,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 401931,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 412281,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 422301,
+        "internal_free_bytes": 13218,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 433091,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 443251,
+        "internal_free_bytes": 13246,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 453641,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 463681,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 474421,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 484851,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 494961,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 505521,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 515531,
+        "internal_free_bytes": 13246,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 525531,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 535901,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 546291,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 556851,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 567021,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 577081,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 587551,
+        "internal_free_bytes": 13198,
+        "internal_minimum_free_bytes": 5374
+      },
+      {
+        "device_uptime_ms": 597561,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 607631,
+        "internal_free_bytes": 13222,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 617731,
+        "internal_free_bytes": 13210,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 627741,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 637751,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 647771,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 657791,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 667811,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 677831,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 687851,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 697871,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 707891,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 717911,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 727931,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 737951,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 747971,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 757991,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 768011,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 778031,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 788051,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 798071,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 808091,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 818111,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 828131,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 838151,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 848171,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 858191,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 868211,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 878231,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 888251,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 898271,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 908291,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 918311,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 928331,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 938351,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 948371,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 958371,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 968391,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 978411,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 988431,
+        "internal_free_bytes": 13202,
+        "internal_minimum_free_bytes": 5358
+      },
+      {
+        "device_uptime_ms": 10680,
+        "internal_free_bytes": 13690,
+        "internal_minimum_free_bytes": 6006
+      },
+      {
+        "device_uptime_ms": 20970,
+        "internal_free_bytes": 13230,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 31000,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 41020,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 51040,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 61060,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 71080,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 81100,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 91120,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 101140,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 111160,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 121180,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 131200,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 141220,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 151240,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 161260,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 171280,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 181300,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 191320,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 201340,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 211360,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 221380,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 231400,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 241420,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 251440,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 261460,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      },
+      {
+        "device_uptime_ms": 271480,
+        "internal_free_bytes": 13242,
+        "internal_minimum_free_bytes": 5414
+      }
+    ]
+  },
+  "checks": {
+    "selftest": {
+      "pcm_fnv32": "363d7d98",
+      "samples": 134100,
+      "passes": 2,
+      "comparison": "matched"
+    },
+    "cancel": {
+      "flush_ms": 19.8,
+      "queued_old_speech_discarded": true,
+      "following_request_passed": true
+    },
+    "clear_speech_and_mouth_start_stop": "user_confirmed",
+    "stationary_motors": "user_confirmed",
+    "home_launcher_and_ai_agent_reentry": "user_confirmed_and_followup_speech_passed",
+    "unexpected_resets_during_cases": 0,
+    "normal_build": "pass",
+    "local_build": "pass",
+    "touch_poll_timeout_reports": 3,
+    "degraded": true
+  },
+  "measurement_limits": [
+    "Spoken requests use random seeds; their PCM hashes were recorded, not compared. This is not a PCM mismatch.",
+    "RTF exact audio uses reference sample counts; legacy summaries divide by two-decimal logged audio durations.",
+    "First I2S submission excludes DMA and acoustic latency.",
+    "Observer wall time includes polling, planned start delays and inter-utterance pauses.",
+    "Heap statistics are capability-specific; physical RAM, linker remainder and contiguous allocatable blocks are different quantities.",
+    "One board, one full paragraph run and one human listener. No acoustic latency, microphone/conversation, cold power-cycle or factory cloud/motor regression measurements."
+  ],
+  "evidence": {
+    "session_id": "20261115T075242.489421Z",
+    "raw_serial_sha256": "9c4fed36711b3a55a55ae95d94fa5d1a330ebc9b76014d89935474ee79695fd6",
+    "raw_serial_bytes": 62027,
+    "private_archive_directory": "original-ito-candidate-3/validation-artifacts within the device backup",
+    "source_files": [
+      {
+        "file": "session/serial.log",
+        "bytes": 62027,
+        "sha256": "9c4fed36711b3a55a55ae95d94fa5d1a330ebc9b76014d89935474ee79695fd6"
+      },
+      {
+        "file": "session/metadata.json",
+        "bytes": 1337,
+        "sha256": "54276a1e65cd95eb51b3cae86d713576d48feab7275842420cc7a47b96b76acc"
+      },
+      {
+        "file": "build/sdkconfig.ito",
+        "bytes": 108327,
+        "sha256": "e950cf8f7f89008a050c2f3107eaf2a0770c53c312e7a07a25e2cb19c0701c48"
+      },
+      {
+        "file": "build/dependencies.ito.lock",
+        "bytes": 27545,
+        "sha256": "4f3e60538dadd1bf061770e8d11df65b592b7825de6df96a1444dba4b0c3b279"
+      },
+      {
+        "file": "build/partitions.ito.csv",
+        "bytes": 429,
+        "sha256": "2964760d1b125c523f73baf0e22f4efd8b650eac9fba4d6d18fbdc546a343726"
+      },
+      {
+        "file": "build/stack-chan.elf",
+        "bytes": 66288556,
+        "sha256": "f051b5ce813c11da7e1f76bd403a27a9e32ffb265d6dd6ec8badbbcd343bdbf5"
+      },
+      {
+        "file": "build/stack-chan.map",
+        "bytes": 30222530,
+        "sha256": "f8909122c5776be43192b093fe944c1fd4fa1c0b0a8487e42924e3683e10db74"
+      },
+      {
+        "file": "reference/reference-pcm-int4.json",
+        "bytes": 61204,
+        "sha256": "61628fdca87e6a3f1d61d8f9ce302b7e62412f81ae87d7ea953b85ec3ef32ec0"
+      },
+      {
+        "file": "device-tests/monitor-process.json",
+        "bytes": 781,
+        "sha256": "29eb9d274a539add8c602d1e5d6e939cb85357252deb3e817600edb04dcf40fb"
+      },
+      {
+        "file": "device-tests/live-test-state.json",
+        "bytes": 190,
+        "sha256": "2de428443a7cbfd3a463e8cf61b81308dbf5a355c2dedf1a84d7c3ba552bfc5c"
+      },
+      {
+        "file": "device-tests/paragraph-spoken-result.json",
+        "bytes": 4551,
+        "sha256": "3afcfdf151f09a097e81490d9ab381aa63922cf103840e3bab401b9dca567c21"
+      },
+      {
+        "file": "device-tests/reentry-greeting-result.json",
+        "bytes": 475,
+        "sha256": "de1a9a703ea75f24b1dd53b0ec09ba58bdb4f2edbf7aab0a0f5b12f842214e15"
+      },
+      {
+        "file": "device-tests/cancel-result.json",
+        "bytes": 367,
+        "sha256": "3493ebb551c929f9b55d89d4281274c81a9544580e244f660cd20a5f82b14b3c"
+      },
+      {
+        "file": "device-tests/numbers-spoken-result.json",
+        "bytes": 475,
+        "sha256": "726440f1389b042ee6b0111a187663344608f7326af00eb6428833f28355ef9e"
+      },
+      {
+        "file": "device-tests/numbers-quiet-result.json",
+        "bytes": 474,
+        "sha256": "2d77cd8ec05ceaad32caaca684fdf57164858b7d66beb9e88762db38c97407f5"
+      },
+      {
+        "file": "device-tests/validation-summary.json",
+        "bytes": 7890,
+        "sha256": "294a9d7ea510b665b6db998432c7494b7e1cfc49fdf4fbe8e4e619f7ce56550a"
+      },
+      {
+        "file": "device-tests/numbers-quiet-offset",
+        "bytes": 5,
+        "sha256": "afae321436ffe00d644a919661fad2b0724368b8afcb874727e3474dac597dcb"
+      },
+      {
+        "file": "device-tests/numbers-spoken-offset",
+        "bytes": 5,
+        "sha256": "c1e928d12a40ae14c7d2bed3e6b3cadcff0da485be056545d6955beab208f9e2"
+      },
+      {
+        "file": "device-tests/paragraph-spoken-offset",
+        "bytes": 5,
+        "sha256": "ca4581ade9750f5e7de964ab358371e182d0ea10ee40bc69226aac0fa46e6047"
+      },
+      {
+        "file": "device-tests/reentry-greeting-offset",
+        "bytes": 5,
+        "sha256": "f12d63f5a2121a9639a6531ffb81edfc75e88cd749c7c8ea1db43254916158d8"
+      },
+      {
+        "file": "device-tests/monitor-pipe.py",
+        "bytes": 1227,
+        "sha256": "e4ede13de599e274e940a78a793664fca489603247ccb722da791a50f60091ad"
+      },
+      {
+        "file": "device-tests/test-cancel.py",
+        "bytes": 1822,
+        "sha256": "fbb8ce01fae0ee320df2412e808af124b81458ec40c9837b6496c4fa7b250290"
+      },
+      {
+        "file": "device-tests/monitor-from-rom.py",
+        "bytes": 750,
+        "sha256": "c9cd885d40c5d602db8faf59dfe4a76a0a2bff2ff8f2fba77ea7ed5a9b9c4fac"
+      },
+      {
+        "file": "build/local-ui-memory-build.log",
+        "bytes": 1721,
+        "sha256": "b0232fc4c73f82daf6397708c6fe512723757475c879a0126c51b928a59f3012"
+      },
+      {
+        "file": "build/normal-final-build.log",
+        "bytes": 33100,
+        "sha256": "b68347c91632ac3d300659d3108adfbcee16a10c209cb139fad0af2d6ffad8eb"
+      },
+      {
+        "file": "build/local-memory-final-size.log",
+        "bytes": 358,
+        "sha256": "424c28a7e959feab91fe92ec9fa48007628d45762927b473cb538856fd088801"
+      },
+      {
+        "file": "device-tests/wait-case.py",
+        "bytes": 2997,
+        "sha256": "68ddf4113f01c446f69faa434fc7bfa23c8e923c6c7f62a7ec57b8f434e5c809"
+      },
+      {
+        "file": "report-generator.py",
+        "bytes": 17184,
+        "sha256": "0838169e0a4ac89e0bc8d648baf61cf3ed1bc4aee28e4adc4a793ae11c437052"
+      }
+    ],
+    "committed_trace": "measurements.log"
+  }
+}

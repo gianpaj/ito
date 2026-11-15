@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "runs": 4,
+  "capture_seconds": 5,
+  "volume_percent": 100,
+  "reply_text": "I'm doing well Gianfranco. How's the weather in Madrid?",
+  "reply_bytes": 55,
+  "reply_sha256": "5d6e3dbf39ec16863efad79f85067b68f2e60d424f512be3720ed5b13fbb9dbc",
+  "llm_called": false,
+  "p95_method": "nearest rank: sorted samples[ceil(0.95*n)-1]; with n=4 this equals the sample maximum",
+  "under_1500ms": 4,
+  "total_underruns": 0,
+  "summary_ms": {
+    "last_input_read_to_first_i2s_device_ms": {
+      "n": 4,
+      "mean": 1465.6725,
+      "p95": 1474.192,
+      "min": 1444.674,
+      "max": 1474.192
+    },
+    "last_input_read_to_final_transcript_device_ms": {
+      "n": 4,
+      "mean": 526.65875,
+      "p95": 537.986,
+      "min": 505.309,
+      "max": 537.986
+    },
+    "final_transcript_to_resume_device_ms": {
+      "n": 4,
+      "mean": 28.34975,
+      "p95": 30.908,
+      "min": 25.513,
+      "max": 30.908
+    },
+    "final_transcript_to_first_i2s_device_ms": {
+      "n": 4,
+      "mean": 939.01375,
+      "p95": 940.982,
+      "min": 936.162,
+      "max": 940.982
+    },
+    "tts_text_to_first_i2s_ms": {
+      "n": 4,
+      "mean": 907.75,
+      "p95": 908.0,
+      "min": 907.5,
+      "max": 908.0
+    },
+    "tts_text_to_pcm_ready_ms": {
+      "n": 4,
+      "mean": 661.625,
+      "p95": 661.8,
+      "min": 661.4,
+      "max": 661.8
+    }
+  },
+  "trials": [
+    {
+      "session_id": "20261115T175953.154210Z",
+      "started_utc": "2026-11-15T17:59:53.154706+00:00",
+      "source_results_sha256": "c0dcca52c743680a018e23edfd949ac75082046321b60b275c2f5b6f7b2975bd",
+      "tool_revision": "826025b68cb897466348787bae587a237bfb9913",
+      "tool_sha256": "7598eb867bda35aaf9c7ac70917d7bd6c04a0054aee085843e0a18b1bf1a287b",
+      "boot_elf_sha256_prefix": "62da67318",
+      "firmware_file_recorded": false,
+      "archive_match": {
+        "method": "boot ELF hash prefix matches retained ELF manifest",
+        "elf_sha256": "62da67318a4e9e9b9f52391569a38f892399322d4167e5578c639d0f1b67e501",
+        "app_sha256": "dbb885505894c97381c6d8835c6039e6ab5a8138250d88888851af8ac02b844c",
+        "built_stackchan_revision": "ca36a658bed875708b8c8f646aa168aac0b2c613"
+      },
+      "transcript_kind": "no_speech",
+      "capture": {
+        "samples": 80000,
+        "peak": 4279,
+        "clipped": 0,
+        "elapsed_ms": 5000,
+        "cleanup": 1,
+        "audio_ms": 5000,
+        "capped": 1,
+        "backlog_samples": 3200
+      },
+      "tts_utterances": 2,
+      "tts_underruns": 0,
+      "events_device_monotonic_us": {
+        "last_input_us": 19485381,
+        "input_drained_us": 19699766,
+        "final_transcript_us": 19990690,
+        "resume_done_us": 20018839,
+        "first_i2s_us": 20930055
+      },
+      "last_input_read_to_first_i2s_device_ms": 1444.674,
+      "last_input_read_to_final_transcript_device_ms": 505.309,
+      "final_transcript_to_resume_device_ms": 28.149,
+      "final_transcript_to_first_i2s_device_ms": 939.365,
+      "tts_text_to_first_i2s_ms": 908.0,
+      "tts_text_to_pcm_ready_ms": 661.8
+    },
+    {
+      "session_id": "20261115T180031.797192Z",
+      "started_utc": "2026-11-15T18:00:31.797424+00:00",
+      "source_results_sha256": "b8f91e43edddc810aad052c2bad9663f8bb08c4de6f430f287c9293e2e489584",
+      "tool_revision": "826025b68cb897466348787bae587a237bfb9913",
+      "tool_sha256": "7598eb867bda35aaf9c7ac70917d7bd6c04a0054aee085843e0a18b1bf1a287b",
+      "boot_elf_sha256_prefix": "62da67318",
+      "firmware_file_recorded": false,
+      "archive_match": {
+        "method": "boot ELF hash prefix matches retained ELF manifest",
+        "elf_sha256": "62da67318a4e9e9b9f52391569a38f892399322d4167e5578c639d0f1b67e501",
+        "app_sha256": "dbb885505894c97381c6d8835c6039e6ab5a8138250d88888851af8ac02b844c",
+        "built_stackchan_revision": "ca36a658bed875708b8c8f646aa168aac0b2c613"
+      },
+      "transcript_kind": "text",
+      "capture": {
+        "samples": 80000,
+        "peak": 11125,
+        "clipped": 0,
+        "elapsed_ms": 5000,
+        "cleanup": 1,
+        "audio_ms": 5000,
+        "capped": 1,
+        "backlog_samples": 3200
+      },
+      "tts_utterances": 2,
+      "tts_underruns": 0,
+      "events_device_monotonic_us": {
+        "last_input_us": 19505369,
+        "input_drained_us": 19733820,
+        "final_transcript_us": 20040015,
+        "resume_done_us": 20068844,
+        "first_i2s_us": 20979561
+      },
+      "last_input_read_to_first_i2s_device_ms": 1474.192,
+      "last_input_read_to_final_transcript_device_ms": 534.646,
+      "final_transcript_to_resume_device_ms": 28.829,
+      "final_transcript_to_first_i2s_device_ms": 939.546,
+      "tts_text_to_first_i2s_ms": 907.9,
+      "tts_text_to_pcm_ready_ms": 661.8
+    },
+    {
+      "session_id": "20261115T180128.592636Z",
+      "started_utc": "2026-11-15T18:01:28.592867+00:00",
+      "source_results_sha256": "b6f11875c95077406e20dad611d1525948e76ed84fa1d1bdf597612beb4758b0",
+      "tool_revision": "826025b68cb897466348787bae587a237bfb9913",
+      "tool_sha256": "7598eb867bda35aaf9c7ac70917d7bd6c04a0054aee085843e0a18b1bf1a287b",
+      "boot_elf_sha256_prefix": "62da67318",
+      "firmware_file_recorded": false,
+      "archive_match": {
+        "method": "boot ELF hash prefix matches retained ELF manifest",
+        "elf_sha256": "62da67318a4e9e9b9f52391569a38f892399322d4167e5578c639d0f1b67e501",
+        "app_sha256": "dbb885505894c97381c6d8835c6039e6ab5a8138250d88888851af8ac02b844c",
+        "built_stackchan_revision": "ca36a658bed875708b8c8f646aa168aac0b2c613"
+      },
+      "transcript_kind": "text",
+      "capture": {
+        "samples": 80000,
+        "peak": 6781,
+        "clipped": 0,
+        "elapsed_ms": 5000,
+        "cleanup": 1,
+        "audio_ms": 5000,
+        "capped": 1,
+        "backlog_samples": 3200
+      },
+      "tts_utterances": 2,
+      "tts_underruns": 0,
+      "events_device_monotonic_us": {
+        "last_input_us": 19489193,
+        "input_drained_us": 19719376,
+        "final_transcript_us": 20017887,
+        "resume_done_us": 20048795,
+        "first_i2s_us": 20958869
+      },
+      "last_input_read_to_first_i2s_device_ms": 1469.676,
+      "last_input_read_to_final_transcript_device_ms": 528.694,
+      "final_transcript_to_resume_device_ms": 30.908,
+      "final_transcript_to_first_i2s_device_ms": 940.982,
+      "tts_text_to_first_i2s_ms": 907.5,
+      "tts_text_to_pcm_ready_ms": 661.4
+    },
+    {
+      "session_id": "20261115T181212.470092Z",
+      "started_utc": "2026-11-15T18:12:12.470630+00:00",
+      "source_results_sha256": "18c37761d43aaaf0abd06e083c5fe22d2b4c27e34554918cf2ffada46abe85f1",
+      "tool_revision": "826025b68cb897466348787bae587a237bfb9913",
+      "tool_sha256": "7598eb867bda35aaf9c7ac70917d7bd6c04a0054aee085843e0a18b1bf1a287b",
+      "boot_elf_sha256_prefix": "0da833689",
+      "firmware_file_recorded": false,
+      "archive_match": {
+        "method": "boot ELF hash prefix matches retained ELF manifest",
+        "elf_sha256": "0da8336893fb1c8d04dede4fbd74f2b1dc9c9d7a5321966224828cf1919aa258",
+        "app_sha256": "395a035034d01e6821e88e8480ea1d940c2d10c536c87589988218981a6882ef",
+        "built_stackchan_revision": "e62c35edd94a70669ae24d36612d05b8e7998f4c"
+      },
+      "transcript_kind": "text",
+      "capture": {
+        "samples": 80000,
+        "peak": 10959,
+        "clipped": 0,
+        "elapsed_ms": 5000,
+        "cleanup": 1,
+        "audio_ms": 5000,
+        "capped": 1,
+        "backlog_samples": 3200
+      },
+      "tts_utterances": 2,
+      "tts_underruns": 0,
+      "events_device_monotonic_us": {
+        "last_input_us": 19485300,
+        "input_drained_us": 19713799,
+        "final_transcript_us": 20023286,
+        "resume_done_us": 20048799,
+        "first_i2s_us": 20959448
+      },
+      "last_input_read_to_first_i2s_device_ms": 1474.148,
+      "last_input_read_to_final_transcript_device_ms": 537.986,
+      "final_transcript_to_resume_device_ms": 25.513,
+      "final_transcript_to_first_i2s_device_ms": 936.162,
+      "tts_text_to_first_i2s_ms": 907.6,
+      "tts_text_to_pcm_ready_ms": 661.5
+    }
+  ],
+  "limits": [
+    "Four user-triggered runs on one robot, not a population p95 or a general latency guarantee.",
+    "The reply contains two TTS utterances; first-audio timings describe the first, underruns cover both.",
+    "First run returns no speech; three return text. No private input transcripts are published or accuracy scored.",
+    "Three runs precede the listening-LED update and one follows it; matching boot ELF prefixes are retained. --firmware was not supplied.",
+    "The final RX read and first I2S submission are software endpoints, excluding DMA and acoustic onset.",
+    "Five-second capture uses a fixed timer. Boot/calibration are excluded; there is no automatic speech endpoint detector.",
+    "This reply differs from the 38-byte single-sentence development baseline, so results are not pooled."
+  ]
+}

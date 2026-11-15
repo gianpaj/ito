@@ -234,6 +234,18 @@ typedef struct {
 void itofs_arena_bytes(const itofs_model_t *m, const itofs_limits_t *lim, size_t *hot_bytes, size_t *bulk_bytes);
 int itofs_init(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim,
                void *hot, size_t hot_bytes, void *bulk, size_t bulk_bytes);
+/* Optional caller-owned cache of immutable trig tables. Supply a zeroed,
+ * float-aligned buffer initially; keep it outside the context and hot/bulk arenas.
+ * A matching FFT size reuses exact table bytes. Other model state, win2 and
+ * hop-dependent interpolation weights are rebuilt with the ordinary math.
+ * NULL selects ordinary initialization. A supplied buffer needs the capacity
+ * returned by itofs_init_cache_bytes; it fills only after successful init.
+ * The caller owns the buffer, retains it across reuse and serializes access.
+ * Do not modify a populated cache or share it between concurrent init calls. */
+size_t itofs_init_cache_bytes(const itofs_model_t *m);
+int itofs_init_cached(itofs_ctx_t *c, const itofs_model_t *m, const itofs_limits_t *lim,
+                      void *hot, size_t hot_bytes, void *bulk, size_t bulk_bytes,
+                      void *cache, size_t cache_bytes);
 
 // Start an utterance: tokens are StyleTTS 2 symbol ids with the leading 0 pad; style_idx picks a bank entry; seed fixes
 // the source noise and start phase (the same seed gives the same audio for any chunking). Returns T (frames) or <0.

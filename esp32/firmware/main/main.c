@@ -10,7 +10,7 @@
 //                           "style <0-63>" | "act <8|16>" | "demo" | "demo <k>" | "test" | "stats" | "bench" |
 //                           "wmode <0|1|2>" (weight staging: direct / copy / gdma) | "first <n>" (frames in the
 //                           first chunk) | "split [auto|row|full]" (GEMM split, see DUAL_CORE_POWER.md) | "equiv [light on|off]" (weight sets validated by ear) |
-//                           "volume <0-100>" (ES8388 builds) | "cancel" (stop the
+//                           "volume <0-100>" (codec builds) | "cancel" (stop the
 //                           utterance being spoken) | "rep <n> [k]" (n silent repetitions of the demos, with timing and hash) |
 //                           "reboot" | "help"
 //   I2S: sample rate from the blob (24 kHz), 16-bit, mono duplicated to stereo. Pins: BCLK GPIO15, LRCLK GPIO16, DOUT GPIO17 (plain DAC, default), or the ES8388 shield's.
@@ -18,9 +18,44 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdatomic.h>
+#ifdef ITOFS_EMBEDDED
+#include "itofs_service.h"
+#include "esp_attr.h"
+static itofs_service_config_t s_audio;
+static atomic_int s_service_started;
+static atomic_int s_service_up;
+static atomic_uint s_park_epoch[3];
+static atomic_int s_park_error;
+static unsigned s_workers;
+static int s_stopped, s_memory_borrowed, s_guard_loaded, s_audio_opened;
+static atomic_int s_boot_done;
+static atomic_uint s_stop_sequence;
+static int s_resume_style, s_resume_act = 8;
+#define PARK_FE 1u
+#define PARK_SYNTH 2u
+#define PARK_PLAY 4u
+static void service_checkpoint(unsigned worker);
+static int service_stopping(void);
+static size_t s_hot_reserved;
+static void *s_psram_pool;
+static size_t s_psram_pool_bytes, s_psram_weights_bytes;
+static int s_weight_copy_valid;
+static const void *s_weight_copy_partition;
+static size_t s_weight_copy_extent;
+static itofs_workspace_t s_memory_lease;
+static void *s_init_cache;
+static size_t s_init_cache_bytes;
+static void audio_mute(int muted);
+#endif
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#ifdef ITOFS_EMBEDDED
+static SemaphoreHandle_t s_command_mutex;
+static TaskHandle_t s_play_h, s_synth_h, s_console_h;
+#endif
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
 #include "esp_partition.h"
@@ -33,7 +68,7 @@
 #include "hal/usb_serial_jtag_ll.h"     // the console input of a board connected only through the native USB port (the UART0 pins are unconnected there)
 #endif
 #include "driver/gpio.h"
-#ifndef ITOFS_QEMU
+#if !defined(ITOFS_QEMU) && !defined(ITOFS_EMBEDDED)
 #include "driver/i2s_std.h"
 #endif
 #include "itofs.h"
@@ -46,6 +81,10 @@
 #ifdef CONFIG_ITOFS_AUDIO_ES8388
 #include "es8388.h"
 #endif
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+#include "stackchan_audio.h"
+#include "stackchan_display.h"
+#endif
 #ifdef CONFIG_ITOFS_FRONTEND
 #include "ito_frontend.h"
 #include "ito_fe_idf.h"
@@ -56,6 +95,11 @@
 #define PIN_BCLK CONFIG_ITOFS_ES8388_PIN_BCLK
 #define PIN_WS CONFIG_ITOFS_ES8388_PIN_WS
 #define PIN_DOUT CONFIG_ITOFS_ES8388_PIN_DOUT
+#elif defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+#define PIN_MCLK 0
+#define PIN_BCLK 34
+#define PIN_WS 33
+#define PIN_DOUT 13
 #else                                  // a plain I2S DAC / amplifier: BCLK GPIO15, LRCLK GPIO16, DOUT GPIO17, no MCLK
 #define PIN_MCLK I2S_GPIO_UNUSED
 #define PIN_BCLK 15
@@ -63,19 +107,34 @@
 #define PIN_DOUT 17
 #endif
 #define PIN_BOOT 0
-#ifdef CONFIG_ITOFS_AUDIO_ES8388
+#if defined(CONFIG_ITOFS_AUDIO_ES8388) || defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
 #define VOLUME_HELP "volume <0-100> | "
 #else
 #define VOLUME_HELP ""
 #endif
-#ifdef CONFIG_ITOFS_AUDIO_ES8388
+#ifdef ITOFS_EMBEDDED
+#define CODEC_MUTE(m) audio_mute(m)
+#elif defined(CONFIG_ITOFS_AUDIO_ES8388)
 #define CODEC_MUTE(m) es8388_mute(m)       // the DAC is muted whenever nothing is spoken: a class-D amplifier makes no noise and no click on a silent, steady input
+#elif defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+#define CODEC_MUTE(m) do { \
+    const esp_err_t error_ = stackchan_audio_mute(m); \
+    if (error_ != ESP_OK) { s_cancel = 1; printf("ERROR StackChan mute: %s; playback cancelled\n", esp_err_to_name(error_)); } \
+} while (0)
 #else
 #define CODEC_MUTE(m) ((void)0)
 #endif
 #define MAX_TOKENS 400
 #define TAIL_SAMPLES 120             // end of an utterance: the last sample decays to zero over 5 ms (the engine's PCM ends at up to -45 dBFS, not at zero: a step would click)
 #define I2S_SLICE 480                // samples per I2S write (20 ms = one DMA descriptor); a chunk (up to 300 ms) goes out in slices
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+#ifndef STEADY_FRAMES
+#define STEADY_FRAMES 32
+#endif
+#ifndef FIRST_FRAMES
+#define FIRST_FRAMES 32
+#endif
+#endif
 #ifndef STEADY_FRAMES
 #define STEADY_FRAMES 24             // frames per chunk once the start-up ramp is over (24 frames = 300 ms): every chunk reads each weight
                                      // matrix once from PSRAM, so bigger chunks mean less weight traffic per second of audio
@@ -149,12 +208,21 @@ static int text_step_for(int k)
 static const int32_t *s_st, *s_st16; // self-test records from the blob ("selftest": default 8-bit activations,
                                      // "selftest_a16": 16-bit); NULL if absent
 
-typedef struct { int16_t *pcm; int n; } buf_t;      // n = samples, 0 = end of utterance
+typedef struct { int16_t *pcm; int n; uint32_t job; } buf_t;      // n = samples, 0 = end of utterance
 static QueueHandle_t s_free_q, s_full_q, s_req_q, s_done_q;
+#ifdef ITOFS_EMBEDDED
+static int16_t *s_pcm_buffers[NBUF];
+static int s_resume_chunk = STEADY_FRAMES;
+#endif
 static volatile int s_underruns, s_playing;
+static atomic_uint s_job_generation = 1;
+static uint32_t s_active_job;
 static volatile int s_cancel, s_speaking;   // `cancel`: set by the console while an utterance is spoken; the synthesis stops at the next chunk, the player drops what it holds and flushes the I2S ring
 static volatile int64_t s_cancel_t;         // esp_timer time of the cancel command
 static volatile int64_t s_utt_t0;       // esp_timer time (us) at which the current utterance was handed to the engine
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+static int64_t s_first_i2s_submit_us;
+#endif
 static int s_delay_override_ms = START_DELAY_MS;   // >= 0: hold the DAC until this long after the text arrived, whatever the plan says (`delay <ms>`); -1: use the plan (`delay auto`)
 static volatile int64_t s_cur_delay_us;            // the planned start delay of the current utterance (from its text arrival); raised while the player waits if the chunks come slower than calibrated
 static int s_trace;                                // `trace 1`: print the chunk times of every utterance
@@ -162,10 +230,49 @@ static int s_active = -1, s_selected = -1, s_degraded;   // weight set in use / 
 #define PLAN_MAX_DELAY_US 4000000.0
 static double s_obs_us[ITOFS_SCHED_MAXCH];         // production times of the chunks of the current utterance so far
 
-typedef struct { int kind; int n; uint32_t seed; int64_t t0; uint32_t aux[4]; int flags; int16_t tok[MAX_TOKENS]; } req_t;   // 0 say, 1 demos, 2 self-test, 3 style, 4 act bits, 5 bench, 6 wmode, 7 icprof, 8 first, 9 tier, 10 recal, 11 status, 13 no-op, 14 rep, 15 split, 16 hang (test builds), 20 silent text utterance (seed, t0 = text arrival; flags & 1: emulate the playout clock), 21 stand-alone test utterance (aux = text, utt, front-end us, ids hash), 22 end of the stand-alone test, 23 end of one test text
+typedef struct { int kind; int n; uint32_t job; uint32_t seed; int64_t t0; uint32_t aux[4]; int flags; int16_t tok[MAX_TOKENS]; } req_t;   // 0 say, 1 demos, 2 self-test, 3 style, 4 act bits, 5 bench, 6 wmode, 7 icprof, 8 first, 9 tier, 10 recal, 11 status, 13 no-op, 14 rep, 15 split, 16 hang (test builds), 20 silent text utterance (seed, t0 = text arrival; flags & 1: emulate the playout clock), 21 stand-alone test utterance (aux = text, utt, front-end us, ids hash), 22 end of the stand-alone test, 23 end of one test text
 static req_t s_req_tmp;
 
 static double ms(int64_t us) { return us / 1000.0; }
+
+/* A parked worker touches only retained task/global state until resume. */
+#ifdef ITOFS_EMBEDDED
+static int service_stopping(void) { return (atomic_load(&s_stop_sequence) & 1u) != 0; }
+static void request_stop(void)
+{
+    unsigned state = atomic_load(&s_stop_sequence);
+    while (!atomic_compare_exchange_weak(&s_stop_sequence, &state, (state + 2u) | 1u)) {}
+}
+static int workers_parked(void)
+{
+    const unsigned state = atomic_load(&s_stop_sequence);
+    if (!(state & 1u)) return 0;
+    for (unsigned i = 0; i < 3; i++)
+        if ((s_workers & (1u << i)) && atomic_load(&s_park_epoch[i]) != state) return 0;
+    return state == atomic_load(&s_stop_sequence);
+}
+static void service_checkpoint(unsigned worker)
+{
+    const unsigned index = worker == PARK_FE ? 0 : worker == PARK_SYNTH ? 1 : 2;
+    unsigned state;
+    while ((state = atomic_load(&s_stop_sequence)) & 1u) {
+        atomic_store(&s_park_epoch[index], state);
+        guard_wdt_feed(); vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+#else
+static int service_stopping(void) { return 0; }
+#define service_checkpoint(worker) ((void)0)
+#endif
+
+static int request_send(const req_t *request)
+{
+    do {
+        if (service_stopping()) return 0;
+        if (xQueueSend(s_req_q, request, pdMS_TO_TICKS(20)) == pdTRUE) return 1;
+    } while (!service_stopping());
+    return 0;
+}
 
 static void mem_report(const char *tag)
 {
@@ -179,7 +286,7 @@ static void mem_report(const char *tag)
 // ------------------------------------------------------------------------------------------------------------------
 // audio output
 // ------------------------------------------------------------------------------------------------------------------
-#ifndef ITOFS_QEMU
+#if !defined(ITOFS_QEMU) && !defined(ITOFS_EMBEDDED)
 static i2s_chan_handle_t s_tx;
 #ifdef CONFIG_ITOFS_AUDIO_LOOPBACK
 // Test-only microphone loopback (see the `loopback` command below): the player records the level of what it hands to the I2S, in 10 ms frames, from the first slice on.
@@ -224,6 +331,13 @@ static void i2s_setup(void)
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_rx, &sc));          // the receive channel shares the transmit channel's clocks; it is enabled only during a `loopback`
 #endif
     ESP_ERROR_CHECK(i2s_channel_enable(s_tx));
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (stackchan_audio_init(s_sr, CONFIG_ITOFS_AUDIO_VOLUME) != ESP_OK) {
+        i2s_channel_disable(s_tx);
+        printf("ERROR StackChan audio initialization failed; playback stopped, use USB download mode to recover\n");
+        for (;;) { guard_wdt_feed(); vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+#endif
 #ifdef CONFIG_ITOFS_AUDIO_ES8388
     const int e = es8388_init(CONFIG_ITOFS_ES8388_PIN_SDA, CONFIG_ITOFS_ES8388_PIN_SCL, CONFIG_ITOFS_AUDIO_VOLUME);   // the clocks run, so the codec can lock to them
     if (e) printf("ERROR ES8388 codec %s: nothing will be heard\n", e == -1 ? "does not answer on the I2C bus" : "bus error");
@@ -239,39 +353,102 @@ static void cancel_flush(int16_t *st)
     for (int i = 0; i < 6; i++) { size_t n = 0; i2s_channel_preload_data(s_tx, st, sizeof(int16_t) * 2 * (size_t)I2S_SLICE, &n); }
     i2s_channel_enable(s_tx);
     CODEC_MUTE(1);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    stackchan_display_playing(false);
+#endif
+    printf("CANCEL: audio flushed %.1f ms after the command\n", ms(esp_timer_get_time() - s_cancel_t));
+}
+#elif defined(ITOFS_EMBEDDED)
+static void audio_mute(int muted)
+{
+    const esp_err_t error = s_audio.mute(s_audio.user, muted != 0);
+    if (error != ESP_OK) { s_cancel = 1; printf("ERROR audio mute: %s\n", esp_err_to_name(error)); }
+}
+static void cancel_flush(int16_t *st)
+{
+    (void)st;
+    const esp_err_t error = s_audio.flush(s_audio.user);
+    if (error != ESP_OK) printf("ERROR audio flush: %s\n", esp_err_to_name(error));
+    CODEC_MUTE(1);
+    s_audio.playing(s_audio.user, false);
     printf("CANCEL: audio flushed %.1f ms after the command\n", ms(esp_timer_get_time() - s_cancel_t));
 }
 #else
 static void cancel_flush(int16_t *st) { (void)st; }
 #endif
 
+/* One mono PCM output contract for both the standalone and embedded runtime. */
+static esp_err_t audio_write(const int16_t *pcm, int n, int16_t *st)
+{
+#ifdef ITOFS_EMBEDDED
+    (void)st;
+    return s_audio.write(s_audio.user, pcm, (size_t)n);
+#elif !defined(ITOFS_QEMU)
+    for (int i = 0; i < n; i++) st[2 * i] = st[2 * i + 1] = pcm[i];
+    size_t written = 0;
+    const size_t bytes = sizeof(int16_t) * 2 * (size_t)n;
+    const esp_err_t error = i2s_channel_write(s_tx, st, bytes, &written, portMAX_DELAY);
+    return error != ESP_OK ? error : written == bytes ? ESP_OK : ESP_FAIL;
+#else
+    (void)pcm; (void)n; (void)st;
+    return ESP_OK;
+#endif
+}
+
 static void play_task(void *arg)
 {
     (void)arg;
-    int16_t *st = heap_caps_malloc(sizeof(int16_t) * 2 * (size_t)I2S_SLICE + 64, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);   // one 20 ms slice
+#ifdef ITOFS_EMBEDDED
+    int16_t *st = NULL; /* The application codec accepts mono PCM directly. */
+#else
+    int16_t *st = heap_caps_malloc(sizeof(int16_t) * 2 * (size_t)I2S_SLICE + 64, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+    if (!st) { printf("ERROR no internal SRAM for audio output\n"); vTaskDelete(NULL); return; }
+#endif
     buf_t b;
     int16_t last = 0;                // the last sample handed to the I2S in this utterance
     int64_t end_us = 0;              // when the audio handed to the I2S so far has been played out (the DMA ring holds ~120 ms, and i2s_channel_write returns once the data is queued, not played)
     for (;;) {
+#ifdef ITOFS_EMBEDDED
+        if (service_stopping()) {
+            cancel_flush(st); s_playing = 0; last = 0;
+            service_checkpoint(PARK_PLAY);
+            continue;
+        }
+#endif
         int starved = 0;
         if (s_playing && xQueueReceive(s_full_q, &b, 0) != pdTRUE) {
             starved = 1;             // the queue is empty: an underrun only if the DAC has also run out of audio (checked below; found on the board: the ring made every late chunk look like a gap)
-            xQueueReceive(s_full_q, &b, portMAX_DELAY);
-        } else if (!s_playing) {
-            xQueueReceive(s_full_q, &b, portMAX_DELAY);
-        }
-        if (b.n == 0) {
-#ifndef ITOFS_QEMU
-            if (s_playing && !s_cancel && last) {          // end of the utterance: a short ramp from the last sample to zero instead of a step
-                for (int i = 0; i < TAIL_SAMPLES; i++) st[2 * i] = st[2 * i + 1] = (int16_t)((int32_t)last * (TAIL_SAMPLES - i) / TAIL_SAMPLES);
-                size_t wr = 0;
-                i2s_channel_write(s_tx, st, sizeof(int16_t) * 2 * TAIL_SAMPLES, &wr, portMAX_DELAY);
+            while (xQueueReceive(s_full_q, &b, pdMS_TO_TICKS(10)) != pdTRUE) {
+                if (service_stopping()) break;
+                if (s_cancel && s_playing) { cancel_flush(st); s_playing = 0; }
             }
+        } else if (!s_playing) {
+            if (xQueueReceive(s_full_q, &b, pdMS_TO_TICKS(20)) != pdTRUE) continue;
+        }
+        if (service_stopping()) continue;
+        if (b.job && b.job != atomic_load(&s_job_generation)) s_cancel = 1;
+        if (b.n == 0) {
+            if (s_playing && s_cancel) cancel_flush(st);
+            else if (s_playing) {
+#ifndef ITOFS_QEMU
+                if (last) {
+                    int16_t tail[TAIL_SAMPLES];
+                    for (int i = 0; i < TAIL_SAMPLES; i++) tail[i] = (int16_t)((int32_t)last * (TAIL_SAMPLES - i) / TAIL_SAMPLES);
+                    if (audio_write(tail, TAIL_SAMPLES, st) != ESP_OK) s_cancel = 1;
+                }
 #endif
-            if (s_playing) {                               // the audio handed to the I2S has played out at end_us (+ the tail ramp); then the codec is muted
+#ifdef ITOFS_EMBEDDED
+                if (s_audio.drain(s_audio.user) != ESP_OK) s_cancel = 1;
+                if (s_cancel) cancel_flush(st);
+                else { CODEC_MUTE(1); s_audio.playing(s_audio.user, false); }
+#else
                 const int64_t w = end_us + (int64_t)TAIL_SAMPLES * 1000000 / s_sr + 60000 - esp_timer_get_time();
                 if (w > 0) vTaskDelay(pdMS_TO_TICKS((w + 999) / 1000));
                 CODEC_MUTE(1);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+                stackchan_display_playing(false);
+#endif
+#endif
             }
             last = 0; s_playing = 0; xQueueSend(s_done_q, &b, portMAX_DELAY); continue;
         }
@@ -300,12 +477,29 @@ static void play_task(void *arg)
 #ifndef ITOFS_QEMU
         for (int o = 0; o < b.n && !s_cancel; o += I2S_SLICE) {
             const int m = b.n - o < I2S_SLICE ? b.n - o : I2S_SLICE;
-            for (int i = 0; i < m; i++) { st[2 * i] = b.pcm[o + i]; st[2 * i + 1] = b.pcm[o + i]; }
 #ifdef CONFIG_ITOFS_AUDIO_LOOPBACK
             if (s_lb_on) lb_play_note(b.pcm + o, m);
 #endif
-            size_t wr = 0;
-            i2s_channel_write(s_tx, st, sizeof(int16_t) * 2 * (size_t)m, &wr, portMAX_DELAY);
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+            const int64_t submit_us = s_first_i2s_submit_us ? 0 : esp_timer_get_time();
+#endif
+            const esp_err_t err = audio_write(b.pcm + o, m, st);
+            if (err != ESP_OK) {
+                printf("ERROR PCM write: %s\n", esp_err_to_name(err));
+                s_cancel = 1;
+                break;
+            }
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+            if (submit_us) {
+                s_first_i2s_submit_us = submit_us;
+#ifdef ITOFS_EMBEDDED
+                s_audio.playing(s_audio.user, true);
+#else
+                stackchan_display_playing(true);
+#endif
+            }
+#endif
+            if (b.job && b.job != atomic_load(&s_job_generation)) s_cancel = 1;
         }
         last = b.pcm[b.n - 1];
         if (s_cancel) { cancel_flush(st); s_playing = 0; }
@@ -334,9 +528,12 @@ static int speak(const int *tok, int n, int style, uint32_t seed, int play, int1
     int64_t pstart = 0, cend[NBUF]; int have_p = 0;
     long wpos = 0;
     s_cur_delay_us = 0;
-    s_cancel = 0; s_speaking = play;
+    s_cancel = s_active_job && s_active_job != atomic_load(&s_job_generation); s_speaking = play;
     int64_t t0 = esp_timer_get_time();
     s_utt_t0 = t0;
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+    s_first_i2s_submit_us = 0;
+#endif
     s3_stats_reset();
     int T = itofs_begin(&s_ctx, tok, n, style, seed);
     int64_t t1 = esp_timer_get_time();
@@ -346,9 +543,14 @@ static int speak(const int *tok, int n, int style, uint32_t seed, int play, int1
     int kch = 0;
     s_underruns = 0;
     for (;;) {
-        buf_t b = { NULL, 0 };
+        buf_t b = { NULL, 0, 0 };
         guard_wdt_feed();
-        if (play) xQueueReceive(s_free_q, &b, portMAX_DELAY);
+        if (play) {
+            while (xQueueReceive(s_free_q, &b, pdMS_TO_TICKS(20)) != pdTRUE)
+                if (service_stopping()) break;
+            if (service_stopping()) { if (b.pcm) xQueueSend(s_free_q, &b, 0); break; }
+        }
+        if (s_active_job && s_active_job != atomic_load(&s_job_generation)) s_cancel = 1;
         if (s_cancel) { if (play) xQueueSend(s_free_q, &b, portMAX_DELAY); break; }
         s_ctx.text_step = text_step_for(kch);
         const int want = chunk_frames_for(kch) * s_hop;                                  // low-latency first chunk, ramp, steady state
@@ -393,13 +595,14 @@ static int speak(const int *tok, int n, int style, uint32_t seed, int play, int1
                     S->plan_delay_ms = pl.start_delay_us / 1e3; S->plan_underruns = pl.underruns; S->plan_feasible = pl.feasible;
                 }
             }
-            b.n = got; xQueueSend(s_full_q, &b, portMAX_DELAY);
+            b.n = got; b.job = s_active_job; xQueueSend(s_full_q, &b, portMAX_DELAY);
         }
     }
-    if (play) {
-        buf_t end = { NULL, 0 };
+    if (play && !service_stopping()) {
+        buf_t end = { NULL, 0, s_active_job };
         xQueueSend(s_full_q, &end, portMAX_DELAY);
-        xQueueReceive(s_done_q, &end, portMAX_DELAY);
+        while (xQueueReceive(s_done_q, &end, pdMS_TO_TICKS(20)) != pdTRUE)
+            if (service_stopping()) break;
     }
     S->cancelled = s_cancel; s_cancel = 0; s_speaking = 0;
     if (pace && have_p) s_pace_end_us = pstart + (int64_t)pos * 1000000 / s_sr;
@@ -423,6 +626,14 @@ static void print_timing(const char *what, const stats_t *S, int n_tok, int styl
            S->compute_ms, S->compute_ms / 1000.0 / S->audio_s, s_underruns, s_delay_override_ms >= 0 ? "fixed" : "planned",
            s_delay_override_ms >= 0 ? (double)s_delay_override_ms : S->plan_delay_ms, s_delay_override_ms >= 0 || S->plan_feasible ? "" : ", model predicts underruns", s_active, s3_gemm_dual ? "full" : "row", s3_wmode_name(s3_wmode),
            s3_stats.calls, s3_stats.pf_hit, s3_stats.pf_miss + s3_stats.pf_free, S->chunks, s3_stats.wbytes / 1e6, (unsigned long)S->hash);
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+    if (s_first_i2s_submit_us) {
+        printf("I2S_START: engine begin -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_utt_t0));
+        if (s_req_tmp.t0) printf(", text received -> first PCM submission %.1f ms", ms(s_first_i2s_submit_us - s_req_tmp.t0));
+        printf(" (successful I2S API call; DMA and acoustic latency excluded) submit_us=%.0f\n",
+               (double)s_first_i2s_submit_us);
+    }
+#endif
     mem_report(what);
 }
 
@@ -475,7 +686,10 @@ static void self_test_one(const int32_t *s_st, int both, int dump)
     const uint32_t seed = (uint32_t)s_st[3], href = (uint32_t)s_st[5];
     s_ctx.act_bits = act;            // the record says which activation precision the host reference used
     int16_t *pcm = heap_caps_malloc(sizeof(int16_t) * ((size_t)nref + (size_t)s_chunk_samples), MALLOC_CAP_SPIRAM);
-    if (!pcm || n > MAX_TOKENS) { printf("SELFTEST ERROR: no memory\n"); return; }
+    if (!pcm || n > MAX_TOKENS) {
+        printf("SELFTEST ERROR: no memory or invalid token count\n");
+        s_selftest_ok = 0; s_ctx.act_bits = act_saved; heap_caps_free(pcm); return;
+    }
     for (int i = 0; i < n; i++) s_tok_buf[i] = s_st[7 + i];
     for (int pass = 0; pass < (both ? 2 : 1); pass++) {
         s3_dual_enabled = pass == 0;
@@ -998,6 +1212,39 @@ static esp_partition_mmap_handle_t s_map_h; static int s_mapped;
 static itofs_limits_t s_lim;
 static int s_sim; static double s_sim_rtf[MAX_TIERS] = { 0.9, 0.8, 0.7 };
 
+#ifdef ITOFS_EMBEDDED
+static int allocate_inference_pool(size_t extent, size_t bulk_bytes, int chunk_samples)
+{
+    const size_t weights = (extent + 64 + 63) & ~(size_t)63;
+    const size_t bulk = (bulk_bytes + 15) & ~(size_t)15;
+    const size_t pcm = ((size_t)chunk_samples * sizeof(int16_t) + 15) & ~(size_t)15;
+    const size_t bytes = (weights + bulk + NBUF * pcm + 63) & ~(size_t)63;
+    if (!s_psram_pool) {
+        if (heap_caps_get_free_size(MALLOC_CAP_SPIRAM) < bytes + 320 * 1024) return 0;
+        s_psram_pool = heap_caps_aligned_alloc(64, bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!s_psram_pool) return 0;
+        s_psram_pool_bytes = bytes;
+    }
+    if (s_psram_pool_bytes < bytes) return 0;
+    s_psram_weights_bytes = weights;
+    s_wbuf = s_psram_pool;
+    s_bulk = (uint8_t *)s_psram_pool + weights;
+    for (int i = 0; i < NBUF; i++)
+        s_pcm_buffers[i] = (int16_t *)((uint8_t *)s_bulk + bulk + (size_t)i * pcm);
+    return 1;
+}
+#else
+static int allocate_weight_copy(size_t extent, size_t bulk_bytes)
+{
+    /* Weights need one block; the bulk arena and self-test margin need total
+     * capacity. Only the allocator determines whether the aligned copy fits. */
+    const size_t need = extent + 64 + bulk_bytes + 320 * 1024;
+    if (heap_caps_get_free_size(MALLOC_CAP_SPIRAM) < need) return 0;
+    s_wbuf = heap_caps_aligned_alloc(64, extent + 64, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    return s_wbuf != NULL;
+}
+#endif
+
 static int tier_ext(const esp_partition_t *p, size_t *ext, uint32_t *id, int *has_id, int quiet)
 {
     uint8_t hdr[16];
@@ -1041,24 +1288,67 @@ static int tier_dims(int i, size_t *hb, size_t *bb, int *hop, int *sr)
     return e ? -1 : 0;
 }
 
+static int load_weight_copy(const esp_partition_t *partition, size_t extent)
+{
+#ifdef ITOFS_EMBEDDED
+    if (s_weight_copy_valid && s_weight_copy_partition == partition && s_weight_copy_extent == extent) return 1;
+    s_weight_copy_valid = 0;
+#endif
+    for (size_t offset = 0; offset < extent; offset += 65536) {
+        guard_wdt_feed();
+        const size_t bytes = extent - offset < 65536 ? extent - offset : 65536;
+        if (esp_partition_read(partition, offset, s_wbuf + offset, bytes) != ESP_OK) return -1;
+    }
+    memset(s_wbuf + extent, 0, 64);
+    const esp_err_t error = esp_cache_msync(s_wbuf, (extent + 64 + 63) & ~(size_t)63, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+#ifdef ITOFS_EMBEDDED
+    if (error != ESP_OK) return -1;
+    s_weight_copy_partition = partition;
+    s_weight_copy_extent = extent;
+    s_weight_copy_valid = 1;
+#else
+    (void)error;
+#endif
+    return 0;
+}
+
+#ifdef ITOFS_EMBEDDED
+static int retained_layout_ready(void)
+{
+    if (!s_boot_done || !s_weight_copy_valid || s_active != 0 || !s_tier[0].valid) return 0;
+    const tier_t *tier = &s_tier[0];
+    if (!tier->p || tier->p != s_weight_copy_partition || tier->ext != s_weight_copy_extent ||
+        !tier->ext || tier->ext > SIZE_MAX - 127) return 0;
+    if (!s_hot || !s_hb || s_hot_reserved < s_hb || !s_bb || s_hop <= 0 || s_sr <= 0 ||
+        s_lim.max_tokens != MAX_TOKENS || s_lim.chunk_frames != STEADY_FRAMES ||
+        s_lim.act_bits != ITOFS_ACT_BITS || s_lim.whole_text) return 0;
+    if (!s_psram_pool || s_psram_weights_bytes != ((tier->ext + 127) & ~(size_t)63) ||
+        s_psram_weights_bytes >= s_psram_pool_bytes || s_bb > SIZE_MAX - 15 ||
+        (size_t)s_hop > (SIZE_MAX - 15) / (STEADY_FRAMES * sizeof(int16_t))) return 0;
+    const size_t scratch = s_psram_pool_bytes - s_psram_weights_bytes;
+    const size_t bulk = (s_bb + 15) & ~(size_t)15;
+    const size_t pcm = ((size_t)STEADY_FRAMES * s_hop * sizeof(int16_t) + 15) & ~(size_t)15;
+    return bulk <= scratch && pcm <= (scratch - bulk) / NBUF;
+}
+#endif
+
 // make set i the active one: weights into PSRAM (or the flash mapping), model parsed, engine context initialised over the shared arenas
 static int activate_tier(int i)
 {
+#ifdef ITOFS_EMBEDDED
+    if (!s_wbuf) { printf("ERROR no reserved PSRAM weights workspace\n"); return -1; }
+#endif
     tier_t *T = &s_tier[i];
     s3_stream_reset();                                    // weight staging idle before the weights under it change
     const void *blob;
     int64_t t0 = esp_timer_get_time();
     if (s_mapped) { esp_partition_munmap(s_map_h); s_mapped = 0; }
     if (s_wbuf) {
-        for (size_t o = 0; o < T->ext; o += 65536) {      // flash read API in 64 KB pieces
-            guard_wdt_feed();
-            size_t n = T->ext - o < 65536 ? T->ext - o : 65536;
-            if (esp_partition_read(T->p, o, s_wbuf + o, n) != ESP_OK) { printf("ERROR reading weights '%s'\n", T->p->label); return -1; }
-        }
-        memset(s_wbuf + T->ext, 0, 64);
-        esp_cache_msync(s_wbuf, (T->ext + 64 + 63) & ~(size_t)63, ESP_CACHE_MSYNC_FLAG_DIR_C2M);   // GDMA staging reads PSRAM directly
+        const int reused = load_weight_copy(T->p, T->ext);
+        if (reused < 0) { printf("ERROR loading weights '%s'\n", T->p->label); return -1; }
         blob = s_wbuf;
-        printf("weights: set %d ('%s'): %u bytes copied flash -> PSRAM in %.0f ms\n", i, T->p->label, (unsigned)T->ext, ms(esp_timer_get_time() - t0));
+        printf("weights: set %d ('%s'): %u bytes %s in %.0f ms\n", i, T->p->label, (unsigned)T->ext,
+               reused ? "retained in PSRAM" : "copied flash -> PSRAM", ms(esp_timer_get_time() - t0));
     } else {
         const void *map;
         if (esp_partition_mmap(T->p, 0, (T->ext + 0xFFFF) & ~(size_t)0xFFFF, ESP_PARTITION_MMAP_DATA, &map, &s_map_h) != ESP_OK) { printf("ERROR mmap weights\n"); return -1; }
@@ -1067,7 +1357,18 @@ static int activate_tier(int i)
     }
     int e = itofs_model_init(&s_model, blob, T->ext);
     if (e) { printf("ERROR model: %s\n", itofs_strerror(e)); return -1; }
-    if ((e = itofs_init(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb))) { printf("ERROR engine init: %s\n", itofs_strerror(e)); return -1; }
+#ifdef ITOFS_EMBEDDED
+    const size_t cache_bytes = itofs_init_cache_bytes(&s_model);
+    if (!s_init_cache && cache_bytes) {
+        s_init_cache = heap_caps_calloc(1, cache_bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (s_init_cache) s_init_cache_bytes = cache_bytes;
+    }
+    void *cache = cache_bytes && s_init_cache_bytes >= cache_bytes ? s_init_cache : NULL;
+    e = itofs_init_cached(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb, cache, s_init_cache_bytes);
+#else
+    e = itofs_init(&s_ctx, &s_model, &s_lim, s_hot, s_hb, s_bulk, s_bb);
+#endif
+    if (e) { printf("ERROR engine init: %s\n", itofs_strerror(e)); return -1; }
     s_ctx.qgemm = s3_qgemm;
     s_ctx.qgemm4 = s3_qgemm4;
     s_ctx.par = s3_par;                                   // row-parallel float work on both cores (bit-identical to one core)
@@ -1286,8 +1587,13 @@ static void repeat_demos(int n, int only)
 // It runs in its own task (stack in PSRAM, priority below the synthesis) and hands the utterances to the synthesis task through the
 // request queue; while utterance k is synthesized (the synthesis task waits for the player whenever it is ahead) it prepares k + 1.
 // ------------------------------------------------------------------------------------------------------------------
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+extern const char phrases_start[] asm("_binary_stackchan_phrases_txt_start");
+extern const char phrases_end[] asm("_binary_stackchan_phrases_txt_end");
+#else
 extern const char phrases_start[] asm("_binary_phrases_txt_start");
 extern const char phrases_end[] asm("_binary_phrases_txt_end");
+#endif
 #ifdef CONFIG_ITOFS_FE_FAST_FIRST
 static int s_fe_fast_first = 1;         // `fastfirst 0|1` changes it at run time
 #else
@@ -1298,14 +1604,21 @@ static int s_fe_fast_first = 0;
 #endif
 #define FE_TEXT_MAX 4096
 enum { FE_SPEAK = 0, FE_SILENT = 1, FE_IDS = 2, FE_PHRASES = 3, FE_PHRASES_SILENT = 4, FE_PACED = 5, FE_AUTO = 6 };
-typedef struct { int mode; int64_t t_arrive; } fejob_t;
+typedef struct { int mode; int64_t t_arrive; uint32_t job; } fejob_t;
 static QueueHandle_t s_fe_q;
-static volatile int s_fe_busy, s_fe_abort, s_fe_up;
+static atomic_uint s_fe_job;
+static atomic_int s_fe_abort, s_fe_up;
+static int fe_busy(void) { return atomic_load(&s_fe_job) != 0; }
+static void fe_release(uint32_t job)
+{
+    atomic_compare_exchange_strong(&s_fe_job, &job, 0);
+}
 static char *s_fe_text;                 // PSRAM: the text of the current job
 static itofe_stream *s_fe_st;
 static req_t *s_fe_req;
 static StaticTask_t s_fe_tcb;
 static TaskHandle_t s_fe_h;
+static StackType_t *s_fe_stack;
 static int16_t *s_text_pcm;             // PSRAM: PCM of the silent (compute-only) text utterances
 
 #ifndef CONFIG_ITOFS_AUTOTEST
@@ -1325,7 +1638,7 @@ static void fe_run_text(const char *text, int mode, int64_t t_arrive, int *seed_
         const int n = itofe_stream_next(s_fe_st, buf, sizeof buf);
         const int64_t b = esp_timer_get_time();
         if (n < 0) { printf("ERROR front end: %d\n", n); return; }
-        if (n == 0 || s_fe_abort) return;
+        if (n == 0 || s_fe_abort || s_fe_req->job != atomic_load(&s_job_generation)) return;
         printf("FE utt %d: %d tokens in %.1f ms (%.1f ms after the text arrived), ids fnv32 %08lx\n", k, n, ms(b - a), ms(b - t_arrive), (unsigned long)fnv_ids(buf, n));
         if (mode == FE_IDS) {
             printf("IDS ");
@@ -1339,7 +1652,7 @@ static void fe_run_text(const char *text, int mode, int64_t t_arrive, int *seed_
         s_fe_req->n = nt;
         s_fe_req->seed = (mode == FE_SILENT || mode == FE_PACED) ? 1u + (uint32_t)(*seed_ctr)++ : 0;
         s_fe_req->t0 = k == 0 ? t_arrive : 0;
-        xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);       // blocks while the synthesis queue is full: the front end runs at most two utterances ahead
+        request_send(s_fe_req);       // blocks while the synthesis queue is full: the front end runs at most two utterances ahead
     }
 }
 
@@ -1406,28 +1719,40 @@ static void fe_auto_run(void)
             s_fe_req->kind = 21; s_fe_req->n = nt; s_fe_req->seed = 1u + (uint32_t)k;
             s_fe_req->t0 = k == 0 ? t_arrive : 0; s_fe_req->flags = n > MAX_TOKENS ? 2 : 0;
             s_fe_req->aux[0] = ti; s_fe_req->aux[1] = (uint32_t)k; s_fe_req->aux[2] = (uint32_t)(b - a); s_fe_req->aux[3] = fnv_ids(buf, n);
-            xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);
+            request_send(s_fe_req);
         }
         s_at_sent++;
-        s_fe_req->kind = 23; xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);
+        s_fe_req->kind = 23; request_send(s_fe_req);
     }
-    s_fe_req->kind = 22; xQueueSend(s_req_q, s_fe_req, portMAX_DELAY);
+    s_fe_req->kind = 22; request_send(s_fe_req);
 }
 #endif
 
 static void fe_task(void *arg)
 {
     (void)arg;
+    service_checkpoint(PARK_FE);
     const int64_t t0 = esp_timer_get_time();
-    const int r = itofe_idf_init();
-    if (r) { printf("ERROR front end init: %d\n", r); vTaskDelete(NULL); }
+    int r;
+    while ((r = itofe_idf_init()) != 0) {
+        printf("ERROR front end init: %d\n", r);
+#ifdef ITOFS_EMBEDDED
+        atomic_store(&s_service_up, 0); request_stop();
+        service_checkpoint(PARK_FE);
+#else
+        vTaskDelete(NULL); return;
+#endif
+    }
     printf("FE ready: init %.1f ms, espeak-ng data %u KB in flash, work buffers %u KB PSRAM, stack %u KB (PSRAM)\n", ms(esp_timer_get_time() - t0),
            (unsigned)(itofe_idf_blob_bytes() / 1024), (unsigned)(itofe_work_bytes() / 1024), FE_STACK_BYTES / 1024);
     s_fe_up = 1;
     for (;;) {
+        service_checkpoint(PARK_FE);
         fejob_t j;
-        if (xQueueReceive(s_fe_q, &j, pdMS_TO_TICKS(2000)) != pdTRUE) continue;
+        if (xQueueReceive(s_fe_q, &j, pdMS_TO_TICKS(20)) != pdTRUE) continue;
+        if (j.job != atomic_load(&s_job_generation)) { fe_release(j.job); continue; }
         s_fe_abort = 0;
+        s_fe_req->job = j.job;
         int seed_ctr = 0;
         if (j.mode == FE_AUTO) {
             fe_auto_run();
@@ -1452,7 +1777,12 @@ static void fe_task(void *arg)
         printf("FE done (stack high-water: %u bytes of %u; free PSRAM %u KB (min %u), free internal SRAM %u KB (min %u))\n", (unsigned)(FE_STACK_BYTES - uxTaskGetStackHighWaterMark(NULL) * sizeof(StackType_t)), FE_STACK_BYTES,
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM) / 1024),
                (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024), (unsigned)(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024));
-        s_fe_busy = 0;
+        if (j.mode == FE_IDS || s_fe_abort || j.job != atomic_load(&s_job_generation)) fe_release(j.job);
+        else if (j.mode != FE_AUTO) {
+            s_fe_req->kind = 24; s_fe_req->job = j.job;
+            request_send(s_fe_req);
+            if (j.job != atomic_load(&s_job_generation)) fe_release(j.job);
+        }
         if (j.mode == FE_IDS) printf("READY\n");
     }
 }
@@ -1521,8 +1851,8 @@ static void autotest_begin(void)
     b.uptime_ms = (uint32_t)(esp_timer_get_time() / 1000); b.texts_fnv = s_at_fnv;
     at_append(&b);
     printf("AUTOTEST: boot %u, texts %u..%u of %u, set %d, %s split, reset %u\n", (unsigned)boots, (unsigned)s_at_start, (unsigned)s_at_end, (unsigned)s_at_n, s_active, s3_gemm_dual ? "full" : "row", (unsigned)b.reset_reason);
-    s_at_on = 1; s_fe_busy = 1; s_at_sent = s_at_done = 0;
-    fejob_t j = { FE_AUTO, esp_timer_get_time() };
+    s_at_on = 1; atomic_store(&s_fe_job, atomic_load(&s_job_generation)); s_at_sent = s_at_done = 0;
+    fejob_t j = { FE_AUTO, esp_timer_get_time(), atomic_load(&s_job_generation) };
     xQueueSend(s_fe_q, &j, 0);
 }
 
@@ -1554,7 +1884,7 @@ static void at_finish(void)
         d.texts_fnv = s_at_fnv;
         at_append(&d);
     }
-    s_at_on = 0; s_fe_busy = 0;
+    s_at_on = 0; fe_release(s_req_tmp.job);
 #ifdef CONFIG_ITOFS_AUTOTEST_SELFRESET
     if (!last) {                                                       // the next boot of the reboot loop
         vTaskDelay(pdMS_TO_TICKS(200));
@@ -1569,49 +1899,73 @@ static void at_finish(void)
 }
 #endif
 
-static void fe_start(void)
+static int fe_start(void)
 {
-    s_fe_q = xQueueCreate(1, sizeof(fejob_t));
-    s_fe_text = heap_caps_malloc(FE_TEXT_MAX, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    s_fe_st = heap_caps_malloc(sizeof(itofe_stream), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    s_fe_req = heap_caps_malloc(sizeof(req_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        StackType_t *stk = heap_caps_malloc(FE_STACK_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    if (!s_fe_q || !s_fe_text || !s_fe_st || !s_fe_req || !stk) { printf("ERROR front end: no memory\n"); return; }
-    s_fe_h = xTaskCreateStaticPinnedToCore(fe_task, "itofs_fe", FE_STACK_BYTES / sizeof(StackType_t), NULL, 3, stk, &s_fe_tcb, 0);
+    if (s_fe_h) return 0;
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+    const BaseType_t frontend_core = 1;
+#else
+    const BaseType_t frontend_core = 0;
+#endif
+    if (!s_fe_q) s_fe_q = xQueueCreate(1, sizeof(fejob_t));
+    if (!s_fe_text) s_fe_text = heap_caps_malloc(FE_TEXT_MAX, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s_fe_st) s_fe_st = heap_caps_malloc(sizeof(itofe_stream), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s_fe_req) s_fe_req = heap_caps_malloc(sizeof(req_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s_fe_stack) s_fe_stack = heap_caps_malloc(FE_STACK_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s_fe_q || !s_fe_text || !s_fe_st || !s_fe_req || !s_fe_stack) { printf("ERROR front end: no memory\n"); return -1; }
+    s_fe_h = xTaskCreateStaticPinnedToCore(fe_task, "itofs_fe", FE_STACK_BYTES / sizeof(StackType_t), NULL, 3, s_fe_stack, &s_fe_tcb, frontend_core);
+#ifdef ITOFS_EMBEDDED
+    if (s_fe_h) s_workers |= PARK_FE;
+#endif
+    return s_fe_h ? 0 : -1;
 }
 
 // submit a text job (from the console or the boot demo); text == NULL: the stored phrase list
 static int fe_submit(const char *text, int mode)
 {
     if (!s_fe_up) { printf("ERROR front end not ready\n"); return -1; }
-    if (s_fe_busy) { printf("ERROR front end busy (cancel first)\n"); return -1; }
     if (text) {
         size_t l = strlen(text);
         if (l >= FE_TEXT_MAX) { printf("ERROR text longer than %d bytes\n", FE_TEXT_MAX - 1); return -1; }
-        memcpy(s_fe_text, text, l + 1);
     }
-    fejob_t j = { mode, esp_timer_get_time() };
-    s_fe_busy = 1;
+    const uint32_t job = atomic_load(&s_job_generation);
+    unsigned expected = 0;
+    if (!atomic_compare_exchange_strong(&s_fe_job, &expected, job)) {
+        printf("ERROR front end busy (cancel first)\n"); return -1;
+    }
+    if (text) memcpy(s_fe_text, text, strlen(text) + 1);
+    fejob_t j = { mode, esp_timer_get_time(), job };
     printf("OK text queued (%u bytes)\n", text ? (unsigned)strlen(text) : (unsigned)(phrases_end - phrases_start));
-    xQueueSend(s_fe_q, &j, 0);
+    if (xQueueSend(s_fe_q, &j, 0) != pdTRUE) {
+        fe_release(job); printf("ERROR front end queue full\n"); return -1;
+    }
     return 0;
 }
 #endif
 
 static void halt(void);
-static void synth_task(void *arg)
+static int synth_initialize(void)
 {
-    (void)arg;
     int first = -1;
     for (int i = 0; i < MAX_TIERS && first < 0; i++) if (s_tier[i].valid) first = i;
-    if (first < 0 || activate_tier(first)) { printf("ERROR no usable weight set\n"); halt(); }
+    if (first < 0 || activate_tier(first)) { printf("ERROR no usable weight set\n"); return -1; }
     split_apply(s_plan);                 // the supply test (if due) runs on the first weight set, before anything else uses both cores
     self_test(0);
     if (!s_selftest_ok) { printf("WARNING: the first weight set FAILED its self-test and is excluded; the other sets are tried below\n"); s_tier[first].valid = 0; }
 #ifndef ITOFS_QEMU
+#if defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+    if (set_wmode(3)) {
+        printf("WARNING: StackChan gdma+prefetch unavailable; benchmarking available staging modes\n");
+        board_bench();
+    } else {
+        printf("BOOT: StackChan uses measured gdma+prefetch; boot benchmark skipped (run `bench` for diagnostics)\n");
+    }
+#else
     board_bench();                   // hardware: measure, keep the fastest weight-staging mode (QEMU: `bench` command)
 #endif
+#endif
     tiers_select();
+    if (s_selected < 0 || !s_selftest_ok) return -1;
 #ifdef CONFIG_ITOFS_AUTOTEST
     autotest_begin();
 #endif
@@ -1627,10 +1981,46 @@ static void synth_task(void *arg)
     fe_submit(NULL, FE_PHRASES);
     #endif
 #endif
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    printf("READY (StackChan, serial: text <English text> | volume <0-100> | cancel | status | help)\n");
+#else
     printf("READY (BOOT button = demos, serial: say <ids> | style <k> | demo [k] | test | stats | tier [k] | status | help)\n");
+#endif
+    return 0;
+}
+
+static void synth_task(void *arg)
+{
+    (void)arg;
+#ifndef ITOFS_EMBEDDED
+    if (synth_initialize()) halt();
+#endif
     for (;;) {
-        while (xQueueReceive(s_req_q, &s_req_tmp, pdMS_TO_TICKS(1000)) != pdTRUE) guard_wdt_feed();      // idle: the watchdog is fed once a second
+#ifdef ITOFS_EMBEDDED
+        if (service_stopping()) {
+            if (s3_kernels_park()) atomic_store(&s_park_error, ESP_FAIL);
+            service_checkpoint(PARK_SYNTH);
+        }
+        if (!s_boot_done) {
+            if (synth_initialize()) {
+                atomic_store(&s_service_up, 0); request_stop(); continue;
+            }
+            s_boot_done = 1;
+        }
+#endif
+        if (xQueueReceive(s_req_q, &s_req_tmp, pdMS_TO_TICKS(20)) != pdTRUE) { guard_wdt_feed(); continue; }
+        if (service_stopping()) continue;      // idle: the watchdog is fed once a second
         guard_wdt_feed();
+        if (s_req_tmp.job && s_req_tmp.job != atomic_load(&s_job_generation)) {
+#ifdef CONFIG_ITOFS_FRONTEND
+            if (s_req_tmp.kind == 24) fe_release(s_req_tmp.job);
+#endif
+            continue;
+        }
+        s_active_job = (s_req_tmp.kind == 0 || s_req_tmp.kind == 20 || s_req_tmp.kind == 21) ? s_req_tmp.job : 0;
+#ifdef CONFIG_ITOFS_FRONTEND
+        if (s_req_tmp.kind == 24) { fe_release(s_req_tmp.job); printf("READY\n"); continue; }
+#endif
         if (s_req_tmp.kind == 0) {
             for (int i = 0; i < s_req_tmp.n; i++) s_tok_buf[i] = s_req_tmp.tok[i];
             stats_t S;
@@ -1740,7 +2130,11 @@ static void synth_task(void *arg)
             s_ctx.act_bits = s_req_tmp.n;
             printf("OK %d-bit activations for the int8-weight layers\n", s_ctx.act_bits);
         }
-        if (s_req_tmp.kind != 21 && s_req_tmp.kind != 23) printf("READY\n");
+        if (s_req_tmp.kind != 21 && s_req_tmp.kind != 23
+#ifdef CONFIG_ITOFS_FRONTEND
+            && !fe_busy()
+#endif
+        ) printf("READY\n");
     }
 }
 
@@ -1749,8 +2143,19 @@ static void synth_task(void *arg)
 // ------------------------------------------------------------------------------------------------------------------
 static req_t s_in_req;
 
+static void cancel_job(void)
+{
+    atomic_fetch_add(&s_job_generation, 1);
+#ifdef CONFIG_ITOFS_FRONTEND
+    s_fe_abort = 1;
+#endif
+    s_cancel_t = esp_timer_get_time();
+    if (s_speaking) s_cancel = 1;
+}
+
 static void handle_line(char *line)
 {
+    s_in_req.job = atomic_load(&s_job_generation);
     while (*line == ' ' || *line == '\t') line++;
     if (!strncmp(line, "say", 3)) {
         char *p = line + 3;
@@ -1766,7 +2171,7 @@ static void handle_line(char *line)
         if (n == 0) { printf("ERROR no tokens\n"); return; }
         s_in_req.kind = 0; s_in_req.n = n;
         printf("OK %d tokens queued\n", n);
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
 #ifdef CONFIG_ITOFS_FRONTEND
     } else if (!strncmp(line, "text", 4) && (line[4] == ' ' || line[4] == 'q' || line[4] == 'p' || line[4] == 0)) {      // text <string> | textq <string> | textp <string>: front end on the chip, then speak / compute only / compute against an emulated playout clock
         const int q = line[4] == 'q' || line[4] == 'p';
@@ -1782,7 +2187,7 @@ static void handle_line(char *line)
     } else if (!strncmp(line, "fastfirst", 9)) {       // fastfirst 0|1: speak the first sentence alone (1) or exactly the utterances of tools/say.py (0)
         s_fe_fast_first = atoi(line + 9) != 0;
         printf("OK first sentence %s\n", s_fe_fast_first ? "alone (lowest latency)" : "merged like tools/say.py");
-        s_in_req.kind = 13; xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        s_in_req.kind = 13; request_send(&s_in_req);
     } else if (!strncmp(line, "phrases", 7)) {       // phrases [q]: speak the phrase list stored in flash (main/phrases.txt); q: compute only
         fe_submit(NULL, strchr(line + 7, 'q') ? FE_PHRASES_SILENT : FE_PHRASES);
 #endif
@@ -1790,27 +2195,24 @@ static void handle_line(char *line)
         int k = atoi(line + 5);
         if (k < 0 || k >= s_model.n_styles) { printf("ERROR style must be 0-%d\n", s_model.n_styles - 1); return; }
         s_in_req.kind = 3; s_in_req.n = k;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "act", 3)) {
         int b = atoi(line + 3);
         if (b != 8 && b != 16) { printf("ERROR act must be 8 or 16\n"); return; }
         s_in_req.kind = 4; s_in_req.n = b;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "demo", 4)) {
         s_in_req.kind = 1; s_in_req.n = line[4] ? atoi(line + 4) : -1;
         if (s_in_req.n >= s_ndemo) s_in_req.n = -1;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "test", 4)) {
         s_in_req.kind = 2;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "stats", 5)) {
         mem_report("now");
     } else if (!strncmp(line, "cancel", 6)) {        // handled here, not by the synthesis task: it is busy with the utterance being cancelled
-#ifdef CONFIG_ITOFS_FRONTEND
-        s_fe_abort = 1;
-#endif
-        if (s_speaking) { s_cancel_t = esp_timer_get_time(); s_cancel = 1; printf("OK cancel\n"); }
-        else printf("OK nothing to cancel\n");
+        cancel_job();
+        printf("OK cancel\n");
     } else if (!strncmp(line, "equiv", 5)) {         // equiv: show which sets are validated by ear; equiv light on|off: approve the light sets of every voice (stored in NVS), then measure again
         const char *a = line + 5;
         while (*a == ' ') a++;
@@ -1819,20 +2221,28 @@ static void handle_line(char *line)
         else if (!strncmp(a, "light on", 8)) s_in_req.n = 1;
         else if (!strncmp(a, "light off", 9)) s_in_req.n = 0;
         else { printf("ERROR equiv [light on|off]\n"); return; }
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "split", 5)) {         // split: show; split auto|row|full: set the preference (stored in NVS)
         const char *a = line + 5;
         while (*a == ' ') a++;
         if (!*a) split_print();
         else if (!strncmp(a, "auto", 4) || !strncmp(a, "row", 3) || !strncmp(a, "full", 4)) {
             s_in_req.kind = 15; s_in_req.n = a[0] == 'a' ? ITOFS_PREF_AUTO : a[0] == 'r' ? ITOFS_PREF_ROW : ITOFS_PREF_FULL;
-            xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+            request_send(&s_in_req);
         } else printf("ERROR split auto|row|full\n");
-#ifdef CONFIG_ITOFS_AUDIO_ES8388
-    } else if (!strncmp(line, "volume", 6)) {         // volume <0-100>: codec output volume in percent (91 = 0 dB, 100 = +4.5 dB); 0 mutes the DAC
+#if defined(CONFIG_ITOFS_AUDIO_ES8388) || defined(CONFIG_ITOFS_AUDIO_STACKCHAN) || defined(ITOFS_EMBEDDED)
+    } else if (!strncmp(line, "volume", 6)) {         // codec output level in percent; zero keeps the amplifier muted
         const int v = atoi(line + 6);
         if (v < 0 || v > 100 || !line[6]) { printf("ERROR volume 0-100\n"); return; }
+#ifdef ITOFS_EMBEDDED
+        const esp_err_t error = s_audio.set_volume(s_audio.user, v);
+        if (error != ESP_OK) { cancel_job(); printf("ERROR volume: %s\n", esp_err_to_name(error)); return; }
+#elif defined(CONFIG_ITOFS_AUDIO_STACKCHAN)
+        const esp_err_t error = stackchan_audio_set_volume(v);
+        if (error != ESP_OK) { s_cancel = 1; printf("ERROR volume: %s\n", esp_err_to_name(error)); return; }
+#else
         es8388_set_volume_percent(v);                // 0 is a true mute that utterances do not lift (the codec's volume register alone only reaches -45 dB)
+#endif
         printf("OK volume %d\n", v);
 #endif
 #ifdef CONFIG_ITOFS_AUDIO_LOOPBACK
@@ -1840,7 +2250,7 @@ static void handle_line(char *line)
         char *e; const long k = strtol(line + 8, &e, 10);
         if (k < 0 || k >= s_ndemo) { printf("ERROR loopback <demo 0-%d> [dump]\n", s_ndemo - 1); return; }
         s_in_req.kind = 17; s_in_req.n = (int)k | (strstr(e, "dump") ? 256 : 0);
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "micsel", 6)) {        // micsel 0-3: the codec's input (single-ended pair 1 or 2, differential pair 1 or 2)
         s_mic_sel = atoi(line + 6) & 3; printf("OK input pair %d (applies to the next loopback)\n", s_mic_sel);
     } else if (!strncmp(line, "micgain", 7)) {       // micgain 0-8: PGA gain in steps of 3 dB
@@ -1850,7 +2260,7 @@ static void handle_line(char *line)
         const int n = atoi(line + 5);
         if (n < 2 || n > STEADY_FRAMES) { printf("ERROR chunk 2-%d\n", STEADY_FRAMES); return; }
         s_in_req.kind = 18; s_in_req.n = n;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "cores", 5)) {           // cores 1|2: one core for everything, or both (the split decides the GEMM); for measurement
         s3_dual_enabled = atoi(line + 5) != 1; printf("OK %d core%s\n", s3_dual_enabled ? 2 : 1, s3_dual_enabled ? "s" : "");
     } else if (!strncmp(line, "trace", 5)) {           // trace 0|1: print the time of every chunk
@@ -1860,7 +2270,7 @@ static void handle_line(char *line)
         const long k = strtol(e, NULL, 10);
         if (n < 1 || n > 1000) { printf("ERROR rep <n 1-1000> [demo]\n"); return; }
         s_in_req.kind = 14; s_in_req.n = (int)(n << 8) | (*e && k >= 0 && k < s_ndemo ? (int)k + 1 : 0);
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "reboot", 6)) {
         printf("rebooting\n");
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -1868,48 +2278,48 @@ static void handle_line(char *line)
 #ifdef ITOFS_INJECT_HANG
     } else if (!strncmp(line, "hang", 4)) {
         s_in_req.kind = 16; s_in_req.n = strstr(line, "irq") != NULL;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
 #endif
     } else if (!strncmp(line, "bench", 5)) {
         s_in_req.kind = 5;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
 #ifdef ITOFS_ICPROF
     } else if (!strncmp(line, "icprof", 6)) {
         s_in_req.kind = 7; s_in_req.n = atoi(line + 6);     // "icprof q" would be 0; "icprof 1" = quick (schedule 0 only: 1 core + 2 cores serialised)
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
 #endif
     } else if (!strncmp(line, "tier", 4)) {          // tier: status; tier <k>: activate weight set k
         const char *a = line + 4;
         while (*a == ' ') a++;
         s_in_req.kind = 9; s_in_req.n = *a ? atoi(a) : -1;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "status", 6)) {
         s_in_req.kind = 11;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "recal", 5)) {
         s_in_req.kind = 10;
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "simtime", 7)) {       // simtime off | simtime <rtf set0> <rtf set1> <rtf set2>: timing injection for the next `recal`
         const char *a = line + 7;
         while (*a == ' ') a++;
         s_in_req.kind = 13;                         // no-op request: only so that the console client sees READY
-        if (!strncmp(a, "off", 3)) { s_sim = 0; printf("OK simulated timing off (the next recal measures)\n"); xQueueSend(s_req_q, &s_in_req, portMAX_DELAY); }
+        if (!strncmp(a, "off", 3)) { s_sim = 0; printf("OK simulated timing off (the next recal measures)\n"); request_send(&s_in_req); }
         else {
             char *e1, *e2; double r0 = strtod(a, &e1), r1 = strtod(e1, &e2), r2 = strtod(e2, NULL);
             if (e1 == a || r0 <= 0 || r1 <= 0 || r2 <= 0) { printf("ERROR simtime needs three positive RTFs: simtime 0.9 0.8 0.7\n"); return; }
             s_sim = 1; s_sim_rtf[0] = r0; s_sim_rtf[1] = r1; s_sim_rtf[2] = r2;
             printf("OK simulated timing on: set RTFs %.3f %.3f %.3f (the next recal uses them instead of the clock)\n", r0, r1, r2);
-            xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+            request_send(&s_in_req);
         }
     } else if (!strncmp(line, "unpack", 6)) {       // unpack pie | c: int4 row unpack by the PIE kernel or the C code (same results; for measurement)
         const char *a = line + 6;
         while (*a == ' ') a++;
         if (!strncmp(a, "c", 1)) { s3_w4_pie = 0; printf("OK int4 unpack: C code\n"); }
         else { s3_w4_pie = 1; printf("OK int4 unpack: PIE kernel (unchecked if the boot check failed!)\n"); }
-        s_in_req.kind = 13; xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        s_in_req.kind = 13; request_send(&s_in_req);
     } else if (!strncmp(line, "first", 5)) {
         s_in_req.kind = 8; s_in_req.n = atoi(line + 5);
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (!strncmp(line, "delay", 5)) {
         if (!strncmp(line + 5, " auto", 5)) { s_delay_override_ms = -1; printf("OK start delay planned per utterance\n"); }
         else {
@@ -1918,10 +2328,10 @@ static void handle_line(char *line)
             if (d > (int)(PLAN_MAX_DELAY_US / 1000)) d = (int)(PLAN_MAX_DELAY_US / 1000);   // a longer hold would starve the watchdog (the synthesis waits for the player's buffers)
             s_delay_override_ms = d; printf("OK start delay fixed at %d ms (at most %d)\n", d, (int)(PLAN_MAX_DELAY_US / 1000));
         }
-        s_in_req.kind = 13; xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        s_in_req.kind = 13; request_send(&s_in_req);
     } else if (!strncmp(line, "wmode", 5)) {
         s_in_req.kind = 6; s_in_req.n = atoi(line + 5);
-        xQueueSend(s_req_q, &s_in_req, portMAX_DELAY);
+        request_send(&s_in_req);
     } else if (line[0]) {
         printf("commands: say <comma-separated token ids> | "
 #ifdef CONFIG_ITOFS_FRONTEND
@@ -1935,21 +2345,38 @@ static void handle_line(char *line)
 static void console_task(void *arg)
 {
     (void)arg;
+#ifdef ITOFS_EMBEDDED
+    static EXT_RAM_BSS_ATTR char line[4096];
+#else
     static char line[4096];
+#endif
     int len = 0;
     uint8_t ch[64];
     for (;;) {
+#if defined(ITOFS_EMBEDDED) && defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG)
+        int n = 0;
+#else
         int n = uart_read_bytes(UART_NUM_0, ch, sizeof ch, pdMS_TO_TICKS(20));
+#endif
 #ifndef ITOFS_QEMU
         if (n <= 0) {            // found on the board: with only the native USB port connected the commands never arrived; read the USB-Serial/JTAG FIFO as well
             n = 0;
             while (n < (int)sizeof ch && usb_serial_jtag_ll_rxfifo_data_available()) n += usb_serial_jtag_ll_read_rxfifo(ch + n, sizeof ch - n);
         }
 #endif
+#if defined(ITOFS_EMBEDDED) && defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG)
+        if (n == 0) { vTaskDelay(pdMS_TO_TICKS(20)); continue; }
+#endif
         for (int i = 0; i < n; i++) {
             if (ch[i] == '\n' || ch[i] == '\r') {
                 line[len] = 0;
-                if (len) handle_line(line);
+                if (len) {
+#ifdef ITOFS_EMBEDDED
+                    itofs_service_command(line);
+#else
+                    handle_line(line);
+#endif
+                }
                 len = 0;
             } else if (len < (int)sizeof line - 1) {
                 line[len++] = (char)ch[i];
@@ -1958,6 +2385,7 @@ static void console_task(void *arg)
     }
 }
 
+#if !defined(CONFIG_ITOFS_AUDIO_STACKCHAN) && !defined(ITOFS_EMBEDDED)
 static void button_task(void *arg)
 {
     (void)arg;
@@ -1973,13 +2401,14 @@ static void button_task(void *arg)
         vTaskDelay(pdMS_TO_TICKS(30));
     }
 }
+#endif
 
 // ------------------------------------------------------------------------------------------------------------------
 // boot
 // ------------------------------------------------------------------------------------------------------------------
 static void halt(void) { for (;;) vTaskDelay(1000); }
 
-void app_main(void)
+static esp_err_t runtime_start(void)
 {
 #if defined(CONFIG_ITOFS_AUTOTEST) && defined(CONFIG_ITOFS_AUTOTEST_QUIET)
     {   // stand-alone test: nothing is written to the console (stdout of all tasks created from here on goes nowhere) until the run is over
@@ -1990,17 +2419,46 @@ void app_main(void)
     }
 #endif
     printf("\n==== ItoFS TTS on ESP32-S3 ====\n");
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    if (stackchan_audio_prepare() != ESP_OK) return ESP_FAIL;
+#endif
     guard_wdt_arm(WDT_RUN_MS);
+#ifdef ITOFS_EMBEDDED
+    if (!s_guard_loaded) {
+#endif
     {   // GEMM split: the stored verdict and the evidence of the reset that led here (see itofs_split.h); the row split runs until the supply test has passed
         const itofs_rst_t rst = guard_reset_class(&s_rst_name);
         if (guard_rec_load(&s_split)) { itofs_split_default(&s_split, SPLIT_POLICY); printf("SPLIT: no valid record in NVS, starting a new one (policy %s)\n", itofs_split_pref_name(SPLIT_POLICY)); }
+#ifdef ITOFS_EMBEDDED
+        /* Apply reset evidence under the stored policy before selecting this
+         * profile. A policy change must not clear a failed-full verdict. */
+        s_plan = itofs_split_boot(&s_split, s_split.policy, rst);
+        s_split.policy = ITOFS_PREF_ROW; s_split.pref = ITOFS_PREF_ROW;
+        s_split.testing = 0; s_split.full_active = 0;
+        s_plan.test = 0; s_plan.full = 0; s_plan.save = 1;
+#else
         s_plan = itofs_split_boot(&s_split, SPLIT_POLICY, rst);
+#endif
         { uint8_t a = 0; if (!guard_u8_load(NVS_KEY_APPROVE, &a)) s_approve_nvs = a & ITOFS_APPROVE_LIGHT; }
         s3_gemm_dual = 0;
     }
+#ifdef ITOFS_EMBEDDED
+        s_guard_loaded = 1;
+    }
+#endif
     int nvalid = 0, first = -1;
     size_t max_ext = 0;
+#ifdef ITOFS_EMBEDDED
+    if (retained_layout_ready()) {
+        first = s_active;
+        max_ext = s_weight_copy_extent;
+        printf("weights: retained layout for set %d\n", s_active);
+    } else {
+#endif
     for (int i = 0; i < MAX_TIERS; i++) {
+#ifdef ITOFS_EMBEDDED
+        if (i > 0) continue;
+#endif
         tier_t *T = &s_tier[i];
         T->p = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, (esp_partition_subtype_t)(0x40 + i), s_tier_label[i]);
         if (!T->p) { if (i == 0) printf("ERROR no 'weights' partition\n"); continue; }
@@ -2009,7 +2467,7 @@ void app_main(void)
         if (first < 0) first = i;
         if (T->ext > max_ext) max_ext = T->ext;
     }
-    if (!nvalid) halt();
+    if (!nvalid) return ESP_ERR_NOT_FOUND;
     printf("weight sets in flash:");
     for (int i = 0; i < MAX_TIERS; i++) printf(" %d '%s' %s;", i, s_tier_label[i], s_tier[i].valid ? "present" : "absent");
     printf("\n");
@@ -2023,33 +2481,58 @@ void app_main(void)
         if (bb > s_bb) s_bb = bb;
         s_hop = hop; s_sr = sr;
     }
-    // the active set's weights live in PSRAM next to the arenas (+ margin for the self-test buffer); else they run memory-mapped from flash (slow)
-    {
-        const size_t need = max_ext + 64 + s_bb + 320 * 1024;
-        if (heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM) > need) s_wbuf = heap_caps_aligned_alloc(64, max_ext + 64, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!s_wbuf) printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
+#ifdef ITOFS_EMBEDDED
     }
+#endif
+    if (!s_hb || !s_bb || !s_hop || !s_sr) return ESP_ERR_INVALID_SIZE;
     s_chunk_frames = STEADY_FRAMES;
     s_chunk_samples = s_chunk_frames * s_hop;
     s_style = demo_style[0];   // replaced by the first blob demo's style once the demos are loaded
-#ifndef ITOFS_QEMU
+#ifdef ITOFS_EMBEDDED
+    esp_err_t audio_error = ESP_OK;
+    if (!s_audio_opened) {
+        audio_error = s_audio.open(s_audio.user, s_sr);
+        if (audio_error != ESP_OK) return audio_error;
+        s_audio_opened = 1;
+    }
+    audio_error = s_audio.mute(s_audio.user, true);
+    if (audio_error != ESP_OK) return audio_error;
+#elif !defined(ITOFS_QEMU)
     i2s_setup();                     // before the arenas: DMA buffers must get internal RAM first
 #else
     printf("QEMU build: I2S disabled (audio is generated and discarded)\n");
+#endif
+    /* Keep persistent codec storage separate from inference storage. */
+#ifdef ITOFS_EMBEDDED
+    if (!allocate_inference_pool(max_ext, s_bb, s_chunk_samples)) return ESP_ERR_NO_MEM;
+#else
+    // The standalone runtime can use mapped flash when the weight copy does not fit.
+    if (!allocate_weight_copy(max_ext, s_bb))
+        printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
 #endif
     // leave room in internal RAM for the task stacks, the staging tiles and the I2S slice (about 24 KB more than the arena itself)
     const char *hot_where = "internal SRAM";
     printf("internal SRAM before the hot arena: largest free block %u KB, free %u KB\n", (unsigned)(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) >> 10),
            (unsigned)(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) >> 10));
     // the arena needs one block of its size; what is left must still hold the task stacks, the 16 KB of staging tiles and the I2S slice
+#ifdef ITOFS_EMBEDDED
+    if (s_hot && s_hot_reserved < s_hb) return ESP_ERR_INVALID_SIZE;
+    if (!s_hot) {
+        s_hot = heap_caps_aligned_alloc(16, s_hb, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+        if (s_hot) s_hot_reserved = s_hb;
+    }
+#else
     if (heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) >= s_hb + 4 * 1024 && heap_caps_get_free_size(MALLOC_CAP_INTERNAL) >= s_hb + 56 * 1024)
         s_hot = heap_caps_aligned_alloc(16, s_hb, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     if (!s_hot) { s_hot = heap_caps_aligned_alloc(16, s_hb, MALLOC_CAP_SPIRAM); hot_where = "PSRAM (internal SRAM too small)"; }
+#endif
+#ifndef ITOFS_EMBEDDED
     s_bulk = heap_caps_aligned_alloc(16, s_bb, MALLOC_CAP_SPIRAM);
-    if (!s_hot || !s_bulk) { printf("ERROR arena alloc (hot %u, bulk %u)\n", (unsigned)s_hb, (unsigned)s_bb); halt(); }
+#endif
+    if (!s_hot || !s_bulk) { printf("ERROR arena alloc (hot %u, bulk %u)\n", (unsigned)s_hb, (unsigned)s_bb); return ESP_ERR_NO_MEM; }
     printf("arena: hot %u bytes in %s, bulk %u bytes in PSRAM; chunk %d frames = %d samples; %d-bit activations\n", (unsigned)s_hb, hot_where,
            (unsigned)s_bb, s_chunk_frames, s_chunk_samples, s_lim.act_bits ? s_lim.act_bits : 8);
-    s3_kernels_init();
+    if (s3_kernels_init()) { printf("ERROR kernel scratch or worker allocation failed\n"); return ESP_ERR_NO_MEM; }
 #ifdef ITOFS_KCHECK
     heap_caps_free(s_hot); heap_caps_free(s_wbuf);   // the check needs the internal SRAM of the engine's hot arena and 4 MB of PSRAM; a check build does no synthesis
     guard_wdt_arm(120000);
@@ -2058,22 +2541,243 @@ void app_main(void)
 #endif
     (void)first;
 
-    s_free_q = xQueueCreate(NBUF, sizeof(buf_t));
-    s_full_q = xQueueCreate(NBUF + 1, sizeof(buf_t));
-    s_done_q = xQueueCreate(1, sizeof(buf_t));
-    s_req_q = xQueueCreate(2, sizeof(req_t));
+    if (!s_free_q) s_free_q = xQueueCreate(NBUF, sizeof(buf_t));
+    if (!s_full_q) s_full_q = xQueueCreate(NBUF + 1, sizeof(buf_t));
+    if (!s_done_q) s_done_q = xQueueCreate(1, sizeof(buf_t));
+    if (!s_req_q) s_req_q = xQueueCreate(2, sizeof(req_t));
+    if (!s_free_q || !s_full_q || !s_done_q || !s_req_q) return ESP_ERR_NO_MEM;
     for (int i = 0; i < NBUF; i++) {
-        buf_t b = { heap_caps_malloc(sizeof(int16_t) * (size_t)s_chunk_samples, MALLOC_CAP_SPIRAM), 0 };   // PSRAM: the I2S driver copies from it
-        if (!b.pcm) { printf("ERROR no PSRAM for PCM buffers\n"); halt(); }
+#ifdef ITOFS_EMBEDDED
+        buf_t b = { s_pcm_buffers[i], 0, 0 };
+#else
+        buf_t b = { heap_caps_malloc(sizeof(int16_t) * (size_t)s_chunk_samples, MALLOC_CAP_SPIRAM), 0, 0 };
+#endif
+        if (!b.pcm) { printf("ERROR no PSRAM for PCM buffers\n"); return ESP_ERR_NO_MEM; }
         xQueueSend(s_free_q, &b, 0);
     }
+#ifdef ITOFS_EMBEDDED
+#ifndef CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+    if (s_audio.start_console && !uart_is_driver_installed(UART_NUM_0)) {
+        esp_err_t error = uart_driver_install(UART_NUM_0, 4096, 0, 0, NULL, 0);
+        if (error != ESP_OK) return error;
+    }
+#endif
+#else
     uart_driver_install(UART_NUM_0, 4096, 0, 0, NULL, 0);
+#endif
     mem_report("boot");
 #ifdef CONFIG_ITOFS_FRONTEND
-    fe_start();
+    if (fe_start()) return ESP_ERR_NO_MEM;
 #endif
-    xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, NULL, 1);
-    xTaskCreatePinnedToCore(synth_task, "itofs_synth", 12288, NULL, 5, NULL, 0);
-    xTaskCreatePinnedToCore(console_task, "itofs_con", 4096, NULL, 4, NULL, 0);
+#ifdef CONFIG_ITOFS_AUDIO_STACKCHAN
+    (void)stackchan_display_init();
+#endif
+#ifdef ITOFS_EMBEDDED
+    if (!s_play_h) {
+        if (xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, &s_play_h, 1) != pdPASS) return ESP_ERR_NO_MEM;
+        s_workers |= PARK_PLAY;
+    }
+    if (!s_synth_h) {
+        if (xTaskCreatePinnedToCore(synth_task, "itofs_synth", 12288, NULL, 5, &s_synth_h, 0) != pdPASS) return ESP_ERR_NO_MEM;
+        s_workers |= PARK_SYNTH;
+    }
+    if (s_audio.start_console && !s_console_h &&
+        xTaskCreatePinnedToCore(console_task, "itofs_con", 4096, NULL, 4, &s_console_h, 0) != pdPASS) return ESP_ERR_NO_MEM;
+    if (s_boot_done) {
+        if (activate_tier(s_active)) return ESP_FAIL;
+        s_ctx.act_bits = s_resume_act; s_style = s_resume_style;
+        s_chunk_frames = s_resume_chunk; s_chunk_samples = s_chunk_frames * s_hop;
+    }
+#else
+    if (xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, NULL, 1) != pdPASS) return ESP_ERR_NO_MEM;
+    if (xTaskCreatePinnedToCore(synth_task, "itofs_synth", 12288, NULL, 5, NULL, 0) != pdPASS) return ESP_ERR_NO_MEM;
+    if (xTaskCreatePinnedToCore(console_task, "itofs_con", 4096, NULL, 4, NULL, 0) != pdPASS) return ESP_ERR_NO_MEM;
+#endif
+#if !defined(CONFIG_ITOFS_AUDIO_STACKCHAN) && !defined(ITOFS_EMBEDDED)
     xTaskCreatePinnedToCore(button_task, "itofs_btn", 4096, NULL, 4, NULL, 0);
+#endif
+    return ESP_OK;
 }
+
+#ifdef ITOFS_EMBEDDED
+esp_err_t itofs_service_reserve_hot(size_t bytes)
+{
+    if (s_service_started || s_hot) return ESP_ERR_INVALID_STATE;
+    if (!bytes) return ESP_ERR_INVALID_ARG;
+    s_hot = heap_caps_aligned_alloc(16, bytes, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    if (!s_hot) return ESP_ERR_NO_MEM;
+    s_hot_reserved = bytes;
+    return ESP_OK;
+}
+
+static int wait_parked(int64_t deadline_us)
+{
+    while (!workers_parked()) {
+        if (esp_timer_get_time() >= deadline_us) return 0;
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    return 1;
+}
+
+static void reset_playback_queues(void)
+{
+    if (s_free_q) xQueueReset(s_free_q);
+    if (s_full_q) xQueueReset(s_full_q);
+    if (s_done_q) xQueueReset(s_done_q);
+    if (s_req_q) xQueueReset(s_req_q);
+    if (s_fe_q) xQueueReset(s_fe_q);
+}
+
+/* Requires parked workers. The reserved workspace and retained services stay owned. */
+static void release_inference(void)
+{
+    reset_playback_queues();
+    for (int i = 0; i < NBUF; i++) s_pcm_buffers[i] = NULL;
+    heap_caps_free(s_text_pcm); s_text_pcm = NULL;
+    s_wbuf = NULL; s_bulk = NULL;
+    if (s_mapped) { esp_partition_munmap(s_map_h); s_mapped = 0; }
+    s_blob = NULL; s_blob_size = 0; s_st = s_st16 = NULL;
+    s_ndemo = 0; s_demo_from_blob = 0;
+    memset(&s_ctx, 0, sizeof s_ctx); memset(&s_model, 0, sizeof s_model);
+    atomic_store(&s_fe_job, 0);
+    s_cancel = s_speaking = s_playing = 0; s_active_job = 0;
+    s_stopped = 1;
+}
+
+esp_err_t itofs_service_stop(uint32_t timeout_ms)
+{
+    if (!s_service_started) return ESP_ERR_INVALID_STATE;
+    const int64_t deadline = esp_timer_get_time() + (int64_t)timeout_ms * 1000;
+    atomic_store(&s_service_up, 0);
+    cancel_job(); request_stop();
+    if (xSemaphoreTake(s_command_mutex, pdMS_TO_TICKS(timeout_ms)) != pdTRUE) return ESP_ERR_TIMEOUT;
+    esp_err_t error = ESP_OK;
+    if (s_memory_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_OK; }
+    if (!wait_parked(deadline)) error = ESP_ERR_TIMEOUT;
+    else if (!s_stopped) {
+        error = s_audio.flush(s_audio.user);
+        const esp_err_t muted = s_audio.mute(s_audio.user, true);
+        s_audio.playing(s_audio.user, false);
+        if (error == ESP_OK) error = muted;
+        if (s_park_error) error = s_park_error;
+        if (error == ESP_OK) {
+            if (s_boot_done) { s_resume_style = s_style; s_resume_act = s_ctx.act_bits; s_resume_chunk = s_chunk_frames; }
+            release_inference();
+        }
+    }
+    xSemaphoreGive(s_command_mutex);
+    return error;
+}
+
+esp_err_t itofs_service_resume(void)
+{
+    if (!s_service_started) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_command_mutex, portMAX_DELAY);
+    if (s_park_error) { xSemaphoreGive(s_command_mutex); return ESP_FAIL; }
+    if (!s_stopped || s_memory_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_ERR_INVALID_STATE; }
+    unsigned sequence = atomic_load(&s_stop_sequence);
+    s_stopped = 0;
+    esp_err_t error = runtime_start();
+    if (error == ESP_OK && atomic_compare_exchange_strong(&s_stop_sequence, &sequence, sequence & ~1u)) {
+        atomic_store(&s_service_up, 1);
+    } else {
+        if (error == ESP_OK) error = ESP_ERR_INVALID_STATE;
+        if (wait_parked(esp_timer_get_time() + 5000000)) {
+            if (s_park_error) error = s_park_error;
+            else release_inference();
+        }
+        else error = ESP_ERR_TIMEOUT;
+    }
+    xSemaphoreGive(s_command_mutex);
+    return error;
+}
+
+static esp_err_t borrow_workspace(itofs_workspace_t *workspace, int scratch_only)
+{
+    if (!workspace) return ESP_ERR_INVALID_ARG;
+    if (!s_service_started) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_command_mutex, portMAX_DELAY);
+    esp_err_t error = ESP_ERR_INVALID_STATE;
+    if (s_stopped && !s_memory_borrowed && !s_park_error && s_hot && s_psram_pool && workers_parked() &&
+        (!scratch_only || (s_weight_copy_valid && s_psram_weights_bytes && s_psram_weights_bytes < s_psram_pool_bytes))) {
+        s_memory_borrowed = 1;
+        const size_t offset = scratch_only ? s_psram_weights_bytes : 0;
+        s_memory_lease = (itofs_workspace_t){ s_hot, s_hot_reserved,
+            (uint8_t *)s_psram_pool + offset, s_psram_pool_bytes - offset };
+        if (!scratch_only) s_weight_copy_valid = 0;
+        *workspace = s_memory_lease;
+        error = ESP_OK;
+    }
+    xSemaphoreGive(s_command_mutex);
+    return error;
+}
+
+esp_err_t itofs_service_borrow_memory(itofs_workspace_t *workspace) { return borrow_workspace(workspace, 0); }
+esp_err_t itofs_service_borrow_scratch(itofs_workspace_t *workspace) { return borrow_workspace(workspace, 1); }
+
+esp_err_t itofs_service_return_memory(const itofs_workspace_t *workspace)
+{
+    if (!workspace) return ESP_ERR_INVALID_ARG;
+    if (!s_service_started) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_command_mutex, portMAX_DELAY);
+    esp_err_t error = ESP_ERR_INVALID_STATE;
+    if (s_memory_borrowed && workspace->hot == s_memory_lease.hot && workspace->hot_bytes == s_memory_lease.hot_bytes &&
+        workspace->psram == s_memory_lease.psram && workspace->psram_bytes == s_memory_lease.psram_bytes) {
+        s_memory_borrowed = 0; error = ESP_OK;
+        memset(&s_memory_lease, 0, sizeof s_memory_lease);
+    }
+    xSemaphoreGive(s_command_mutex);
+    return error;
+}
+
+esp_err_t itofs_service_start(const itofs_service_config_t *config)
+{
+    if (s_service_started) return ESP_ERR_INVALID_STATE;
+    if (!config || !config->open || !config->write || !config->drain || !config->flush ||
+        !config->mute || !config->set_volume || !config->playing) return ESP_ERR_INVALID_ARG;
+    s_command_mutex = xSemaphoreCreateMutex();
+    if (!s_command_mutex) return ESP_ERR_NO_MEM;
+    xSemaphoreTake(s_command_mutex, portMAX_DELAY);
+    request_stop();
+    unsigned sequence = atomic_load(&s_stop_sequence);
+    s_audio = *config;
+    s_service_started = 1;
+    guard_set_watchdog_hooks(config->user, config->watchdog_arm, config->watchdog_feed);
+    esp_err_t error = runtime_start();
+    if (error == ESP_OK && atomic_compare_exchange_strong(&s_stop_sequence, &sequence, sequence & ~1u)) {
+        atomic_store(&s_service_up, 1);
+    } else {
+        if (error == ESP_OK) error = ESP_ERR_INVALID_STATE;
+        if (wait_parked(esp_timer_get_time() + 5000000)) {
+            if (s_park_error) error = s_park_error;
+            else release_inference();
+        }
+        else error = ESP_ERR_TIMEOUT;
+    }
+    xSemaphoreGive(s_command_mutex);
+    return error;
+}
+
+void itofs_service_cancel(void) { if (s_service_started) cancel_job(); }
+
+esp_err_t itofs_service_command(const char *line)
+{
+    if (!s_service_up || service_stopping()) return ESP_ERR_INVALID_STATE;
+    if (!line) return ESP_ERR_INVALID_ARG;
+    size_t n = strlen(line);
+    if (n >= FE_TEXT_MAX) return ESP_ERR_INVALID_SIZE;
+    /* Cancel never waits behind a producer blocked on its request queue. */
+    if (!strcmp(line, "cancel")) { cancel_job(); printf("OK cancel\n"); return ESP_OK; }
+    char *copy = heap_caps_malloc(n + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!copy) return ESP_ERR_NO_MEM;
+    memcpy(copy, line, n + 1);
+    xSemaphoreTake(s_command_mutex, portMAX_DELAY);
+    esp_err_t error = ESP_ERR_INVALID_STATE;
+    if (atomic_load(&s_service_up) && !service_stopping()) { handle_line(copy); error = ESP_OK; }
+    xSemaphoreGive(s_command_mutex);
+    heap_caps_free(copy);
+    return error;
+}
+#else
+void app_main(void) { (void)runtime_start(); }
+#endif

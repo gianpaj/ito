@@ -6,6 +6,11 @@ endif()
 # linker drops the unused code
 set(ITOFS_FE_REQ frontend)
 set(ITOFS_FE_EMBED EMBED_TXTFILES "phrases.txt")
+if(CONFIG_ITOFS_AUDIO_STACKCHAN)
+  list(APPEND ITOFS_SRCS "stackchan_audio.c" "stackchan_display.c")
+  list(APPEND ITOFS_FE_REQ esp_codec_dev esp_lcd esp_driver_spi esp_lcd_ili9341)
+  set(ITOFS_FE_EMBED EMBED_TXTFILES "stackchan_phrases.txt")
+endif()
 idf_component_register(SRCS ${ITOFS_SRCS}
                        INCLUDE_DIRS "." "../../engine"
                        ${ITOFS_FE_EMBED}

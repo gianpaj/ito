@@ -16,6 +16,8 @@ before it does not grow with the sentence length. The voice is distilled from a 
 [Lokutor](https://lokutor.com), the makers of [Oído](https://github.com/lokutor-ai/oido) (speech recognition on the
 same chip).
 
+[StackChan offline STT + TTS: four-run average and p95](#stackchan-offline-voice-loop).
+
 > **Text in, speech out on the chip (v1.1.0, measured 4 and 5 November 2026 on one ESP32-S3-DevKitC-1 N16R8, rev v0.2; a different board from the one of the headline below; firmware `onchip-frontend`, image `esp32/prebuilt/ito_app_frontend_merged.bin`; female voice, full split, int4 set chosen by the boot, ESP-IDF 5.5.1).** The chip turns English text into the exact token ids the host front end produces, then into audio, and nothing else is needed. Everything in this table was measured on silicon; nothing was estimated. Full tables, commands and limits: [`esp32/FRONTEND.md`](esp32/FRONTEND.md).
 >
 > | | Result |
@@ -63,6 +65,27 @@ same chip).
 **Weights:** [lokutor-ai/ito](https://huggingface.co/lokutor-ai/ito)
 
 [![Ito: natural speech from a $5 chip](https://lokutor-ai.github.io/ito/og.png)](https://lokutor-ai.github.io/ito/)
+
+## StackChan offline voice loop
+
+Oido speech recognition, Ito speech synthesis and the original animated face run
+on StackChan's ESP32-S3 with 8 MB PSRAM. A computer sends fixed reply text over
+USB after recognition; no LLM or cloud service is used.
+
+Four user-run five-second microphone tests on 15 November 2026 produce:
+
+| Interval | Average | Sample p95 |
+|---|---:|---:|
+| Final microphone read to first I2S | 1,465.7 ms | 1,474.2 ms |
+| Final transcript to first I2S | 939.0 ms | 941.0 ms |
+| Supplied reply text to first I2S | 907.8 ms | 908.0 ms |
+
+All four runs are below 1.5 seconds from the final microphone read to first I2S,
+with zero output underruns. These software timings exclude acoustic latency.
+The fixed two-sentence reply produces two TTS utterances. With only four samples,
+nearest-rank p95 equals the maximum and is descriptive, not a general guarantee.
+
+[Command, per-run measurements and provenance](results/stackchan/2026-11-15-user-four-run/README.md).
 
 ## Listen
 

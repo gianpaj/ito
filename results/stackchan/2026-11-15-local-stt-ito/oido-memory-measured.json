@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "measurement": "host requested-allocation bytes; not ESP32 heap telemetry",
+  "upstream_revision": "c8d60325ba8bffd4bad65a9ac63c713ee64d1aae",
+  "model": {
+    "file": "oido_v2b.tnm",
+    "bytes": 5931424,
+    "sha256": "9e8b40913f532fb44b716a1f882f38b3b21e220713e417899aba32ace8c35066"
+  },
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "pointer_bytes": 8,
+    "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+  },
+  "build": {
+    "flags": [
+      "-O2",
+      "-std=c11",
+      "-D_DEFAULT_SOURCE",
+      "-ffp-contract=off",
+      "-shared",
+      "-fPIC"
+    ],
+    "translation_units": [
+      "tinyasr.c",
+      "kernels.c",
+      "tinyasr_lm.c",
+      "tasr_nemo.c",
+      "tasr_seg.c"
+    ],
+    "esp_platform": false,
+    "workers": "serial default"
+  },
+  "configuration": {
+    "language_model": false,
+    "acoustic_weight_copy_budget_bytes": 0,
+    "acoustic_weights_copied_bytes": 0,
+    "chunk_frames": 8,
+    "left_context_frames": 64,
+    "input_sample_rate_hz": 16000,
+    "input_seconds": 10,
+    "input": "silence"
+  },
+  "kind_meanings": {
+    "0": "PSRAM suitable",
+    "1": "internal preferred, PSRAM fallback allowed by upstream firmware"
+  },
+  "model_live_by_kind_bytes": [
+    261888,
+    21692
+  ],
+  "stream_live_by_kind_bytes": [
+    1264364,
+    211460
+  ],
+  "after_feed_finish_live_by_kind_bytes": [
+    1264364,
+    211460
+  ],
+  "peak_total_bytes": 1520880,
+  "peak_by_kind_bytes": [
+    1309420,
+    211460
+  ],
+  "after_free_bytes": 0,
+  "after_free_blocks": 0,
+  "capture_ring_10s_pcm16_bytes": 320000,
+  "peak_plus_capture_ring_bytes": 1840880,
+  "peak_plus_ring_and_separate_10s_utterance_bytes": 2160880,
+  "exclusions": [
+    "allocator headers and alignment padding",
+    "ESP32 tasks, drivers, DMA and static BSS",
+    "host model image standing in for flash mmap",
+    "Python and host library runtime memory"
+  ]
+}

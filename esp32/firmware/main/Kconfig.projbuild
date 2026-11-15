@@ -18,12 +18,13 @@ menu "Ito"
             Off: exactly the utterances of tools/say.py (a second sentence is phonemized before the first audio).
 
     config ITOFS_BOOT_TEXT
-        bool "At boot, speak the phrase list in main/phrases.txt (text stored in flash, no host)"
+        bool "At boot, speak the stored phrase list (text stored in flash, no host)"
         depends on ITOFS_FRONTEND
         default n
         help
             One phrase per line, '#' starts a comment. Each phrase goes through the on-chip front end and is spoken after the boot calibration,
             like CONFIG_ITOFS_BOOT_DEMOS does for the three demo sentences. The `phrases` command speaks the list again.
+            StackChan uses main/stackchan_phrases.txt; other boards use main/phrases.txt.
 
     config ITOFS_BOOT_TEXT_SILENT
         bool "... but compute only: no playback (prints timing and the PCM hash)"
@@ -113,13 +114,26 @@ menu "Ito"
         help
             Where the 24 kHz audio goes. A plain I2S DAC or class-D amplifier (MAX98357A and the like) needs no setup: BCLK GPIO15, LRCLK GPIO16,
             DOUT GPIO17, no master clock, and no I2C access. The ESP_S3-AUDIN shield has an ES8388 codec that must be configured over I2C and fed a master clock;
-            only that choice touches the I2C and MCLK pins. If the codec does not answer, the firmware prints an error and runs on without sound.
+            StackChan uses its AW88298 amplifier and board-specific power setup on I2C, with GPIO0 as MCLK instead of a demo button.
+            If a codec does not answer, playback stays disabled and the console reports the failing initialization step.
 
         config ITOFS_AUDIO_PLAIN_I2S
             bool "Plain I2S DAC or amplifier (GPIO15 / 16 / 17)"
         config ITOFS_AUDIO_ES8388
             bool "ES8388 codec on the ESP_S3-AUDIN shield"
+        config ITOFS_AUDIO_STACKCHAN
+            bool "M5Stack StackChan speaker (AW88298)"
     endchoice
+
+    config ITOFS_AUDIO_VOLUME
+        int "Default output volume in percent"
+        depends on ITOFS_AUDIO_ES8388 || ITOFS_AUDIO_STACKCHAN
+        range 0 100
+        default 25 if ITOFS_AUDIO_STACKCHAN
+        default 91
+        help
+            The console command `volume <0-100>` changes the codec output level.
+            Zero keeps the amplifier muted. For ES8388, 91 is 0 dB and 100 is +4.5 dB.
 
     if ITOFS_AUDIO_ES8388
         comment "Defaults are the ESP_S3-AUDIN shield on an ESP32-S3-DevKitC-1 N16R8. GPIO3 and GPIO46 are strapping pins (read at reset, free afterwards); GPIO0 (BOOT), 19/20 (USB) and 35-37 (octal PSRAM) must not be used."
@@ -147,13 +161,6 @@ menu "Ito"
             int "I2S data to the codec (DSDIN) GPIO (strapping pin GPIO46 on the shield)"
             range 1 48
             default 46
-        config ITOFS_AUDIO_VOLUME
-            int "Default output volume in percent (0..100; 91 = 0 dB at the codec, 100 = +4.5 dB)"
-            range 0 100
-            default 91
-            help
-                The codec's analogue output gain. 0 dB is the loudest setting that cannot clip the DAC with the engine's PCM (its peaks reach about 92 % of full scale).
-                The console command `volume <0-100>` changes it at run time.
         config ITOFS_AUDIO_LOOPBACK
             bool "Test only: record the shield's microphones through the codec ADC (command `loopback`)"
             default n

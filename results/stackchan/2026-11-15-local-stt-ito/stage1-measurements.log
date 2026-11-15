@@ -1,0 +1,37 @@
+I (346) local_ito: after early hot reserve: internal free=105939 largest=31744
+I (1356) local_ito: before avatar: internal free=87635 largest=31744; PSRAM free=8297168 largest=8257536
+I (1426) local_ito: after avatar: internal free=87635 largest=31744; PSRAM free=8295108 largest=8257536
+MEM boot: peak PSRAM used 4799 / 8121 KB, peak internal SRAM used 342 / 397 KB | free now: PSRAM 3321 KB, internal SRAM 55 KB
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 669.0 ms (begin 1.8 ms; incremental text side, 16 tokens final at first chunk) | compute 5791.2 ms, RTF 1.036 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging direct: 2356 GEMM calls, 0 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8121 KB, peak internal SRAM used 379 / 397 KB | free now: PSRAM 2731 KB, internal SRAM 34 KB
+I (10646) SystemInfo: free sram: 34491 minimal sram: 17911
+TIER_SELECT chosen=0 ('weights', vocoder 192/576 x5, int4 blocks) measured_rtf=1.005 target=0.85 status=DEGRADED degraded=1 split=row | measured (RTF, planned start delay for 84 tokens, first chunk): set0 1.005, 1222 ms, 645 ms (female int4, validated by ear); set1 absent; set2 absent;
+READY (BOOT button = demos, serial: say <ids> | style <k> | demo [k] | test | stats | tier [k] | status | help)
+FE utt 0: 106 tokens in 15.0 ms (15.5 ms after the text arrived), ids fnv32 dc83ce13
+FE done (stack high-water: 45544 bytes of 65536; free PSRAM 3018 KB (min 2730), free internal SRAM 33 KB (min 17))
+I (20666) SystemInfo: free sram: 34415 minimal sram: 17883
+TIMING textq: 106 tokens, style 0, 6.92 s audio | first chunk 570.0 ms (begin 1.6 ms; incremental text side, 8 tokens final at first chunk) | compute 6974.2 ms, RTF 1.007 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2901 GEMM calls, 2901 announced ahead, 0 not | 18 chunks, 53.1 MB of weights read | pcm fnv32 c4472e58
+MEM textq: peak PSRAM used 5678 / 8121 KB, peak internal SRAM used 380 / 397 KB | free now: PSRAM 2442 KB, internal SRAM 33 KB
+READY
+FE utt 0: 28 tokens in 4.2 ms (4.7 ms after the text arrived), ids fnv32 ebe50d44
+FE done (stack high-water: 45544 bytes of 65536; free PSRAM 2442 KB (min 2442), free internal SRAM 33 KB (min 17))
+I (21576) local_ito: speaker playing=1
+I (24096) local_ito: speaker playing=0
+TIMING text: 28 tokens, style 0, 2.49 s audio | first chunk 569.2 ms (begin 2.2 ms; incremental text side, 8 tokens final at first chunk) | compute 2500.7 ms, RTF 1.005 | underruns 0 (start delay planned 819 ms) | weight set 0 | split row | weight staging gdma+prefetch: 1092 GEMM calls, 1092 announced ahead, 0 not | 7 chunks, 20.3 MB of weights read | pcm fnv32 7cb4c6da
+I2S_START: engine begin -> first PCM submission 817.5 ms, text received -> first PCM submission 823.1 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5679 / 8121 KB, peak internal SRAM used 380 / 397 KB | free now: PSRAM 2442 KB, internal SRAM 33 KB
+READY
+FE utt 0: 66 tokens in 9.3 ms (9.7 ms after the text arrived), ids fnv32 758cac54
+FE utt 1: 45 tokens in 10.0 ms (20.3 ms after the text arrived), ids fnv32 c662e516
+FE done (stack high-water: 45816 bytes of 65536; free PSRAM 2442 KB (min 2441), free internal SRAM 33 KB (min 17))
+I (25256) local_ito: speaker playing=1
+I (25586) local_ito: speaker playing=0
+CANCEL: audio flushed 18.6 ms after the command
+CANCELLED text after 1.20 s of audio
+TIMING text: 66 tokens, style 0, 1.20 s audio | first chunk 572.7 ms (begin 2.4 ms; incremental text side, 8 tokens final at first chunk) | compute 1520.7 ms, RTF 1.267 | underruns 0 (start delay planned 982 ms) | weight set 0 | split row | weight staging gdma+prefetch: 728 GEMM calls, 728 announced ahead, 0 not | 3 chunks, 11.3 MB of weights read | pcm fnv32 3e53a84c
+I2S_START: engine begin -> first PCM submission 1091.7 ms, text received -> first PCM submission 1102.1 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5679 / 8121 KB, peak internal SRAM used 380 / 397 KB | free now: PSRAM 2442 KB, internal SRAM 33 KB
+STATUS split=row active_set=0 selected_set=0 degraded=1 status=DEGRADED start_delay=planned | set0 ('weights'): 3196068 bytes, measured RTF 1.005 | set1 ('weights_b'): absent | set2 ('weights_c'): absent
+READY
+MEM now: peak PSRAM used 5679 / 8121 KB, peak internal SRAM used 380 / 397 KB | free now: PSRAM 2442 KB, internal SRAM 33 KB

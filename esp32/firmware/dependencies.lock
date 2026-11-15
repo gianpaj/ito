@@ -1,4 +1,14 @@
 dependencies:
+  espressif/cmake_utilities:
+    component_hash: 351350613ceafba240b761b4ea991e0f231ac7a9f59a9ee901f751bddc0bb18f
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.1'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 0.5.3
   espressif/esp-nn:
     component_hash: 3b3411b0e4ad1717a72870fde9f9b67cef6f3f97491cc64fcfc1910a8fd8a246
     dependencies:
@@ -9,13 +19,39 @@ dependencies:
       registry_url: https://components.espressif.com/
       type: service
     version: 1.4.1
+  espressif/esp_codec_dev:
+    component_hash: 0d9e9bc288156eb55f79338d312e1ebf8c9dfbd5e7d13ef0f20ccb031b4e15cf
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.5.4
+  espressif/esp_lcd_ili9341:
+    component_hash: 31f1b793aa2110dd2ae071c21ccbff0a4eb20d9a4ee40b6294c0dc0ad9552c4e
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4'
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.2.0
   idf:
     source:
       type: idf
-    version: 5.5.1
+    version: 5.5.4
 direct_dependencies:
 - espressif/esp-nn
+- espressif/esp_codec_dev
+- espressif/esp_lcd_ili9341
 - idf
-manifest_hash: 3fd1ec458b93d4e5c13724d92a9fe9de06f67451875d762282fe18a439a84692
+manifest_hash: 48fc307f06badae99e984c1fbb7335a20fe0b2c15930c601f84302e0ab644ac6
 target: esp32s3
 version: 2.0.0

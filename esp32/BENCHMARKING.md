@@ -300,3 +300,54 @@ With the light set and the shipped ramp (demo 1): 240 MHz 1.019 / 0.775 / 0.609,
 
 Not touched because nothing looked wrong: the second board and its supply history, the brownout ladder thresholds (need a scope), the instruction/data cache and line sweeps, the GDMA 8 KB tile, the 20-frame plan, the arena placement table; PSRAM at 120 MHz does not build with this module's QIO flash in ESP-IDF 5.5.1 (the timing tables need octal flash).
 
+
+## StackChan manual speech latency
+
+The original-face Oido/Ito conversation firmware exposes timings for a complete
+USB speech turn. With that profile installed, close the monitor and run from
+this Ito checkout using the ESP-IDF Python:
+
+```sh
+python esp32/tools/stackchan_benchmark.py --port /dev/cu.usbmodem1101 --seconds 5
+```
+
+The default is one recording followed by a fixed supplied reply. `--reply`
+selects that text; it stands in for the manual LLM step. No LLM is called or timed.
+`--wav path.wav` uses fixed mono PCM16 at 16 kHz instead of the microphone.
+`--runs N` explicitly requests more turns. `--firmware path.bin` records an
+image hash, and `--volume 50` optionally selects playback volume. Boot and
+startup calibration are excluded from the trial.
+
+The script prints its private session directory and writes `results.json`,
+`trials.csv`, raw serial output and commands. Raw logs can contain personal
+speech and supplied replies; metric rows omit transcript text. JSON retains
+host monotonic event timestamps, device log timestamps and optional device
+microsecond markers for timing review.
+
+- STT setup, feed and finish come from the firmware. Their sum excludes Ito
+  restoration. Streaming feed overlaps recording, so their sum is compute
+  time rather than post-recording delay. The transcript is printed after Ito
+  restoration.
+- STT-report to conversation-READY is a host-observed restoration/control
+  interval, including USB delivery and scheduling.
+- Reply dispatch is automatic after READY. Its delay measures the benchmark
+  responder, not human thinking or a real LLM.
+- Reply text to first I2S submission is firmware-timed. It excludes DMA and
+  acoustic latency. The I2S summary is printed after playback; its log arrival
+  time is not the first-audio time.
+- Capture-end log to playback-start log uses one device clock. The callback
+  follows the first successful I2S write. Log timestamps have firmware-dependent
+  tick resolution, and capture-end is the end of the recording cap, not VAD.
+- `last_input_read_to_first_i2s_device_ms` uses `TURN_TIMING` and the absolute
+  `I2S_START submit_us` marker on the same device monotonic clock. It includes
+  the STT tail, restoration, reply dispatch and TTS startup. The input endpoint
+  is completion of the final RX read, not measured acoustic speech end. Separate
+  fields report input drain, final transcript and restoration. Older firmware
+  leaves these fields null.
+- Host intervals include USB/log delivery. TTS compute/audio fields describe
+  the first utterance; underruns sum all reply utterances. Total speech-ready
+  time covers the whole reply. Summary statistics are min/median/max with sample
+  counts; one run does not establish a latency distribution.
+
+Compare the same input length and reply text. Automatic speech endpointing and
+a real LLM responder remain separate milestones.
