@@ -1,0 +1,96 @@
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs hoESP-ROM:esp32s3-20210327
+I (346) local_ito: after early hot reserve: internal free=105827 largest=31744
+I (1346) local_ito: before avatar: internal free=87523 largest=31744 min=87523; PSRAM free=8292940 largest=8257536 min=8292940
+I (1416) local_ito: after avatar: internal free=87523 largest=31744 min=87523; PSRAM free=8290880 largest=8257536 min=8289328
+MEM boot: peak PSRAM used 4802 / 8117 KB, peak internal SRAM used 342 / 397 KB | free now: PSRAM 3318 KB, internal SRAM 55 KB
+I (1496) local_ito: speaker playing=0
+CANCEL: audio flushed 1161.3 ms after the command
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 671.2 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5797.1 ms, RTF 1.038 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging direct: 2356 GEMM calls, 0 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 383 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+I (11616) SystemInfo: free sram: 30239 minimal sram: 13735
+TIER_SELECT chosen=0 ('weights', vocoder 192/576 x5, int4 blocks) measured_rtf=1.005 target=0.85 status=DEGRADED degraded=1 split=row | measured (RTF, planned start delay for 84 tokens, first chunk): set0 1.005, 1220 ms, 644 ms (female int4, validated by ear); set1 absent; set2 absent;
+READY (BOOT button = demos, serial: say <ids> | style <k> | demo [k] | test | stats | tier [k] | status | help)
+HOST > volume 50
+STATUS split=row active_set=0 selected_set=0 degraded=1 status=DEGRADED start_delay=planned | set0 ('weights'): 3196068 bytes, measured RTF 1.005 | set1 ('weights_b'): absent | set2 ('weights_c'): absent
+READY
+HOST > memory
+I (13706) local_ito: console: internal free=30239 largest=19456 min=13735; PSRAM free=3088656 largest=3080192 min=2793296
+CONTROL stack_free=6616 of=8192 bytes
+HOST > test
+HOST > tts stop
+I (13936) local_ito: speaker playing=0
+CANCEL: audio flushed 18.7 ms after the command
+I (18966) local_ito: tts stop failed: internal free=30239 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6568 of=8192 bytes
+ERROR tts stop: ESP_ERR_TIMEOUT
+HOST > tts probe
+I (19196) local_ito: workspace returned: internal free=30227 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6568 of=8192 bytes
+ERROR tts probe: ESP_ERR_INVALID_STATE
+HOST > tts stop
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 638.5 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5624.6 ms, RTF 1.007 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+I (21786) SystemInfo: free sram: 30223 minimal sram: 13735
+I (24356) local_ito: tts stop failed: internal free=30231 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6568 of=8192 bytes
+ERROR tts stop: ESP_ERR_TIMEOUT
+HOST > tts probe
+I (24816) local_ito: workspace returned: internal free=30231 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+ERROR tts probe: ESP_ERR_INVALID_STATE
+HOST > tts stop
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (30276) local_ito: tts stop failed: internal free=30215 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+ERROR tts stop: ESP_ERR_TIMEOUT
+HOST > tts probe
+I (30436) local_ito: workspace returned: internal free=30227 largest=19456 min=13735; PSRAM free=2793740 largest=2752512 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+ERROR tts probe: ESP_ERR_INVALID_STATE
+HOST > tts stop
+I (31936) SystemInfo: free sram: 30227 minimal sram: 13735
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 773.4 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7544.7 ms, RTF 1.350 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+READY
+I (34136) local_ito: speaker playing=0
+I (34136) local_ito: tts stopped: internal free=30239 largest=19456 min=13735; PSRAM free=3088656 largest=3080192 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > memory
+I (35156) local_ito: console: internal free=30239 largest=19456 min=13735; PSRAM free=3088656 largest=3080192 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (35786) local_ito: workspace returned: internal free=30239 largest=19456 min=13735; PSRAM free=3088656 largest=3080192 min=2793280
+CONTROL stack_free=6504 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3016 KB, internal SRAM 29 KB
+I (36506) local_ito: tts resumed: internal free=30239 largest=19456 min=13735; PSRAM free=3088440 largest=3080192 min=2793280
+CONTROL stack_free=3208 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (42046) SystemInfo: free sram: 30211 minimal sram: 13735
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.5 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5615.6 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (52066) SystemInfo: free sram: 30239 minimal sram: 13735
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 772.4 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7550.8 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+READY
+HOST > text Hello, I am StackChan.
+I (57766) local_ito: speaker playing=1
+I (60286) local_ito: speaker playing=0
+TIMING text: 28 tokens, style 0, 2.49 s audio | first chunk 563.8 ms (begin 2.3 ms; incremental text side, 8 tokens final at first chunk) | compute 2490.1 ms, RTF 1.001 | underruns 0 (start delay planned 813 ms) | weight set 0 | split row | weight staging gdma+prefetch: 1092 GEMM calls, 1092 announced ahead, 0 not | 7 chunks, 20.3 MB of weights read | pcm fnv32 ab2feae1
+I2S_START: engine begin -> first PCM submission 812.4 ms, text received -> first PCM submission 821.4 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+READY
+HOST > memory
+I (62096) SystemInfo: free sram: 30227 minimal sram: 13735
+I (62336) local_ito: console: internal free=30227 largest=19456 min=13735; PSRAM free=3087880 largest=3080192 min=2793056
+CONTROL stack_free=3208 of=8192 bytes

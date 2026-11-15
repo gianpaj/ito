@@ -1,0 +1,1943 @@
+I (346) local_ito: after early hot reserve: internal free=105827 largest=31744
+I (1346) local_ito: before avatar: internal free=87523 largest=31744 min=87523; PSRAM free=8292940 largest=8257536 min=8292940
+I (1416) local_ito: after avatar: internal free=87523 largest=31744 min=87523; PSRAM free=8290880 largest=8257536 min=8289328
+MEM boot: peak PSRAM used 4802 / 8117 KB, peak internal SRAM used 342 / 397 KB | free now: PSRAM 3318 KB, internal SRAM 55 KB
+I (1496) local_ito: speaker playing=0
+CANCEL: audio flushed 1161.3 ms after the command
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 669.3 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5798.9 ms, RTF 1.038 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging direct: 2356 GEMM calls, 0 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 383 / 397 KB | free now: PSRAM 2728 KB, internal SRAM 29 KB
+I (10336) SystemInfo: free sram: 30239 minimal sram: 13735
+TIER_SELECT chosen=0 ('weights', vocoder 192/576 x5, int4 blocks) measured_rtf=1.006 target=0.85 status=DEGRADED degraded=1 split=row | measured (RTF, planned start delay for 84 tokens, first chunk): set0 1.006, 1221 ms, 645 ms (female int4, validated by ear); set1 absent; set2 absent;
+READY (BOOT button = demos, serial: say <ids> | style <k> | demo [k] | test | stats | tier [k] | status | help)
+HOST > volume 50
+STATUS split=row active_set=0 selected_set=0 degraded=1 status=DEGRADED start_delay=planned | set0 ('weights'): 3196068 bytes, measured RTF 1.006 | set1 ('weights_b'): absent | set2 ('weights_c'): absent
+READY
+HOST > memory
+I (13726) local_ito: console: internal free=30239 largest=19456 min=13735; PSRAM free=3088400 largest=3080192 min=2793296
+CONTROL stack_free=6616 of=8192 bytes
+HOST > tts probe
+I (13746) local_ito: workspace returned: internal free=30239 largest=19456 min=13735; PSRAM free=3088656 largest=3080192 min=2793296
+CONTROL stack_free=6616 of=8192 bytes
+ERROR tts probe: ESP_ERR_INVALID_STATE
+HOST > text The robot is speaking before the memory handoff. This next sentence should be cancelled.
+I (14926) local_ito: speaker playing=1
+HOST > tts stop
+I (14946) local_ito: speaker playing=0
+CANCEL: audio flushed 18.0 ms after the command
+I (14956) local_ito: speaker playing=0
+CANCEL: audio flushed 22.9 ms after the command
+CANCELLED text after 0.80 s of audio
+TIMING text: 53 tokens, style 0, 0.80 s audio | first chunk 642.1 ms (begin 2.3 ms; incremental text side, 16 tokens final at first chunk) | compute 1244.0 ms, RTF 1.555 | underruns 0 (start delay planned 1341 ms) | weight set 0 | split row | weight staging gdma+prefetch: 645 GEMM calls, 645 announced ahead, 0 not | 2 chunks, 9.3 MB of weights read | pcm fnv32 b2381492
+I2S_START: engine begin -> first PCM submission 1130.4 ms, text received -> first PCM submission 1138.8 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (15046) local_ito: speaker playing=0
+I (15046) local_ito: tts stopped: internal free=30243 largest=19456 min=13735; PSRAM free=3088108 largest=3080192 min=2793296
+CONTROL stack_free=6600 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > text This must be rejected.
+HOST > tts stop
+I (15096) local_ito: tts stopped: internal free=30243 largest=19456 min=13735; PSRAM free=3088108 largest=3080192 min=2793296
+CONTROL stack_free=6600 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (15716) local_ito: workspace returned: internal free=30243 largest=19456 min=13735; PSRAM free=3088108 largest=3080192 min=2793296
+CONTROL stack_free=6600 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5389 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (16436) local_ito: tts resumed: internal free=30243 largest=19456 min=13735; PSRAM free=3087884 largest=3080192 min=2793296
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts resume
+I (16466) local_ito: tts resume failed: internal free=30243 largest=19456 min=13735; PSRAM free=3087884 largest=3080192 min=2793296
+CONTROL stack_free=3016 of=8192 bytes
+ERROR tts resume: ESP_ERR_INVALID_STATE
+HOST > test
+I (21136) SystemInfo: free sram: 30159 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.4 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5620.6 ms, RTF 1.006 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (31136) SystemInfo: free sram: 30239 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 768.9 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7550.5 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (36906) local_ito: speaker playing=0
+CANCEL: audio flushed 19.8 ms after the command
+I (36926) local_ito: speaker playing=0
+I (36926) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (37546) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (38276) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (38296) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (38316) local_ito: speaker playing=0
+I (38316) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (38936) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (39656) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (39686) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (39706) local_ito: speaker playing=0
+I (39706) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (40326) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (41056) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (41076) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (41096) local_ito: speaker playing=0
+I (41096) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (41716) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (41726) SystemInfo: free sram: 30247 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (42436) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (42466) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (42486) local_ito: speaker playing=0
+I (42486) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (43116) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (43826) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (43856) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (43876) local_ito: speaker playing=0
+I (43876) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (44496) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (45226) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (45246) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (45266) local_ito: speaker playing=0
+I (45266) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (45896) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (46606) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (46636) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (46656) local_ito: speaker playing=0
+I (46656) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (47286) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (48006) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (48026) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (48046) local_ito: speaker playing=0
+I (48046) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (48666) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (49386) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (52036) SystemInfo: free sram: 30239 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.6 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5625.0 ms, RTF 1.007 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (62186) SystemInfo: free sram: 30247 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 768.8 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7547.5 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (69816) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (69826) local_ito: speaker playing=0
+I (69826) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (70446) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (71176) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (71196) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (71216) local_ito: speaker playing=0
+I (71216) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (71846) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (72556) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (72566) SystemInfo: free sram: 30239 minimal sram: 13727
+I (72586) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (72606) local_ito: speaker playing=0
+I (72606) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (73236) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (73956) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (73976) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (73996) local_ito: speaker playing=0
+I (73996) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (74616) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (75346) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (75366) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (75386) local_ito: speaker playing=0
+I (75386) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (76016) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (76726) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (76756) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (76776) local_ito: speaker playing=0
+I (76776) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (77396) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (78126) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (78146) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (78166) local_ito: speaker playing=0
+I (78166) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (78796) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (79506) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (79536) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (79556) local_ito: speaker playing=0
+I (79556) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (80186) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (80906) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (80926) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (80946) local_ito: speaker playing=0
+I (80946) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (81566) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (82296) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (82316) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (82336) local_ito: speaker playing=0
+I (82336) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (82966) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (82966) SystemInfo: free sram: 30239 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (83676) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087884 largest=3080192 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.2 ms (begin 1.8 ms; incremental text side, 16 tokens final at first chunk) | compute 5616.5 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (93856) SystemInfo: free sram: 30247 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (103876) SystemInfo: free sram: 30247 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 774.4 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7553.3 ms, RTF 1.352 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (104126) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (104146) local_ito: speaker playing=0
+I (104146) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (104766) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (105486) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (105516) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (105536) local_ito: speaker playing=0
+I (105536) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (106166) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (106886) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (106906) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (106926) local_ito: speaker playing=0
+I (106926) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (107546) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (108276) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (108296) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (108316) local_ito: speaker playing=0
+I (108316) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (108936) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (109656) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > text The robot is speaking before the memory handoff. This next sentence should be cancelled.
+I (110846) local_ito: speaker playing=1
+HOST > tts stop
+I (110876) local_ito: speaker playing=0
+CANCEL: audio flushed 15.2 ms after the command
+I (110886) local_ito: speaker playing=0
+CANCEL: audio flushed 21.4 ms after the command
+CANCELLED text after 0.80 s of audio
+TIMING text: 53 tokens, style 0, 0.80 s audio | first chunk 642.6 ms (begin 2.2 ms; incremental text side, 16 tokens final at first chunk) | compute 1238.5 ms, RTF 1.548 | underruns 0 (start delay planned 1342 ms) | weight set 0 | split row | weight staging gdma+prefetch: 645 GEMM calls, 645 announced ahead, 0 not | 2 chunks, 9.3 MB of weights read | pcm fnv32 14dcbd81
+I2S_START: engine begin -> first PCM submission 1130.9 ms, text received -> first PCM submission 1144.1 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (110966) local_ito: speaker playing=0
+I (110976) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (111596) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (112326) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (112346) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (112366) local_ito: speaker playing=0
+I (112366) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (112986) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (113716) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (113736) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (113756) local_ito: speaker playing=0
+I (113756) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (114376) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (114386) SystemInfo: free sram: 30239 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (115106) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (115126) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (115146) local_ito: speaker playing=0
+I (115146) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (115776) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (116486) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (116516) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (116536) local_ito: speaker playing=0
+I (116536) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (117166) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (117886) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (117916) local_ito: speaker playing=0
+CANCEL: audio flushed 19.9 ms after the command
+I (117936) local_ito: speaker playing=0
+I (117936) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (118556) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (119276) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792508
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (124656) SystemInfo: free sram: 30239 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.5 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5615.9 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (134786) SystemInfo: free sram: 30215 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 776.3 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7548.7 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (139746) local_ito: speaker playing=0
+CANCEL: audio flushed 19.7 ms after the command
+I (139756) local_ito: speaker playing=0
+I (139756) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (140376) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (141096) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (141126) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (141146) local_ito: speaker playing=0
+I (141146) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (141776) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (142486) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (142516) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (142536) local_ito: speaker playing=0
+I (142536) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (143166) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (143886) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (143906) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (143926) local_ito: speaker playing=0
+I (143926) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (144546) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (145276) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (145276) SystemInfo: free sram: 30247 minimal sram: 13727
+I (145296) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (145316) local_ito: speaker playing=0
+I (145316) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (145936) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (146656) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (146686) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (146706) local_ito: speaker playing=0
+I (146706) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (147326) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (148056) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (148076) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (148096) local_ito: speaker playing=0
+I (148096) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (148716) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (149436) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (149466) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (149486) local_ito: speaker playing=0
+I (149486) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (150116) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (150836) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (150856) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (150876) local_ito: speaker playing=0
+I (150876) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (151496) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (152226) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (152246) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (152266) local_ito: speaker playing=0
+I (152266) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (152896) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (153606) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (155436) SystemInfo: free sram: 30227 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 636.2 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5614.9 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (165606) SystemInfo: free sram: 30223 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 774.4 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7546.4 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (174036) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (174046) local_ito: speaker playing=0
+I (174046) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (174666) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (175396) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (175416) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (175436) local_ito: speaker playing=0
+I (175436) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (176066) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (176066) SystemInfo: free sram: 30239 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (176786) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (176806) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (176826) local_ito: speaker playing=0
+I (176826) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (177446) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (178176) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (178196) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (178216) local_ito: speaker playing=0
+I (178216) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (178846) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (179556) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (179586) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (179606) local_ito: speaker playing=0
+I (179606) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (180236) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (180956) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (180976) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (180996) local_ito: speaker playing=0
+I (180996) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (181616) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (182336) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (182366) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (182386) local_ito: speaker playing=0
+I (182386) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (183016) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (183736) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (183756) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (183776) local_ito: speaker playing=0
+I (183776) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (184396) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (185116) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (185146) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (185166) local_ito: speaker playing=0
+I (185166) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (185796) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (186506) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > text The robot is speaking before the memory handoff. This next sentence should be cancelled.
+I (186516) SystemInfo: free sram: 30239 minimal sram: 13727
+I (187696) local_ito: speaker playing=1
+HOST > tts stop
+I (187726) local_ito: speaker playing=0
+CANCEL: audio flushed 14.8 ms after the command
+I (187736) local_ito: speaker playing=0
+CANCEL: audio flushed 21.2 ms after the command
+CANCELLED text after 0.80 s of audio
+TIMING text: 53 tokens, style 0, 0.80 s audio | first chunk 643.3 ms (begin 2.2 ms; incremental text side, 16 tokens final at first chunk) | compute 1239.5 ms, RTF 1.549 | underruns 0 (start delay planned 1343 ms) | weight set 0 | split row | weight staging gdma+prefetch: 645 GEMM calls, 645 announced ahead, 0 not | 2 chunks, 9.3 MB of weights read | pcm fnv32 6ad3a80a
+I2S_START: engine begin -> first PCM submission 1131.6 ms, text received -> first PCM submission 1144.8 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (187816) local_ito: speaker playing=0
+I (187826) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (188446) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (189176) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.6 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5613.3 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (196786) SystemInfo: free sram: 30227 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (206886) SystemInfo: free sram: 30227 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 776.6 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7550.3 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (209616) local_ito: speaker playing=0
+CANCEL: audio flushed 19.8 ms after the command
+I (209636) local_ito: speaker playing=0
+I (209636) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (210256) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (210976) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (211006) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (211026) local_ito: speaker playing=0
+I (211026) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (211646) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (212376) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (212396) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (212416) local_ito: speaker playing=0
+I (212416) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (213046) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (213766) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (213786) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (213806) local_ito: speaker playing=0
+I (213806) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (214426) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (215146) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (215176) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (215196) local_ito: speaker playing=0
+I (215196) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (215826) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (216536) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (216566) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (216586) local_ito: speaker playing=0
+I (216586) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (217216) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (217216) SystemInfo: free sram: 30239 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (217926) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (217956) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (217976) local_ito: speaker playing=0
+I (217976) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (218596) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (219326) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (219346) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (219366) local_ito: speaker playing=0
+I (219366) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (219986) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (220716) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (220736) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (220756) local_ito: speaker playing=0
+I (220756) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (221376) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (222096) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (222126) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (222146) local_ito: speaker playing=0
+I (222146) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (222776) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (223486) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (227426) SystemInfo: free sram: 30223 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 634.8 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5611.8 ms, RTF 1.004 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (237436) SystemInfo: free sram: 30235 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 773.8 ms (begin 1.4 ms; incremental text side, 16 tokens final at first chunk) | compute 7555.4 ms, RTF 1.352 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (243936) local_ito: speaker playing=0
+CANCEL: audio flushed 19.8 ms after the command
+I (243946) local_ito: speaker playing=0
+I (243946) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (244566) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (245286) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (245316) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (245336) local_ito: speaker playing=0
+I (245336) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (245966) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (246676) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (246706) local_ito: speaker playing=0
+CANCEL: audio flushed 9.7 ms after the command
+I (246726) local_ito: speaker playing=0
+I (246726) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (247346) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (248066) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (248076) SystemInfo: free sram: 30247 minimal sram: 13727
+I (248096) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (248116) local_ito: speaker playing=0
+I (248116) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (248746) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (249456) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (249486) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (249506) local_ito: speaker playing=0
+I (249506) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (250136) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (250856) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (250876) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (250896) local_ito: speaker playing=0
+I (250896) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (251516) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (252246) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (252266) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (252286) local_ito: speaker playing=0
+I (252286) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (252906) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (253626) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (253656) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (253676) local_ito: speaker playing=0
+I (253676) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (254306) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (255016) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (255046) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (255066) local_ito: speaker playing=0
+I (255066) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (255686) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (256406) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (256436) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (256456) local_ito: speaker playing=0
+I (256456) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (257086) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (257806) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (258106) SystemInfo: free sram: 30179 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 638.9 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5625.3 ms, RTF 1.007 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (268856) SystemInfo: free sram: 30227 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 775.6 ms (begin 1.3 ms; incremental text side, 16 tokens final at first chunk) | compute 7555.0 ms, RTF 1.352 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (278246) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (278266) local_ito: speaker playing=0
+I (278266) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (278886) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+I (278896) SystemInfo: free sram: 30239 minimal sram: 13727
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (279606) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (279636) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (279656) local_ito: speaker playing=0
+I (279656) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (280286) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (280996) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (281026) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (281046) local_ito: speaker playing=0
+I (281046) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (281666) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (282386) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (282416) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (282436) local_ito: speaker playing=0
+I (282436) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (283066) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (283786) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087732 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > text The robot is speaking before the memory handoff. This next sentence should be cancelled.
+I (284966) local_ito: speaker playing=1
+HOST > tts stop
+I (284996) local_ito: speaker playing=0
+CANCEL: audio flushed 24.9 ms after the command
+I (285006) local_ito: speaker playing=0
+CANCEL: audio flushed 31.1 ms after the command
+CANCELLED text after 0.80 s of audio
+TIMING text: 53 tokens, style 0, 0.80 s audio | first chunk 642.7 ms (begin 2.2 ms; incremental text side, 16 tokens final at first chunk) | compute 1238.7 ms, RTF 1.548 | underruns 0 (start delay planned 1342 ms) | weight set 0 | split row | weight staging gdma+prefetch: 645 GEMM calls, 645 announced ahead, 0 not | 2 chunks, 9.3 MB of weights read | pcm fnv32 cde3cf10
+I2S_START: engine begin -> first PCM submission 1131.0 ms, text received -> first PCM submission 1144.1 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (285086) local_ito: speaker playing=0
+I (285096) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (285726) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (286436) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (286466) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (286496) local_ito: speaker playing=0
+I (286496) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (287126) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (287836) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (287866) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (287886) local_ito: speaker playing=0
+I (287886) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (288506) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (289226) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (289236) SystemInfo: free sram: 30223 minimal sram: 13727
+I (289256) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (289276) local_ito: speaker playing=0
+I (289276) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (289906) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (290616) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (290646) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (290666) local_ito: speaker playing=0
+I (290666) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (291296) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (292006) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (292036) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (292056) local_ito: speaker playing=0
+I (292056) local_ito: tts stopped: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (292676) local_ito: workspace returned: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (293396) local_ito: tts resumed: internal free=30223 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792356
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.2 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5616.4 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (299236) SystemInfo: free sram: 30167 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (309386) SystemInfo: free sram: 30227 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 774.4 ms (begin 1.3 ms; incremental text side, 16 tokens final at first chunk) | compute 7550.8 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (313846) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (313866) local_ito: speaker playing=0
+I (313866) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (314486) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (315206) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (315236) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (315256) local_ito: speaker playing=0
+I (315256) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (315886) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (316596) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (316626) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (316646) local_ito: speaker playing=0
+I (316646) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (317276) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (317996) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (318016) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (318036) local_ito: speaker playing=0
+I (318036) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (318656) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (319386) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (319406) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (319416) SystemInfo: free sram: 30239 minimal sram: 13727
+I (319426) local_ito: speaker playing=0
+I (319426) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (320056) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (320766) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (320796) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (320816) local_ito: speaker playing=0
+I (320816) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (321436) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (322166) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (322186) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (322206) local_ito: speaker playing=0
+I (322206) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (322826) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (323546) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (323576) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (323596) local_ito: speaker playing=0
+I (323596) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (324226) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (324946) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (324966) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (324986) local_ito: speaker playing=0
+I (324986) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (325606) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (326326) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (326356) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (326376) local_ito: speaker playing=0
+I (326376) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (327006) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (327726) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+I (329646) SystemInfo: free sram: 30211 minimal sram: 13727
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 635.0 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5620.6 ms, RTF 1.006 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (340516) SystemInfo: free sram: 30223 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 776.1 ms (begin 1.3 ms; incremental text side, 16 tokens final at first chunk) | compute 7549.9 ms, RTF 1.351 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > tts stop
+I (348166) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (348186) local_ito: speaker playing=0
+I (348186) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (348806) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (349526) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (349556) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (349576) local_ito: speaker playing=0
+I (349576) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (350206) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (350926) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (350926) SystemInfo: free sram: 30247 minimal sram: 13727
+I (350946) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (350966) local_ito: speaker playing=0
+I (350966) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (351586) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (352316) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (352336) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (352356) local_ito: speaker playing=0
+I (352356) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (352986) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (353706) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (353726) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (353746) local_ito: speaker playing=0
+I (353746) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (354366) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (355096) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (355116) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (355136) local_ito: speaker playing=0
+I (355136) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (355766) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (356476) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (356506) local_ito: speaker playing=0
+CANCEL: audio flushed 9.8 ms after the command
+I (356526) local_ito: speaker playing=0
+I (356526) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (357156) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (357876) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (357896) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (357916) local_ito: speaker playing=0
+I (357916) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (358536) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (359266) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > tts stop
+I (359286) local_ito: speaker playing=0
+CANCEL: audio flushed 9.9 ms after the command
+I (359306) local_ito: speaker playing=0
+I (359306) local_ito: tts stopped: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (359936) local_ito: workspace returned: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (360646) local_ito: tts resumed: internal free=30247 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > text The robot is speaking before the memory handoff. This next sentence should be cancelled.
+I (360946) SystemInfo: free sram: 30263 minimal sram: 13727
+I (361836) local_ito: speaker playing=1
+HOST > tts stop
+I (361866) local_ito: speaker playing=0
+CANCEL: audio flushed 14.5 ms after the command
+I (361876) local_ito: speaker playing=0
+CANCEL: audio flushed 24.2 ms after the command
+CANCELLED text after 0.80 s of audio
+TIMING text: 53 tokens, style 0, 0.80 s audio | first chunk 643.4 ms (begin 2.2 ms; incremental text side, 16 tokens final at first chunk) | compute 1243.3 ms, RTF 1.554 | underruns 0 (start delay planned 1343 ms) | weight set 0 | split row | weight staging gdma+prefetch: 645 GEMM calls, 645 announced ahead, 0 not | 2 chunks, 9.3 MB of weights read | pcm fnv32 93dea5a9
+I2S_START: engine begin -> first PCM submission 1131.8 ms, text received -> first PCM submission 1145.0 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (361976) local_ito: speaker playing=0
+I (361976) local_ito: tts stopped: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts stop: ESP_OK
+HOST > tts probe
+WORKSPACE internal=239948 psram=4891328 checked
+I (362596) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts probe: ESP_OK
+HOST > tts resume
+MEM boot: peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 3015 KB, internal SRAM 29 KB
+I (363326) local_ito: tts resumed: internal free=30239 largest=19456 min=13727; PSRAM free=3087580 largest=2752512 min=2792204
+CONTROL stack_free=3016 of=8192 bytes
+OK tts resume: ESP_OK
+HOST > test
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 634.9 ms (begin 1.7 ms; incremental text side, 16 tokens final at first chunk) | compute 5616.7 ms, RTF 1.005 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+I (372316) SystemInfo: free sram: 30211 minimal sram: 13727
+SELFTEST single-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+I (382346) SystemInfo: free sram: 30179 minimal sram: 13727
+SELFTEST dual-core, 16-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 a8c2df73 (host a8c2df73) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 769.0 ms (begin 1.3 ms; incremental text side, 16 tokens final at first chunk) | compute 7553.3 ms, RTF 1.352 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 3298 GEMM calls, 3298 announced ahead, 0 not | 14 chunks, 62.0 MB of weights read | pcm fnv32 a8c2df73
+MEM selftest(no playback): peak PSRAM used 5390 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2727 KB, internal SRAM 29 KB
+READY
+HOST > textq The coffee costs $3.50, and the appointment is at 7:30 on Tuesday.
+TIMING textq: 106 tokens, style 0, 6.92 s audio | first chunk 568.2 ms (begin 2.1 ms; incremental text side, 8 tokens final at first chunk) | compute 6964.5 ms, RTF 1.006 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2901 GEMM calls, 2901 announced ahead, 0 not | 18 chunks, 53.1 MB of weights read | pcm fnv32 c4472e58
+MEM textq: peak PSRAM used 5678 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2439 KB, internal SRAM 29 KB
+READY
+HOST > text Hello, I am StackChan.
+I (391636) local_ito: speaker playing=1
+I (392366) SystemInfo: free sram: 30199 minimal sram: 13727
+I (394156) local_ito: speaker playing=0
+TIMING text: 28 tokens, style 0, 2.49 s audio | first chunk 563.7 ms (begin 2.2 ms; incremental text side, 8 tokens final at first chunk) | compute 2493.2 ms, RTF 1.002 | underruns 0 (start delay planned 815 ms) | weight set 0 | split row | weight staging gdma+prefetch: 1092 GEMM calls, 1092 announced ahead, 0 not | 7 chunks, 20.3 MB of weights read | pcm fnv32 72fa55bf
+I2S_START: engine begin -> first PCM submission 814.1 ms, text received -> first PCM submission 824.3 ms (successful I2S API call; DMA and acoustic latency excluded)
+MEM text: peak PSRAM used 5678 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2439 KB, internal SRAM 29 KB
+READY
+HOST > memory
+I (394186) local_ito: console: internal free=30263 largest=19456 min=13727; PSRAM free=2497752 largest=2162688 min=2497072
+CONTROL stack_free=3016 of=8192 bytes
+HOST > status
+STATUS split=row active_set=0 selected_set=0 degraded=1 status=DEGRADED start_delay=planned | set0 ('weights'): 3196068 bytes, measured RTF 1.006 | set1 ('weights_b'): absent | set2 ('weights_c'): absent
+READY
+HOST > test
+HOST > tts stop
+I (394436) local_ito: speaker playing=0
+CANCEL: audio flushed 13.9 ms after the command
+I (399466) local_ito: tts stop failed: internal free=30211 largest=19456 min=13727; PSRAM free=2202836 largest=1900544 min=2202376
+CONTROL stack_free=3016 of=8192 bytes
+ERROR tts stop: ESP_ERR_TIMEOUT
+HOST > tts probe
+I (399606) local_ito: workspace returned: internal free=30239 largest=19456 min=13727; PSRAM free=2202836 largest=1900544 min=2202376
+CONTROL stack_free=3016 of=8192 bytes
+ERROR tts probe: ESP_ERR_INVALID_STATE
+HOST > tts stop
+SELFTEST dual-core, 8-bit activations: golden sentence 0 vs host C engine: 134100 samples (host 134100), fnv32 363d7d98 (host 363d7d98) -> PASS
+TIMING selftest(no playback): 84 tokens, style 0, 5.59 s audio | first chunk 639.0 ms (begin 1.5 ms; incremental text side, 16 tokens final at first chunk) | compute 5620.5 ms, RTF 1.006 | underruns 0 (start delay planned -1 ms) | weight set 0 | split row | weight staging gdma+prefetch: 2356 GEMM calls, 2356 announced ahead, 0 not | 14 chunks, 43.6 MB of weights read | pcm fnv32 363d7d98
+MEM selftest(no playback): peak PSRAM used 5966 / 8117 KB, peak internal SRAM used 384 / 397 KB | free now: PSRAM 2151 KB, internal SRAM 29 KB
+I (403916) SystemInfo: free sram: 30227 minimal sram: 13727
+I (404756) local_ito: tts stop failed: internal free=30223 largest=19456 min=13727; PSRAM free=2202836 largest=1900544 min=2202376
+CONTROL stack_free=3016 of=8192 bytes
+ERROR tts stop: ESP_ERR_TIMEOUT

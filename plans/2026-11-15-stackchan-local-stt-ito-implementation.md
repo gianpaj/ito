@@ -1,7 +1,8 @@
 # Local STT and Ito TTS plan
 
 Status: local STT is an investigation candidate. Ito TTS with the original face
-is working. New model, memory-lifecycle and control changes have not started.
+is working. Touch/menu removal and the reserved Ito workspace lifecycle are implemented
+and device-tested. Local STT and microphone integration have not started.
 This plan is independent of the [native Tailscale plan][network].
 The [research record][research] supplies pinned sources and alternatives.
 Keep the [working speech baseline][baseline] for comparison and recovery.
@@ -26,8 +27,8 @@ quality tests remain owned here.
 
 Use half-duplex capture/playback and one active turn. Preserve original face
 geometry, hardware power/reset, watchdog behavior, USB diagnostics and motor
-power clamps. Touch removal is an optional measured candidate, not an approved
-renderer rewrite. No always-listening or full-duplex echo-cancellation work.
+power clamps. The user selected touch/menu removal followed by phase-owned speech memory.
+Keep the existing renderer. No always-listening or full-duplex echo-cancellation work.
 
 ## Interface to any responder
 
@@ -54,10 +55,11 @@ Linux repo's no-PR rule. Keep the tested USB image, models and matching NVS/layo
 ## Memory and minimal UI measurements
 
 The user asked whether removing touch and menus can give STT more memory while
-retaining the face, physical power control, restart and reset. Measure this as
-a separate candidate; selecting native Tailscale does not authorize a UI rewrite.
+retaining the face, physical power control, restart and reset. The user selected
+this candidate on 15 November, followed by shared inference-memory ownership.
+The original face renderer remains required.
 
-### What the existing artifact establishes
+### Saved pre-simplification baseline
 
 | Item | Bytes | Interpretation |
 |---|---:|---|
@@ -100,17 +102,18 @@ resident 2 MiB allocation. Removing it cannot be booked as a guaranteed saving.
 |---|---|---|---|
 | A: existing face, no Ito start/reservation | Original display, face, board, USB, power | No speech runtime initialization | Establish the real base footprint and largest blocks. |
 | B: face and hardware controls | Same renderer, PMIC, watchdog, codec hooks, USB | No touch polling/input, Home/status widgets or launcher integration | Measure the user's proposed simpler shell without copying the face. |
-| C: phase-owned speech workspace | Candidate A or approved B | Release or lend TTS resources only while synthesis is stopped | Recover the large inference budget for STT and networking. |
+| C: phase-owned speech workspace | Selected candidate B | Release or lend TTS resources only while synthesis is stopped | Recover the large inference budget for STT and networking. |
 
-Test B only as an isolated diagnostic until its interface is selected. Keep the
+Candidate B is selected for the local profile. Keep the
 one-time FT6336 controller identification needed to select ILI9342C versus
 ILI9342E initialization, or replace it with a verified board-specific choice.
 Do not remove a shared timer callback without preserving needed PMIC polling.
 
-Candidate C offers the largest budget change: the hot arena is 234.32 KiB and
-the PSRAM weight copy plus bulk arena total 4.555 MiB. These remain allocated
-in the current service even after cancel. Safe reclamation needs code and tests.
-Keeping both engines resident is acceptable only if measurements prove fit.
+The selected candidate C uses exclusive ownership of reserved hot and PSRAM
+workspaces. The allocator cannot reliably reacquire the large weight copy after
+freeing it. The lifecycle decision and measured limits belong in the
+[runtime ownership note][ownership] and [memory results][memory-results].
+Keeping both engines resident remains an alternative only if measurements prove fit.
 
 Preserve the physical power button and RST behavior. Manufacturer documentation
 specifies click for power on, hold for power off, RST click for reboot and RST
@@ -128,7 +131,8 @@ Grove button and USB navigation rather than assuming RST is available as input.
 
 ## Phase 1. Measure the base firmware and simple-control candidate
 
-Proposed StackChan files are `sdkconfig.conversation.defaults`,
+The touch-free local profile uses the existing `build_local_ito.sh`.
+Future microphone/STT profile files are `sdkconfig.conversation.defaults`,
 `build_conversation.sh` and a small `main/conversation/` directory. Start with
 diagnostic startup selection. Keep `build-local-ito` and `sdkconfig.ito` separate.
 Do not add a generic plugin system or duplicate the board implementation.
@@ -142,7 +146,7 @@ normal cloud startup merely because the Ito runtime component is omitted.
   configuration is identical; record configuration differences before comparing.
 - [ ] After announcing the exact candidate and rollback command, boot it and
   record base, display, face and idle allocations. Check largest internal blocks.
-- [ ] Compare candidate B only if the simple-control interface is selected.
+- [x] Compare candidate B for the selected simple-control interface.
   Disable touch interaction/polling and unneeded widgets independently so each
   saving has evidence. Preserve panel detection and PMIC responsibilities.
 - [ ] Verify power-on, power-off, reboot and entry to download mode on battery
@@ -215,18 +219,19 @@ Do not undertake a second STT engine port without a specific measured blocker.
 
 ## Phase 4. Prove STT and Ito memory ownership
 
-First try the measured resident fit. If it fails, introduce only the lifecycle
-needed for half-duplex ownership. Proposed Ito API changes belong in
-`itofs_service.h` and the shared runtime, with tests on the production functions.
+The user selected phase-owned inference workspaces. Ito reserves one internal
+arena and one PSRAM pool, then lends them only after workers park. The runtime
+API and production-function tests define the handoff. The recognizer must return
+both ranges and stop every user of those pointers before resuming Ito.
 If Parakeet is selected, prove capture/Ito transitions and skip unnecessary
 Oído arena-sharing work. Preserve local recognition failures as results.
 
-- [ ] Define ownership for hot/bulk arenas, PSRAM weights, frontend state/stack,
+- [x] Define ownership for hot/bulk arenas, PSRAM weights, frontend state/stack,
   PCM buffers, task stacks, kernel tiles, GDMA channels, queues and codec state.
-- [ ] Stop admission, cancel the current generation, join producers/consumers,
+- [x] Stop admission, cancel the current generation, park TTS producers/consumers,
   flush/drain output as appropriate and close the mouth before lending/freeing
   speech memory. No worker may retain pointers into a borrowed arena.
-- [ ] Preserve the early contiguous-allocation requirement. Repeatedly freeing
+- [x] Preserve the early contiguous-allocation requirement. Repeatedly freeing
   and hoping a 239,948-byte block reappears is not a design. Compare a reserved
   phase-owned arena against measured safe reacquisition; choose one small path.
 - [ ] Audit Oído relocated-weight/LM allocation ownership. Its stock free calls
@@ -316,3 +321,6 @@ logical commit after both plans pass their independent gates.
 [baseline]: ../results/stackchan/2026-11-15-original-face/README.md
 [buttons]: https://docs.m5stack.com/en/StackChan#power-onoff
 [button-api]: https://docs.m5stack.com/en/arduino/stackchan/button
+
+[ownership]: ../.agents/notes/implemented/architecture/2026-11-15-ito-runtime-lifecycle.md
+[memory-results]: ../results/stackchan/2026-11-15-local-stt-ito/README.md

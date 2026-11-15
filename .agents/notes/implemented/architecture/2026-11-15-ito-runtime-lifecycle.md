@@ -1,7 +1,6 @@
 # Agent Note: Ito inference memory ownership
 
-Status: proposed, host lifecycle and golden reuse tests pass; the reserved-pool
-candidate needs integrated device transitions and memory measurements.
+Status: implemented — Device and host workspace-reuse checks pass.
 
 ## Problem
 
@@ -10,7 +9,7 @@ speech but leaves its storage resident. Freeing the early hot reservation risks
 losing its contiguous SRAM block. Returning separate PSRAM inference blocks to
 TLSF does not guarantee that the weight-copy block can be allocated again.
 
-## Proposal
+## Decision
 
 The embedded service owns two reserved memory ranges: the early internal hot
 arena and one 64-byte-aligned PSRAM pool. The pool contains the padded weight
@@ -20,7 +19,7 @@ keeps its separate heap allocations and optional mapped-flash fallback.
 
 `itofs_service_stop` closes admission, invalidates the active generation,
 flushes playback and waits for frontend, synthesis and player checkpoints.
-It clears model/context and all derived workspace aliases, resets queues and
+It clears model/context and active workspace aliases, resets queues and
 frees optional quiet-text scratch. It does not return either workspace to the
 heap. Task stacks, queues, frontend state/stack, kernel tiles, GDMA channels and
 the helper task remain resident and count in the phase budget.
@@ -71,32 +70,37 @@ espeak-global cleanup audit and safe stack reclamation. Use it only if measured
 retained costs fail the STT fit gate. Keeping both engines' inference storage
 resident without phase ownership does not provide the intended shared budget.
 
-## Acceptance criteria
+## Consequences
 
-Production-function tests cover initial pool allocation failure, retry,
-callback failure, timeout ownership, exact exclusive leases, capacity bounds and
-100 overwrite/reuse transitions. Real checkpoint threads reject stale epochs.
-Actual portable-engine PCM matches after overwriting both workspace ranges.
-Device tests must confirm PSRAM-backed weights after every resume, stable
-workspace addresses/sizes and idle heap/largest blocks, original face, volume,
-cancellation and golden PCM through 100 transitions. Measure control-task stack
-high-water use during start and resume.
+The device completes 100 stop/borrow/full-overwrite/return/resume loops. Every
+resume restores PSRAM weights without recalibration. Eleven explicit golden
+commands yield 33 passing 8-/16-bit cases after reuse. A separate long-diagnostic
+test rejects borrowing after three stop timeouts, then stops successfully and
+resumes on the same connection. Golden output and spoken greeting pass afterward.
 
-## Risks
+The [measurement report](../../../../results/stackchan/2026-11-15-local-stt-ito/README.md)
+records every loop, heap ranges, timing method and failed candidates. Reserved
+storage is separate from free heap. Global heap varies by small amounts with
+live UI/allocator activity; exact zero global heap drift is not established.
+The pool itself is not reallocated across transitions. Actual Oido recognition,
+microphone capture and native Tailscale remain independent integration gates.
+
+A 4,096-byte USB control task overflowed during model layout. Sizing runs on
+the caller despite synthesis owning a worker. The application uses an 8,192-byte
+internal stack; the reserved-pool run leaves at least 3,016 bytes unused. Flash
+API calls keep this task's stack in internal RAM. Resume reloads weights in
+447-448 ms; the measured probe-return to resume-complete interval is 710-730 ms,
+including USB polling. These are costs of lending the inference workspace.
+
+Production-function host tests cover capacity/alignment, failed startup/rebind,
+exact leases, timeout/codec/DMA-error ownership and 100 reuse transitions.
+Real checkpoint threads reject stale epochs. The portable engine reproduces
+PCM after overwriting both ranges under ASan/UBSan. Host ABI sizes differ from
+native sizes; allocation seams do not prove every IDF/espeak internal failure.
+Partial required frontend/kernel allocations are reused on retry. Full espeak
+internal OOM teardown is outside this bounded implementation.
 
 Initial calibration and explicit long diagnostics can delay parking. Callbacks
-must finish cooperatively. Allocation seams do not prove every IDF or espeak
-internal failure. Partial required frontend/kernel allocations are reused on
-retry; exhaustive espeak internal OOM teardown is outside this bounded stage.
-Static external BSS and retained services remain outside the borrowed pool.
-
-A 4,096-byte USB control task overflowed in model layout during resume. Sizing
-runs on the caller despite synthesis having its own worker stack. Use at least
-8,192 bytes of internal caller stack and measure remaining headroom. The
-8,192-byte device candidate reported 2,936 bytes remaining during resume.
-Host mocks and portable-engine tests do not reproduce ESP32 caller-stack limits.
-Flash-calling control tasks must not use PSRAM stacks.
-
-Parked workers feed the application watchdog callback. An actual recognizer
-integration must gate that callback by active phase/owner so a parked TTS worker
-cannot hide stalled STT work. A recognizer watchdog handoff is not implemented.
+must finish cooperatively. Parked workers feed the application watchdog callback.
+A recognizer integration must gate it by active phase/owner so parked TTS workers
+cannot hide stalled STT work. That recognizer watchdog handoff is not implemented.
