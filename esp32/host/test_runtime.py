@@ -15,9 +15,9 @@ FUNCTIONS = (
 )
 
 LIFECYCLE_FUNCTIONS = (
-    "allocate_weight_copy", "request_stop", "cancel_job", "itofs_service_reserve_hot", "workers_parked", "wait_parked",
+    "allocate_inference_pool", "request_stop", "cancel_job", "itofs_service_reserve_hot", "workers_parked", "wait_parked",
     "reset_playback_queues", "release_inference", "itofs_service_stop",
-    "itofs_service_resume", "itofs_service_borrow_hot", "itofs_service_return_hot",
+    "itofs_service_resume", "itofs_service_borrow_memory", "itofs_service_return_memory",
     "itofs_service_start",
 )
 

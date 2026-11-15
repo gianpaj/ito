@@ -28,7 +28,7 @@ static atomic_int s_service_up;
 static atomic_uint s_park_epoch[3];
 static atomic_int s_park_error;
 static unsigned s_workers;
-static int s_stopped, s_hot_borrowed, s_guard_loaded, s_audio_opened;
+static int s_stopped, s_memory_borrowed, s_guard_loaded, s_audio_opened;
 static atomic_int s_boot_done;
 static atomic_uint s_stop_sequence;
 static int s_resume_style, s_resume_act = 8;
@@ -38,6 +38,8 @@ static int s_resume_style, s_resume_act = 8;
 static void service_checkpoint(unsigned worker);
 static int service_stopping(void);
 static size_t s_hot_reserved;
+static void *s_psram_pool;
+static size_t s_psram_pool_bytes;
 static void audio_mute(int muted);
 #endif
 #include "freertos/FreeRTOS.h"
@@ -204,6 +206,7 @@ typedef struct { int16_t *pcm; int n; uint32_t job; } buf_t;      // n = samples
 static QueueHandle_t s_free_q, s_full_q, s_req_q, s_done_q;
 #ifdef ITOFS_EMBEDDED
 static int16_t *s_pcm_buffers[NBUF];
+static int s_resume_chunk = STEADY_FRAMES;
 #endif
 static volatile int s_underruns, s_playing;
 static atomic_uint s_job_generation = 1;
@@ -1202,6 +1205,27 @@ static esp_partition_mmap_handle_t s_map_h; static int s_mapped;
 static itofs_limits_t s_lim;
 static int s_sim; static double s_sim_rtf[MAX_TIERS] = { 0.9, 0.8, 0.7 };
 
+#ifdef ITOFS_EMBEDDED
+static int allocate_inference_pool(size_t extent, size_t bulk_bytes, int chunk_samples)
+{
+    const size_t weights = (extent + 64 + 63) & ~(size_t)63;
+    const size_t bulk = (bulk_bytes + 15) & ~(size_t)15;
+    const size_t pcm = ((size_t)chunk_samples * sizeof(int16_t) + 15) & ~(size_t)15;
+    const size_t bytes = (weights + bulk + NBUF * pcm + 63) & ~(size_t)63;
+    if (!s_psram_pool) {
+        if (heap_caps_get_free_size(MALLOC_CAP_SPIRAM) < bytes + 320 * 1024) return 0;
+        s_psram_pool = heap_caps_aligned_alloc(64, bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!s_psram_pool) return 0;
+        s_psram_pool_bytes = bytes;
+    }
+    if (s_psram_pool_bytes < bytes) return 0;
+    s_wbuf = s_psram_pool;
+    s_bulk = (uint8_t *)s_psram_pool + weights;
+    for (int i = 0; i < NBUF; i++)
+        s_pcm_buffers[i] = (int16_t *)((uint8_t *)s_bulk + bulk + (size_t)i * pcm);
+    return 1;
+}
+#else
 static int allocate_weight_copy(size_t extent, size_t bulk_bytes)
 {
     /* Weights need one block; the bulk arena and self-test margin need total
@@ -1211,6 +1235,7 @@ static int allocate_weight_copy(size_t extent, size_t bulk_bytes)
     s_wbuf = heap_caps_aligned_alloc(64, extent + 64, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     return s_wbuf != NULL;
 }
+#endif
 
 static int tier_ext(const esp_partition_t *p, size_t *ext, uint32_t *id, int *has_id, int quiet)
 {
@@ -1258,6 +1283,9 @@ static int tier_dims(int i, size_t *hb, size_t *bb, int *hop, int *sr)
 // make set i the active one: weights into PSRAM (or the flash mapping), model parsed, engine context initialised over the shared arenas
 static int activate_tier(int i)
 {
+#ifdef ITOFS_EMBEDDED
+    if (!s_wbuf) { printf("ERROR no reserved PSRAM weights workspace\n"); return -1; }
+#endif
     tier_t *T = &s_tier[i];
     s3_stream_reset();                                    // weight staging idle before the weights under it change
     const void *blob;
@@ -2405,11 +2433,14 @@ static esp_err_t runtime_start(void)
 #else
     printf("QEMU build: I2S disabled (audio is generated and discarded)\n");
 #endif
-    /* Persistent codec storage precedes the phase-owned weight and bulk blocks,
-     * so stopping inference can coalesce those blocks for the next resume. */
-    // the active set's weights live in PSRAM next to the arenas (+ margin for the self-test buffer); else they run memory-mapped from flash (slow)
+    /* Keep persistent codec storage separate from inference storage. */
+#ifdef ITOFS_EMBEDDED
+    if (!allocate_inference_pool(max_ext, s_bb, s_chunk_samples)) return ESP_ERR_NO_MEM;
+#else
+    // The standalone runtime can use mapped flash when the weight copy does not fit.
     if (!allocate_weight_copy(max_ext, s_bb))
         printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
+#endif
     // leave room in internal RAM for the task stacks, the staging tiles and the I2S slice (about 24 KB more than the arena itself)
     const char *hot_where = "internal SRAM";
     printf("internal SRAM before the hot arena: largest free block %u KB, free %u KB\n", (unsigned)(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) >> 10),
@@ -2426,7 +2457,9 @@ static esp_err_t runtime_start(void)
         s_hot = heap_caps_aligned_alloc(16, s_hb, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     if (!s_hot) { s_hot = heap_caps_aligned_alloc(16, s_hb, MALLOC_CAP_SPIRAM); hot_where = "PSRAM (internal SRAM too small)"; }
 #endif
+#ifndef ITOFS_EMBEDDED
     s_bulk = heap_caps_aligned_alloc(16, s_bb, MALLOC_CAP_SPIRAM);
+#endif
     if (!s_hot || !s_bulk) { printf("ERROR arena alloc (hot %u, bulk %u)\n", (unsigned)s_hb, (unsigned)s_bb); return ESP_ERR_NO_MEM; }
     printf("arena: hot %u bytes in %s, bulk %u bytes in PSRAM; chunk %d frames = %d samples; %d-bit activations\n", (unsigned)s_hb, hot_where,
            (unsigned)s_bb, s_chunk_frames, s_chunk_samples, s_lim.act_bits ? s_lim.act_bits : 8);
@@ -2445,11 +2478,12 @@ static esp_err_t runtime_start(void)
     if (!s_req_q) s_req_q = xQueueCreate(2, sizeof(req_t));
     if (!s_free_q || !s_full_q || !s_done_q || !s_req_q) return ESP_ERR_NO_MEM;
     for (int i = 0; i < NBUF; i++) {
-        buf_t b = { heap_caps_malloc(sizeof(int16_t) * (size_t)s_chunk_samples, MALLOC_CAP_SPIRAM), 0, 0 };   // PSRAM: the I2S driver copies from it
-        if (!b.pcm) { printf("ERROR no PSRAM for PCM buffers\n"); return ESP_ERR_NO_MEM; }
 #ifdef ITOFS_EMBEDDED
-        s_pcm_buffers[i] = b.pcm;
+        buf_t b = { s_pcm_buffers[i], 0, 0 };
+#else
+        buf_t b = { heap_caps_malloc(sizeof(int16_t) * (size_t)s_chunk_samples, MALLOC_CAP_SPIRAM), 0, 0 };
 #endif
+        if (!b.pcm) { printf("ERROR no PSRAM for PCM buffers\n"); return ESP_ERR_NO_MEM; }
         xQueueSend(s_free_q, &b, 0);
     }
 #ifdef ITOFS_EMBEDDED
@@ -2483,6 +2517,7 @@ static esp_err_t runtime_start(void)
     if (s_boot_done) {
         if (activate_tier(s_active)) return ESP_FAIL;
         s_ctx.act_bits = s_resume_act; s_style = s_resume_style;
+        s_chunk_frames = s_resume_chunk; s_chunk_samples = s_chunk_frames * s_hop;
     }
 #else
     if (xTaskCreatePinnedToCore(play_task, "itofs_play", 4096, NULL, 12, NULL, 1) != pdPASS) return ESP_ERR_NO_MEM;
@@ -2524,16 +2559,13 @@ static void reset_playback_queues(void)
     if (s_fe_q) xQueueReset(s_fe_q);
 }
 
-/* Requires parked workers. Tasks, frontend and kernel storage stay resident. */
+/* Requires parked workers. The reserved workspace and retained services stay owned. */
 static void release_inference(void)
 {
     reset_playback_queues();
-    for (int i = 0; i < NBUF; i++) {
-        heap_caps_free(s_pcm_buffers[i]); s_pcm_buffers[i] = NULL;
-    }
+    for (int i = 0; i < NBUF; i++) s_pcm_buffers[i] = NULL;
     heap_caps_free(s_text_pcm); s_text_pcm = NULL;
-    heap_caps_free(s_wbuf); s_wbuf = NULL;
-    heap_caps_free(s_bulk); s_bulk = NULL;
+    s_wbuf = NULL; s_bulk = NULL;
     if (s_mapped) { esp_partition_munmap(s_map_h); s_mapped = 0; }
     s_blob = NULL; s_blob_size = 0; s_st = s_st16 = NULL;
     s_ndemo = 0; s_demo_from_blob = 0;
@@ -2551,7 +2583,7 @@ esp_err_t itofs_service_stop(uint32_t timeout_ms)
     cancel_job(); request_stop();
     if (xSemaphoreTake(s_command_mutex, pdMS_TO_TICKS(timeout_ms)) != pdTRUE) return ESP_ERR_TIMEOUT;
     esp_err_t error = ESP_OK;
-    if (s_hot_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_OK; }
+    if (s_memory_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_OK; }
     if (!wait_parked(deadline)) error = ESP_ERR_TIMEOUT;
     else if (!s_stopped) {
         error = s_audio.flush(s_audio.user);
@@ -2560,7 +2592,7 @@ esp_err_t itofs_service_stop(uint32_t timeout_ms)
         if (error == ESP_OK) error = muted;
         if (s_park_error) error = s_park_error;
         if (error == ESP_OK) {
-            if (s_boot_done) { s_resume_style = s_style; s_resume_act = s_ctx.act_bits; }
+            if (s_boot_done) { s_resume_style = s_style; s_resume_act = s_ctx.act_bits; s_resume_chunk = s_chunk_frames; }
             release_inference();
         }
     }
@@ -2573,7 +2605,7 @@ esp_err_t itofs_service_resume(void)
     if (!s_service_started) return ESP_ERR_INVALID_STATE;
     xSemaphoreTake(s_command_mutex, portMAX_DELAY);
     if (s_park_error) { xSemaphoreGive(s_command_mutex); return ESP_FAIL; }
-    if (!s_stopped || s_hot_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_ERR_INVALID_STATE; }
+    if (!s_stopped || s_memory_borrowed) { xSemaphoreGive(s_command_mutex); return ESP_ERR_INVALID_STATE; }
     unsigned sequence = atomic_load(&s_stop_sequence);
     s_stopped = 0;
     esp_err_t error = runtime_start();
@@ -2591,26 +2623,31 @@ esp_err_t itofs_service_resume(void)
     return error;
 }
 
-esp_err_t itofs_service_borrow_hot(void **workspace, size_t *bytes)
+esp_err_t itofs_service_borrow_memory(itofs_workspace_t *workspace)
 {
-    if (!workspace || !bytes) return ESP_ERR_INVALID_ARG;
+    if (!workspace) return ESP_ERR_INVALID_ARG;
     if (!s_service_started) return ESP_ERR_INVALID_STATE;
     xSemaphoreTake(s_command_mutex, portMAX_DELAY);
     esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (s_stopped && !s_hot_borrowed && !s_park_error && s_hot &&
-        workers_parked()) {
-        s_hot_borrowed = 1; *workspace = s_hot; *bytes = s_hot_reserved; error = ESP_OK;
+    if (s_stopped && !s_memory_borrowed && !s_park_error && s_hot && s_psram_pool && workers_parked()) {
+        s_memory_borrowed = 1;
+        *workspace = (itofs_workspace_t){ s_hot, s_hot_reserved, s_psram_pool, s_psram_pool_bytes };
+        error = ESP_OK;
     }
     xSemaphoreGive(s_command_mutex);
     return error;
 }
 
-esp_err_t itofs_service_return_hot(void *workspace)
+esp_err_t itofs_service_return_memory(const itofs_workspace_t *workspace)
 {
+    if (!workspace) return ESP_ERR_INVALID_ARG;
     if (!s_service_started) return ESP_ERR_INVALID_STATE;
     xSemaphoreTake(s_command_mutex, portMAX_DELAY);
     esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (s_hot_borrowed && workspace == s_hot) { s_hot_borrowed = 0; error = ESP_OK; }
+    if (s_memory_borrowed && workspace->hot == s_hot && workspace->hot_bytes == s_hot_reserved &&
+        workspace->psram == s_psram_pool && workspace->psram_bytes == s_psram_pool_bytes) {
+        s_memory_borrowed = 0; error = ESP_OK;
+    }
     xSemaphoreGive(s_command_mutex);
     return error;
 }
