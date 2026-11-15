@@ -1,5 +1,11 @@
 # StackChan local conversation latency
 
+Status: implemented and flashed; the strict 1,500 ms target remains open.
+The final bounded run measures 1,648.1 ms from the last RX read to first I2S,
+1,109.4 ms from final transcript to first I2S and zero output underruns.
+[Results](../results/stackchan/2026-11-15-streaming-latency/README.md) include all
+four microphone probes and the separate public fixture with a 7.05-second reply.
+
 ## Goal and measurement
 
 Keep Oido STT, Ito TTS and the original speaking face on the ESP32. Replace the
@@ -73,7 +79,9 @@ by one word from chunk eight; keep the batch diagnostic at eight frames.
 Retained-layout restoration still takes about 244 ms. Cache the immutable
 trigonometric initialization tables in a separate optional 14,416-byte PSRAM
 block. Rebind every context pointer and preserve exact table bytes. Keep full
-initialization as the fallback. Verify cached initialization against ordinary
+initialization as the fallback. Keep upstream single-core weight preload enabled
+under its build policy, preserve its prior ROM autoload state, and complete all
+preload reads before returning a workspace. Verify cached initialization against ordinary
 initialization and golden PCM before flashing. Keep TTS buffering unchanged if
 this candidate meets the latency target.
 
@@ -101,3 +109,18 @@ weights and adds about 460 ms to restoration. Scratch-only lending fits the
 measured model while retaining one exclusive hot arena. Server STT remains a
 fallback outside this local implementation. Automatic endpointing is deferred
 to keep the first latency result independent of silence detection.
+
+## Completed scope and remaining work
+
+Streaming capture, scratch-only leases, retained layout, cached initialization,
+weight preload and device-clock benchmark markers are implemented. The affected
+host checks and native boot golden comparisons pass. Four microphone probes and
+one completed public fixture run stay separate from the earlier 91-turn baseline.
+One upload transport failure occurs before recognition and passes after the
+host readiness fix. No further device passes run in this slice.
+
+TTS retains its existing chunk schedule and underrun protection. The final STT
+tail is 538.7 ms and restoration is 31.1 ms; supplied text to first I2S takes
+1,075.6 ms. Reaching the strict target needs TTS startup around 900 ms or less,
+with the same reply and preserved longer-reply playback. This remains open.
+Automatic endpointing, acoustic timing and a real LLM are separate work.

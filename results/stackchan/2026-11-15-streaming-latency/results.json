@@ -1,0 +1,590 @@
+{
+  "schema_version": 1,
+  "target_ms": 1500,
+  "target_metric": "last_input_read_to_first_i2s_device_ms",
+  "target_met": false,
+  "remaining_ms": 148.106,
+  "microphone_turns": 4,
+  "completed_fixture_turns": 1,
+  "fixture_upload_failures_before_recognition": 1,
+  "llm_called": false,
+  "trials": [
+    {
+      "configuration": "batch baseline",
+      "firmware_sha256": "b78e5d70581f6cdc3d88d6270a796034eef00d218c090ad613050b6f912d15c8",
+      "tool_revision": "94b0b45cb66414d57cb1ac71f5bc4936203feb9b",
+      "metrics": {
+        "trial": 1,
+        "mode": "microphone",
+        "turn": 1,
+        "transcript_kind": "no_speech",
+        "capture": {
+          "samples": 80000,
+          "peak": 4248,
+          "clipped": 0,
+          "elapsed_ms": 5006,
+          "cleanup": 1,
+          "audio_ms": 5000,
+          "capped": 1
+        },
+        "events_host_monotonic_ns": {
+          "input_command": 977885532716166,
+          "listening": 977885629553625,
+          "capture_report": 977890648839125,
+          "stt_report": 977895647073833,
+          "transcript": 977896375632750,
+          "conversation_ready": 977896376251208,
+          "reply_sent": 977896376287000,
+          "reply_accepted": 977896377024541,
+          "playback_start_log": 977897445897500,
+          "playback_end_log": 977901093393083,
+          "speech_ready": 977901104976458
+        },
+        "events_device_log_ms": {
+          "capture_end_log": 18896,
+          "playback_start_log": 25696
+        },
+        "stt_setup_ms": 752.6,
+        "stt_feed_ms": 3797.6,
+        "stt_finish_ms": 440.8,
+        "stt_total_ms": 4991.0,
+        "stt_report_to_conversation_ready_host_ms": 729.177,
+        "capture_report_to_transcript_host_ms": 5726.794,
+        "pcm_submit_to_transcript_host_ms": null,
+        "upload_host_ms": null,
+        "transcript_to_reply_sent_host_ms": 0.654,
+        "reply_sent_to_playback_log_host_ms": 1069.611,
+        "capture_report_to_playback_log_host_ms": 6797.058,
+        "capture_end_log_to_playback_log_device_ms": 6800,
+        "pcm_submit_to_playback_log_host_ms": null,
+        "input_command_to_playback_log_host_ms": 11913.181,
+        "reply_sent_to_speech_ready_host_ms": 4728.689,
+        "tts_first_utterance_audio_seconds": 3.62,
+        "tts_first_utterance_compute_ms": 3679.8,
+        "tts_first_utterance_compute_rtf": 1.015,
+        "tts_utterances": 1,
+        "tts_underruns": 0,
+        "tts_text_to_first_i2s_ms": 1066.7,
+        "tts_text_to_pcm_ready_ms": 578.2
+      }
+    },
+    {
+      "configuration": "stream8, retained weights",
+      "image": {
+        "bytes": 2050320,
+        "sha256": "2790a8a1381709996c0b3aa30d5ecd430f7ee6f039113e4abfb6a4bc6b48c360"
+      },
+      "stackchan_revision": "e7ad09003368a3bfcba42943ad53332975e13fc6",
+      "ito_revision": "9761c55780782fef716df4dd656b09c0cb7d26ad",
+      "tool_revision": "9761c55780782fef716df4dd656b09c0cb7d26ad",
+      "tool_sha256": "f51d322ae3f057b2f6e1af7c20b0b021f890884ffb2ae7a337fa28b5826c4dbd",
+      "metrics": {
+        "events_device_monotonic_us": {},
+        "last_input_read_to_first_i2s_device_ms": null,
+        "last_input_read_to_final_transcript_device_ms": null,
+        "last_input_read_to_drained_device_ms": null,
+        "final_transcript_to_resume_device_ms": null,
+        "final_transcript_to_first_i2s_device_ms": null,
+        "trial": 1,
+        "mode": "microphone",
+        "turn": 1,
+        "transcript_kind": "no_speech",
+        "capture": {
+          "samples": 80000,
+          "peak": 4221,
+          "clipped": 0,
+          "elapsed_ms": 5000,
+          "cleanup": 1,
+          "audio_ms": 5000,
+          "capped": 1,
+          "backlog_samples": 19346826
+        },
+        "events_host_monotonic_ns": {
+          "input_command": 979529449382666,
+          "listening": 979530301088000,
+          "capture_report": 979535313256250,
+          "stt_report": 979535797819083,
+          "transcript": 979536062955250,
+          "conversation_ready": 979536063875708,
+          "reply_sent": 979536063897083,
+          "reply_accepted": 979536064494333,
+          "playback_start_log": 979537142577625,
+          "playback_end_log": 979540790572000,
+          "speech_ready": 979540802668208
+        },
+        "events_device_log_ms": {
+          "capture_end_log": 19706,
+          "playback_start_log": 21526
+        },
+        "stt_setup_ms": 753.8,
+        "stt_feed_ms": 3902.6,
+        "stt_finish_ms": 453.9,
+        "stt_total_ms": 5110.3,
+        "stt_report_to_conversation_ready_host_ms": 266.057,
+        "capture_report_to_transcript_host_ms": 749.699,
+        "pcm_submit_to_transcript_host_ms": null,
+        "upload_host_ms": null,
+        "transcript_to_reply_sent_host_ms": 0.942,
+        "reply_sent_to_playback_log_host_ms": 1078.681,
+        "capture_report_to_playback_log_host_ms": 1829.321,
+        "capture_end_log_to_playback_log_device_ms": 1820,
+        "pcm_submit_to_playback_log_host_ms": null,
+        "input_command_to_playback_log_host_ms": 7693.195,
+        "reply_sent_to_speech_ready_host_ms": 4738.771,
+        "tts_first_utterance_audio_seconds": 3.62,
+        "tts_first_utterance_compute_ms": 3693.1,
+        "tts_first_utterance_compute_rtf": 1.019,
+        "tts_utterances": 1,
+        "tts_underruns": 0,
+        "tts_text_to_first_i2s_ms": 1075.8,
+        "tts_text_to_pcm_ready_ms": 587.3
+      },
+      "native_oido_memory_bytes": {
+        "hot": 204720,
+        "psram": 1309152,
+        "allocations": 59
+      },
+      "timestamp_limit": "Unsupported nano printf integer format invalidates TURN_TIMING; retain only independent legacy device-log interval."
+    },
+    {
+      "configuration": "stream4, retained layout",
+      "image": {
+        "bytes": 2050784,
+        "sha256": "70a5fe5b8855a4b8301dc143ba666ae5773109901d5c98c09f052262789e69ef"
+      },
+      "stackchan_revision": "9c511b69bcaf10c405eadccc6375df7d99fb3b0e",
+      "ito_revision": "abdec64825c1afbfd1eeb23998cbcd31f1a2ac97",
+      "tool_revision": "abdec64825c1afbfd1eeb23998cbcd31f1a2ac97",
+      "tool_sha256": "226b78ca95e40e761d79762d0b4cd30a1187cd43fb8f5ff7c7791473e719ab88",
+      "metrics": {
+        "events_device_monotonic_us": {
+          "last_input_us": 19250539,
+          "input_drained_us": 20144757,
+          "final_transcript_us": 20474329,
+          "resume_done_us": 20718768,
+          "first_i2s_us": 21789397
+        },
+        "last_input_read_to_first_i2s_device_ms": 2538.858,
+        "last_input_read_to_final_transcript_device_ms": 1223.79,
+        "last_input_read_to_drained_device_ms": 894.218,
+        "final_transcript_to_resume_device_ms": 244.439,
+        "final_transcript_to_first_i2s_device_ms": 1315.068,
+        "trial": 1,
+        "mode": "microphone",
+        "turn": 1,
+        "transcript_kind": "no_speech",
+        "capture": {
+          "samples": 80000,
+          "peak": 4382,
+          "clipped": 0,
+          "elapsed_ms": 5000,
+          "cleanup": 1,
+          "audio_ms": 5000,
+          "capped": 1,
+          "backlog_samples": 13440
+        },
+        "events_host_monotonic_ns": {
+          "input_command": 979987299571208,
+          "listening": 979988114577666,
+          "capture_report": 979993137312291,
+          "stt_report": 979994339068833,
+          "transcript": 979994583652416,
+          "conversation_ready": 979994584578583,
+          "reply_sent": 979994584594041,
+          "reply_accepted": 979994585194833,
+          "playback_start_log": 979995656847958,
+          "playback_end_log": 979999310803333,
+          "speech_ready": 979999322763666
+        },
+        "events_device_log_ms": {
+          "capture_end_log": 19616,
+          "playback_start_log": 22136
+        },
+        "stt_setup_ms": 718.2,
+        "stt_feed_ms": 5606.6,
+        "stt_finish_ms": 328.6,
+        "stt_total_ms": 6653.4,
+        "stt_report_to_conversation_ready_host_ms": 245.51,
+        "capture_report_to_transcript_host_ms": 1446.34,
+        "pcm_submit_to_transcript_host_ms": null,
+        "upload_host_ms": null,
+        "transcript_to_reply_sent_host_ms": 0.942,
+        "reply_sent_to_playback_log_host_ms": 1072.254,
+        "capture_report_to_playback_log_host_ms": 2519.536,
+        "capture_end_log_to_playback_log_device_ms": 2520,
+        "pcm_submit_to_playback_log_host_ms": null,
+        "input_command_to_playback_log_host_ms": 8357.277,
+        "reply_sent_to_speech_ready_host_ms": 4738.17,
+        "tts_first_utterance_audio_seconds": 3.62,
+        "tts_first_utterance_compute_ms": 3674.6,
+        "tts_first_utterance_compute_rtf": 1.014,
+        "tts_utterances": 1,
+        "tts_underruns": 0,
+        "tts_text_to_first_i2s_ms": 1068.1,
+        "tts_text_to_pcm_ready_ms": 579.7
+      },
+      "native_oido_memory_bytes": {
+        "hot": 182192,
+        "psram": 1216336,
+        "allocations": 59
+      }
+    },
+    {
+      "configuration": "stream6, cached initialization",
+      "image": {
+        "bytes": 2051504,
+        "sha256": "7d0d584fb5ec0a98078285fcf4849e570ce2bfc3311740cc0714b756a238abab"
+      },
+      "stackchan_revision": "de8ff882da365fc18653cdf7bbd4a76ac23df352",
+      "ito_revision": "d11f9104ddc65eb184329374e850c3e412a95dee",
+      "tool_revision": "d11f9104ddc65eb184329374e850c3e412a95dee",
+      "tool_sha256": "8b565c1334096a4c3191ba28149d623fc3ed1a25c0af92e92dd032289a214b2e",
+      "metrics": {
+        "events_device_monotonic_us": {
+          "last_input_us": 19294890,
+          "input_drained_us": 19540672,
+          "final_transcript_us": 19853672,
+          "resume_done_us": 19878837,
+          "first_i2s_us": 20957235
+        },
+        "last_input_read_to_first_i2s_device_ms": 1662.345,
+        "last_input_read_to_final_transcript_device_ms": 558.782,
+        "last_input_read_to_drained_device_ms": 245.782,
+        "final_transcript_to_resume_device_ms": 25.165,
+        "final_transcript_to_first_i2s_device_ms": 1103.563,
+        "trial": 1,
+        "mode": "microphone",
+        "turn": 1,
+        "transcript_kind": "no_speech",
+        "capture": {
+          "samples": 80000,
+          "peak": 4911,
+          "clipped": 0,
+          "elapsed_ms": 5000,
+          "cleanup": 1,
+          "audio_ms": 5000,
+          "capped": 1,
+          "backlog_samples": 3200
+        },
+        "events_host_monotonic_ns": {
+          "input_command": 980688352578916,
+          "listening": 980689191098166,
+          "capture_report": 980694203519875,
+          "stt_report": 980694750568333,
+          "transcript": 980694775323416,
+          "conversation_ready": 980694776697500,
+          "reply_sent": 980694776705583,
+          "reply_accepted": 980694777234208,
+          "playback_start_log": 980695855429083,
+          "playback_end_log": 980699502989916,
+          "speech_ready": 980699514790375
+        },
+        "events_device_log_ms": {
+          "capture_end_log": 19646,
+          "playback_start_log": 21306
+        },
+        "stt_setup_ms": 742.7,
+        "stt_feed_ms": 4637.3,
+        "stt_finish_ms": 312.1,
+        "stt_total_ms": 5692.1,
+        "stt_report_to_conversation_ready_host_ms": 26.129,
+        "capture_report_to_transcript_host_ms": 571.804,
+        "pcm_submit_to_transcript_host_ms": null,
+        "upload_host_ms": null,
+        "transcript_to_reply_sent_host_ms": 1.382,
+        "reply_sent_to_playback_log_host_ms": 1078.724,
+        "capture_report_to_playback_log_host_ms": 1651.909,
+        "capture_end_log_to_playback_log_device_ms": 1660,
+        "pcm_submit_to_playback_log_host_ms": null,
+        "input_command_to_playback_log_host_ms": 7502.85,
+        "reply_sent_to_speech_ready_host_ms": 4738.085,
+        "tts_first_utterance_audio_seconds": 3.62,
+        "tts_first_utterance_compute_ms": 3697.3,
+        "tts_first_utterance_compute_rtf": 1.02,
+        "tts_utterances": 1,
+        "tts_underruns": 0,
+        "tts_text_to_first_i2s_ms": 1075.9,
+        "tts_text_to_pcm_ready_ms": 587.4
+      },
+      "native_oido_memory_bytes": {
+        "hot": 193456,
+        "psram": 1273120,
+        "allocations": 59
+      }
+    },
+    {
+      "configuration": "stream6, cached initialization, upstream prefetch",
+      "image": {
+        "bytes": 2051648,
+        "sha256": "dbb885505894c97381c6d8835c6039e6ab5a8138250d88888851af8ac02b844c"
+      },
+      "stackchan_revision": "ca36a658bed875708b8c8f646aa168aac0b2c613",
+      "ito_revision": "d11f9104ddc65eb184329374e850c3e412a95dee",
+      "tool_revision": "d11f9104ddc65eb184329374e850c3e412a95dee",
+      "tool_sha256": "8b565c1334096a4c3191ba28149d623fc3ed1a25c0af92e92dd032289a214b2e",
+      "metrics": {
+        "events_device_monotonic_us": {
+          "last_input_us": 19289042,
+          "input_drained_us": 19523847,
+          "final_transcript_us": 19827779,
+          "resume_done_us": 19858840,
+          "first_i2s_us": 20937148
+        },
+        "last_input_read_to_first_i2s_device_ms": 1648.106,
+        "last_input_read_to_final_transcript_device_ms": 538.737,
+        "last_input_read_to_drained_device_ms": 234.805,
+        "final_transcript_to_resume_device_ms": 31.061,
+        "final_transcript_to_first_i2s_device_ms": 1109.369,
+        "trial": 1,
+        "mode": "microphone",
+        "turn": 1,
+        "transcript_kind": "no_speech",
+        "capture": {
+          "samples": 80000,
+          "peak": 4188,
+          "clipped": 0,
+          "elapsed_ms": 5000,
+          "cleanup": 1,
+          "audio_ms": 5000,
+          "capped": 1,
+          "backlog_samples": 3200
+        },
+        "events_host_monotonic_ns": {
+          "input_command": 981119726587041,
+          "listening": 981120550380166,
+          "capture_report": 981125564102333,
+          "stt_report": 981126089695333,
+          "transcript": 981126120774083,
+          "conversation_ready": 981126121843625,
+          "reply_sent": 981126121864125,
+          "reply_accepted": 981126122502125,
+          "playback_start_log": 981127200768958,
+          "playback_end_log": 981130847906333,
+          "speech_ready": 981130859883208
+        },
+        "events_device_log_ms": {
+          "capture_end_log": 19646,
+          "playback_start_log": 21286
+        },
+        "stt_setup_ms": 726.9,
+        "stt_feed_ms": 4268.7,
+        "stt_finish_ms": 303.0,
+        "stt_total_ms": 5298.6,
+        "stt_report_to_conversation_ready_host_ms": 32.148,
+        "capture_report_to_transcript_host_ms": 556.672,
+        "pcm_submit_to_transcript_host_ms": null,
+        "upload_host_ms": null,
+        "transcript_to_reply_sent_host_ms": 1.09,
+        "reply_sent_to_playback_log_host_ms": 1078.905,
+        "capture_report_to_playback_log_host_ms": 1636.667,
+        "capture_end_log_to_playback_log_device_ms": 1640,
+        "pcm_submit_to_playback_log_host_ms": null,
+        "input_command_to_playback_log_host_ms": 7474.182,
+        "reply_sent_to_speech_ready_host_ms": 4738.019,
+        "tts_first_utterance_audio_seconds": 3.62,
+        "tts_first_utterance_compute_ms": 3693.9,
+        "tts_first_utterance_compute_rtf": 1.019,
+        "tts_utterances": 1,
+        "tts_underruns": 0,
+        "tts_text_to_first_i2s_ms": 1075.6,
+        "tts_text_to_pcm_ready_ms": 587.1
+      },
+      "native_oido_memory_bytes": {
+        "hot": 193456,
+        "psram": 1273120,
+        "allocations": 59
+      }
+    }
+  ],
+  "public_fixture_long_reply": {
+    "events_device_monotonic_us": {
+      "last_input_us": 0,
+      "input_drained_us": 0,
+      "final_transcript_us": 22651525,
+      "resume_done_us": 22678790,
+      "first_i2s_us": 23830289
+    },
+    "last_input_read_to_first_i2s_device_ms": null,
+    "last_input_read_to_final_transcript_device_ms": null,
+    "last_input_read_to_drained_device_ms": null,
+    "final_transcript_to_resume_device_ms": 27.265,
+    "final_transcript_to_first_i2s_device_ms": 1178.764,
+    "trial": 1,
+    "mode": "wav_upload",
+    "turn": 1,
+    "transcript_kind": "text",
+    "capture": {
+      "backlog_samples": 0
+    },
+    "events_host_monotonic_ns": {
+      "input_command": 981445412485666,
+      "pcm_submit": 981446719272583,
+      "stt_report": 981454356463958,
+      "transcript": 981454384444375,
+      "conversation_ready": 981454385073875,
+      "reply_sent": 981454385104291,
+      "reply_accepted": 981454385811625,
+      "playback_start_log": 981455537881791,
+      "playback_end_log": 981462620900583,
+      "speech_ready": 981462633078583
+    },
+    "events_device_log_ms": {
+      "playback_start_log": 24176
+    },
+    "stt_setup_ms": 729.1,
+    "stt_feed_ms": 6487.6,
+    "stt_finish_ms": 380.3,
+    "stt_total_ms": 7597.0,
+    "stt_report_to_conversation_ready_host_ms": 28.61,
+    "capture_report_to_transcript_host_ms": null,
+    "pcm_submit_to_transcript_host_ms": 7665.172,
+    "upload_host_ms": 1306.787,
+    "transcript_to_reply_sent_host_ms": 0.66,
+    "reply_sent_to_playback_log_host_ms": 1152.777,
+    "capture_report_to_playback_log_host_ms": null,
+    "capture_end_log_to_playback_log_device_ms": null,
+    "pcm_submit_to_playback_log_host_ms": 8818.609,
+    "input_command_to_playback_log_host_ms": 10125.396,
+    "reply_sent_to_speech_ready_host_ms": 8247.974,
+    "tts_first_utterance_audio_seconds": 7.05,
+    "tts_first_utterance_compute_ms": 7365.2,
+    "tts_first_utterance_compute_rtf": 1.045,
+    "tts_utterances": 1,
+    "tts_underruns": 0,
+    "tts_text_to_first_i2s_ms": 1148.6,
+    "tts_text_to_pcm_ready_ms": 660.2,
+    "fixture": {
+      "bytes": 276524,
+      "sha256": "66c6582b36f92d2e62e2103dccb999a55c01eb237c6e5aa60fa0ed3548233854"
+    },
+    "host_transcript_match": true,
+    "reply_bytes": 118,
+    "reply_sha256": "5ea19d7c001f169b8266838dc7eb6e12077063647fea4a6c0fc788c414a4795e",
+    "firmware": {
+      "bytes": 2051648,
+      "sha256": "dbb885505894c97381c6d8835c6039e6ab5a8138250d88888851af8ac02b844c"
+    },
+    "host_tool_revision": "59bbfc4",
+    "private_driver_sha256": "e995f4bfa0b0a103a94594f7e4c133034ca9d164834b58f062132c34776053df"
+  },
+  "final_memory": {
+    "recording": {
+      "internal_free": 11622,
+      "internal_largest": 7680,
+      "psram_free": 2727656,
+      "psram_largest": 2424832
+    },
+    "recognizing": {
+      "internal_free": 13678,
+      "internal_largest": 7680,
+      "psram_free": 2728384,
+      "psram_largest": 2424832
+    },
+    "idle": {
+      "internal_free": 13758,
+      "internal_largest": 7680,
+      "psram_free": 2728056,
+      "psram_largest": 2424832
+    }
+  },
+  "worker_stack": {
+    "bytes": 12288,
+    "unused_bytes": 5936
+  },
+  "control_stack_after_fixture": {
+    "bytes": 8192,
+    "unused_bytes": 6620
+  },
+  "init_cache_bytes": 14416,
+  "reserved_hot_bytes": 239948,
+  "reserved_psram_bytes": 4891328,
+  "scratch_lease_psram_bytes": 1695168,
+  "linked_size": {
+    "version": "1.1",
+    "layout": [
+      {
+        "name": "Flash Data",
+        "total": 0,
+        "used": 1084320,
+        "free": 0,
+        "parts": {
+          ".rodata": {
+            "size": 991976
+          },
+          ".bss": {
+            "size": 92088
+          },
+          ".appdesc": {
+            "size": 256
+          }
+        }
+      },
+      {
+        "name": "Flash Code",
+        "total": 0,
+        "used": 995584,
+        "free": 0,
+        "parts": {
+          ".text": {
+            "size": 995584
+          }
+        }
+      },
+      {
+        "name": "DIRAM",
+        "total": 341760,
+        "used": 91515,
+        "free": 250245,
+        "parts": {
+          ".text": {
+            "size": 49703
+          },
+          ".bss": {
+            "size": 27824
+          },
+          ".data": {
+            "size": 12960
+          },
+          ".vectors": {
+            "size": 1028
+          }
+        }
+      },
+      {
+        "name": "RTC SLOW",
+        "total": 8192,
+        "used": 32,
+        "free": 8160,
+        "parts": {
+          ".force_slow": {
+            "size": 32
+          }
+        }
+      },
+      {
+        "name": "RTC FAST",
+        "total": 8192,
+        "used": 24,
+        "free": 8168,
+        "parts": {
+          ".rtc_reserved": {
+            "size": 24
+          }
+        }
+      }
+    ]
+  },
+  "oido_model_sha256": "9e8b40913f532fb44b716a1f882f38b3b21e220713e417899aba32ace8c35066",
+  "oido_patch_sha256": "6c2dd87061a826f636ab64178104139b538e4f49b1cc457727f2e205ee3c7137",
+  "limits": [
+    "Four ambient microphone timing turns return no speech; these are latency measurements, not live speech accuracy tests.",
+    "The last RX read and first I2S submission are software endpoints; acoustic onset and detected speech end are unmeasured.",
+    "Boot/calibration are excluded. Fixed supplied replies exclude LLM time.",
+    "The batch baseline and stream8 use legacy device-log endpoints; later trials also have device microsecond markers.",
+    "One run per configuration does not establish jitter bounds or a latency distribution.",
+    "Live stream6 and batch stream8 have a one-word host fixture difference; no broad recognition-quality claim.",
+    "The failed fixture upload performs no recognition or speech and is excluded from completed turns.",
+    "TTS scheduling/buffering remains unchanged; degraded=1 remains visible.",
+    "Control stack high-water is measured after the batch fixture; capture-specific control-stack high-water was not recorded."
+  ]
+}

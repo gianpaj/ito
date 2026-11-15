@@ -300,7 +300,7 @@ def benchmark(args):
                     print(f"Trial {number}: last RX read -> first I2S {row['last_input_read_to_first_i2s_device_ms']:.1f} ms; "
                           f"STT tail {row['last_input_read_to_final_transcript_device_ms']:.1f} ms; "
                           f"restore {row['final_transcript_to_resume_device_ms']:.1f} ms", flush=True)
-                print(f"Trial {number}: STT {row['stt_total_ms']:.1f} ms; "
+                print(f"Trial {number}: STT work {row['stt_total_ms']:.1f} ms; "
                       f"Ito restore/control {row['stt_report_to_conversation_ready_host_ms']:.1f} ms observed; "
                       f"text -> first I2S {row['tts_text_to_first_i2s_ms']:.1f} ms; "
                       f"capture-end -> playback log {gap if gap is not None else 'n/a'} ms; "

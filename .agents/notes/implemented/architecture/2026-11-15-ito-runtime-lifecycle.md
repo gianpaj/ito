@@ -157,3 +157,10 @@ callback. StackChan uses that callback to yield to subscribed idle tasks; it doe
 not reset the recognizer's watchdog subscription. The separate conversation
 worker subscribes to the task watchdog and resets its own subscription after
 capture or recognition progress. Parked Ito workers cannot hide stalled STT work.
+
+The [streaming latency run](../../../../results/stackchan/2026-11-15-streaming-latency/README.md)
+measures final-transcript to restoration completion at 31.1 ms with retained
+weights, layout and trig tables. The earlier scratch-only candidate still needs
+244.4 ms before caching trig initialization. The final supplied reply reports
+zero underruns. The complete input-end target remains unmet at 1,648.1 ms;
+restoration savings alone do not establish conversational latency.

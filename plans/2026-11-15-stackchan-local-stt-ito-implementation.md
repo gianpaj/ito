@@ -16,6 +16,10 @@ and no clipping. Oído used 204,720 bytes of borrowed internal memory and
 5,760 bytes of unused stack. Touch/menu removal and reserved Ito workspaces are
 implemented and device-tested.
 The [manual speech results][manual-results] record the completed run and limits.
+The [streaming latency slice](2026-11-15-stackchan-conversation-latency.md) runs
+recognition during capture and preserves Ito weights and initialization tables.
+Its bounded final turn measures 1,648.1 ms from the last RX read to first I2S;
+the strict 1,500 ms target remains open.
 This plan is independent of the [native Tailscale plan][network].
 The [research record][research] supplies pinned sources and alternatives.
 Keep the [working speech baseline][baseline] for comparison and recovery.

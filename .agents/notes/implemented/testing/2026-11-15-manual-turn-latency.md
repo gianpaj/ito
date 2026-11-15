@@ -49,3 +49,12 @@ at 1,073.1 ms. Device capture-end to playback-start logs span 6,790 ms, with zer
 output underruns. This trial returns no speech and makes no accuracy claim.
 The [result](../../../../results/stackchan/2026-11-15-manual-oido/latency-benchmark.json)
 retains the tool/image hashes and exact measurement boundaries. The batch baseline is independent of later streaming measurements.
+
+The [streaming results](../../../../results/stackchan/2026-11-15-streaming-latency/README.md)
+record four ambient microphone probes and one completed public fixture turn.
+The final image measures 1,648.1 ms from the last RX read to first I2S and
+1,109.4 ms from final transcript to first I2S. It misses the strict 1,500 ms
+input-end target by 148.1 ms. The 7.05-second supplied fixture reply has zero
+underruns, as do the microphone replies. A failed upload before recognition is
+recorded separately. TTS scheduling remains unchanged; startup is the remaining
+measured bottleneck. These bounded checks do not establish a latency percentile.
