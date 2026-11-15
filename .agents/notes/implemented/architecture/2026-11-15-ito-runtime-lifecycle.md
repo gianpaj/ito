@@ -63,6 +63,13 @@ Destructive borrowing invalidates it before returning memory to the caller.
 Pool provisioning sets aliases without clearing the weight prefix. Hot/bulk
 initialization is separate, so rebuilding the engine cannot erase copied weights.
 
+After boot completes, an intact copy also permits reuse of its retained layout.
+The active partition and extent, configured limits, dimensions, hot capacity and
+padded PSRAM capacity must match. Resume then skips flash metadata/dimension
+discovery. Pool provisioning and full model/context initialization still run.
+Cold or failed startup, destructive borrowing and invalid retained metadata use
+the full discovery path.
+
 PCM capacity stays at 32 frames even when the active chunk size is smaller.
 Stop snapshots the active chunk profile, style and activation precision. Resume
 restores them after full-capacity provisioning, so retained calibration uses the
@@ -99,6 +106,8 @@ The pool itself is not reallocated across transitions.
 
 Production-function host tests cover exact scratch leases, preservation across
 scratch overwrite, destructive reload, and failed read/cache-sync recovery.
+The retained-layout predicate rejects incomplete boot, changed partition/extent
+or limits, and insufficient hot/PSRAM capacity.
 The portable engine reproduces the golden PCM while alternating preserved-weight
 rebuilds and destructive reloads under ASan/UBSan. Scratch-resume device latency
 is measured separately from the full-pool results below.

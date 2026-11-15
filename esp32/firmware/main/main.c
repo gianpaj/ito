@@ -1310,6 +1310,26 @@ static int load_weight_copy(const esp_partition_t *partition, size_t extent)
     return 0;
 }
 
+#ifdef ITOFS_EMBEDDED
+static int retained_layout_ready(void)
+{
+    if (!s_boot_done || !s_weight_copy_valid || s_active != 0 || !s_tier[0].valid) return 0;
+    const tier_t *tier = &s_tier[0];
+    if (!tier->p || tier->p != s_weight_copy_partition || tier->ext != s_weight_copy_extent ||
+        !tier->ext || tier->ext > SIZE_MAX - 127) return 0;
+    if (!s_hot || !s_hb || s_hot_reserved < s_hb || !s_bb || s_hop <= 0 || s_sr <= 0 ||
+        s_lim.max_tokens != MAX_TOKENS || s_lim.chunk_frames != STEADY_FRAMES ||
+        s_lim.act_bits != ITOFS_ACT_BITS || s_lim.whole_text) return 0;
+    if (!s_psram_pool || s_psram_weights_bytes != ((tier->ext + 127) & ~(size_t)63) ||
+        s_psram_weights_bytes >= s_psram_pool_bytes || s_bb > SIZE_MAX - 15 ||
+        (size_t)s_hop > (SIZE_MAX - 15) / (STEADY_FRAMES * sizeof(int16_t))) return 0;
+    const size_t scratch = s_psram_pool_bytes - s_psram_weights_bytes;
+    const size_t bulk = (s_bb + 15) & ~(size_t)15;
+    const size_t pcm = ((size_t)STEADY_FRAMES * s_hop * sizeof(int16_t) + 15) & ~(size_t)15;
+    return bulk <= scratch && pcm <= (scratch - bulk) / NBUF;
+}
+#endif
+
 // make set i the active one: weights into PSRAM (or the flash mapping), model parsed, engine context initialised over the shared arenas
 static int activate_tier(int i)
 {
@@ -2415,6 +2435,13 @@ static esp_err_t runtime_start(void)
 #endif
     int nvalid = 0, first = -1;
     size_t max_ext = 0;
+#ifdef ITOFS_EMBEDDED
+    if (retained_layout_ready()) {
+        first = s_active;
+        max_ext = s_weight_copy_extent;
+        printf("weights: retained layout for set %d\n", s_active);
+    } else {
+#endif
     for (int i = 0; i < MAX_TIERS; i++) {
 #ifdef ITOFS_EMBEDDED
         if (i > 0) continue;
@@ -2441,6 +2468,9 @@ static esp_err_t runtime_start(void)
         if (bb > s_bb) s_bb = bb;
         s_hop = hop; s_sr = sr;
     }
+#ifdef ITOFS_EMBEDDED
+    }
+#endif
     if (!s_hb || !s_bb || !s_hop || !s_sr) return ESP_ERR_INVALID_SIZE;
     s_chunk_frames = STEADY_FRAMES;
     s_chunk_samples = s_chunk_frames * s_hop;

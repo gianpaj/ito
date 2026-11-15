@@ -15,7 +15,7 @@ FUNCTIONS = (
 )
 
 LIFECYCLE_FUNCTIONS = (
-    "allocate_inference_pool", "load_weight_copy", "request_stop", "cancel_job", "itofs_service_reserve_hot", "workers_parked", "wait_parked",
+    "allocate_inference_pool", "load_weight_copy", "retained_layout_ready", "request_stop", "cancel_job", "itofs_service_reserve_hot", "workers_parked", "wait_parked",
     "reset_playback_queues", "release_inference", "itofs_service_stop",
     "itofs_service_resume", "borrow_workspace", "itofs_service_borrow_memory", "itofs_service_borrow_scratch", "itofs_service_return_memory",
     "itofs_service_start",
@@ -50,7 +50,7 @@ def main():
     source = re.sub(r"^\s*#\s*include[^\n]*", "", MAIN.read_text(), flags=re.MULTILINE)
     selected = subprocess.run(
         compiler + ["-E", "-P", "-x", "c", "-DITOFS_EMBEDDED=1",
-                    "-DCONFIG_ITOFS_FRONTEND=1", "-"],
+                    "-DSTEADY_FRAMES=32", "-DCONFIG_ITOFS_FRONTEND=1", "-"],
         input=source, text=True, capture_output=True, check=True,
     ).stdout
     with tempfile.TemporaryDirectory(prefix="ito-runtime-test-") as directory:

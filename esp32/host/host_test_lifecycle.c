@@ -38,6 +38,11 @@ static size_t s_weight_copy_extent;
 static itofs_workspace_t s_memory_lease;
 typedef struct { int id; } esp_partition_t;
 static const esp_partition_t weight_partition={1}, other_partition={2};
+typedef struct { const esp_partition_t *p; size_t ext; int valid; } tier_t;
+static tier_t s_tier[3];
+static int s_active, s_hop, s_sr;
+static size_t s_hb, s_bb;
+static struct { int max_tokens, chunk_frames, act_bits, whole_text; } s_lim;
 static int weight_reads, fail_weight_read, weight_syncs, sync_error;
 static int s_resume_chunk=32, s_chunk_frames=32;
 static const void *s_blob;
@@ -121,6 +126,9 @@ static esp_err_t runtime_start(void) {
     runtime_calls++;
     if (taint_during_start) atomic_store(&s_park_error,ESP_FAIL);
     if (!allocate_inference_pool(512,256,32)) return ESP_ERR_NO_MEM;
+    s_active=0;s_tier[0]=(tier_t){&weight_partition,512,1};
+    s_lim.max_tokens=400;s_lim.chunk_frames=32;s_lim.act_bits=8;
+    s_hb=s_hot_reserved;s_bb=256;s_hop=1;s_sr=24000;
     if (bind_failure==1) return ESP_FAIL;
     if (load_weight_copy(&weight_partition,512)<0) return ESP_FAIL;
     s_mapped=1;s_map_h=7;s_blob=s_wbuf;s_blob_size=512;
@@ -148,6 +156,8 @@ static void fresh(void) {
     memset(s_pcm_buffers,0,sizeof s_pcm_buffers);
     s_hot_reserved=s_psram_pool_bytes=s_psram_weights_bytes=0;s_service_started=s_stopped=s_memory_borrowed=0;
     s_weight_copy_valid=0;s_weight_copy_partition=NULL;s_weight_copy_extent=0;
+    memset(s_tier,0,sizeof s_tier);memset(&s_lim,0,sizeof s_lim);
+    s_active=-1;s_hb=s_bb=0;s_hop=s_sr=0;
     memset(&s_memory_lease,0,sizeof s_memory_lease);
     weight_reads=fail_weight_read=weight_syncs=sync_error=0;
     s_workers=PARK_FE|PARK_SYNTH|PARK_PLAY;
@@ -313,6 +323,30 @@ int main(void) {
     assert(!memcmp(weights,s_psram_pool,sizeof weights));
     cleanup();
     puts("PASS scratch lease preserves copied bytes without rereads; destructive lease reloads and failed reload stays stopped");
+
+    fresh();bind_failure=1;
+    assert(itofs_service_start(&config)==ESP_FAIL && !retained_layout_ready());
+    bind_failure=0;assert(itofs_service_resume()==ESP_OK && !retained_layout_ready());
+    atomic_store(&s_boot_done,1);assert(retained_layout_ready());
+    assert(itofs_service_stop(20)==ESP_OK && retained_layout_ready());
+    assert(!s_wbuf && !s_bulk); /* Released aliases do not invalidate retained dimensions. */
+    s_chunk_frames=16;assert(retained_layout_ready());s_chunk_frames=32;
+    s_tier[0].p=&other_partition;assert(!retained_layout_ready());s_tier[0].p=&weight_partition;
+    s_tier[0].ext++;assert(!retained_layout_ready());s_tier[0].ext--;
+    s_lim.chunk_frames=16;assert(!retained_layout_ready());s_lim.chunk_frames=32;
+    s_lim.whole_text=1;assert(!retained_layout_ready());s_lim.whole_text=0;
+    s_hot_reserved--;assert(!retained_layout_ready());s_hot_reserved++;
+    s_psram_weights_bytes--;assert(!retained_layout_ready());s_psram_weights_bytes++;
+    s_psram_pool_bytes--;assert(!retained_layout_ready());s_psram_pool_bytes++;
+    s_bb=SIZE_MAX;assert(!retained_layout_ready());s_bb=256;
+    s_hop=0;assert(!retained_layout_ready());s_hop=1;
+    assert(itofs_service_borrow_scratch(&workspace)==ESP_OK);
+    memset(workspace.hot,0xa5,workspace.hot_bytes);memset(workspace.psram,0xa5,workspace.psram_bytes);
+    assert(itofs_service_return_memory(&workspace)==ESP_OK && retained_layout_ready());
+    workspace=borrow();assert(!retained_layout_ready());
+    assert(itofs_service_return_memory(&workspace)==ESP_OK && !retained_layout_ready());
+    assert(itofs_service_resume()==ESP_OK && retained_layout_ready());cleanup();
+    puts("PASS retained-layout guard accepts intact scratch reuse and rejects cold/failed startup, changed metadata/profile and insufficient capacity");
 
     fresh();assert(itofs_service_start(&config)==ESP_OK);
     flush_error=ESP_FAIL;bulk=s_bulk;blocks=live_blocks;
