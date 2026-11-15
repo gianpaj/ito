@@ -15,6 +15,7 @@
 #define portMAX_DELAY -1
 #define MALLOC_CAP_INTERNAL 1
 #define MALLOC_CAP_8BIT 2
+#define MALLOC_CAP_SPIRAM 4
 #define NBUF 6
 #define PARK_FE 1u
 #define PARK_SYNTH 2u
@@ -41,6 +42,8 @@ static int live_blocks, fail_allocation, allocation_index, fail_mutex, mutex_tim
 static int park_after_delay, flush_error, mute_error, flushes, unmapped;
 static int runtime_calls, runtime_error, stop_during_start, taint_during_start, opens, volumes;
 static void *owned[64];
+static size_t free_psram, last_allocation_size;
+static size_t heap_caps_get_free_size(int caps) { assert(caps==MALLOC_CAP_SPIRAM); return free_psram; }
 static int64_t esp_timer_get_time(void) { return clock_us; }
 static void acknowledge_workers(void) {
     for (int i=0;i<3;i++) atomic_store(&s_park_epoch[i],atomic_load(&s_stop_sequence));
@@ -54,6 +57,7 @@ static void vTaskDelay(int ms) {
 }
 static void *heap_caps_aligned_alloc(size_t alignment, size_t size, int caps) {
     (void)alignment; (void)caps;
+    last_allocation_size=size;
     if (++allocation_index == fail_allocation) return NULL;
     void *p=malloc(size); assert(p);
     for (int i=0;i<64;i++) if (!owned[i]) { owned[i]=p; live_blocks++; return p; }
@@ -134,6 +138,16 @@ static void assert_released(void) {
     assert(live_blocks==1 && s_hot);
 }
 int main(void) {
+    const size_t extent=3196096, bulk_bytes=1579920, need=extent+64+bulk_bytes+320*1024;
+    free_psram=need-1;
+    assert(!allocate_weight_copy(extent,bulk_bytes) && !s_wbuf && allocation_index==0);
+    free_psram=7979384;
+    assert(allocate_weight_copy(extent,bulk_bytes) && last_allocation_size==extent+64);
+    heap_caps_free(s_wbuf);s_wbuf=NULL;
+    fail_allocation=allocation_index+1;
+    assert(!allocate_weight_copy(extent,bulk_bytes) && !s_wbuf);
+    fail_allocation=0;
+    puts("PASS weight-copy allocation uses total budget, attempts only its own block and respects allocation failure");
     fresh();
     assert(itofs_service_start(NULL)==ESP_ERR_INVALID_ARG);
     fail_mutex=1;assert(itofs_service_start(&config)==ESP_ERR_NO_MEM);

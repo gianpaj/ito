@@ -1202,6 +1202,16 @@ static esp_partition_mmap_handle_t s_map_h; static int s_mapped;
 static itofs_limits_t s_lim;
 static int s_sim; static double s_sim_rtf[MAX_TIERS] = { 0.9, 0.8, 0.7 };
 
+static int allocate_weight_copy(size_t extent, size_t bulk_bytes)
+{
+    /* Weights need one block; the bulk arena and self-test margin need total
+     * capacity. Only the allocator determines whether the aligned copy fits. */
+    const size_t need = extent + 64 + bulk_bytes + 320 * 1024;
+    if (heap_caps_get_free_size(MALLOC_CAP_SPIRAM) < need) return 0;
+    s_wbuf = heap_caps_aligned_alloc(64, extent + 64, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    return s_wbuf != NULL;
+}
+
 static int tier_ext(const esp_partition_t *p, size_t *ext, uint32_t *id, int *has_id, int quiet)
 {
     uint8_t hdr[16];
@@ -2379,11 +2389,8 @@ static esp_err_t runtime_start(void)
     }
     if (!s_hb || !s_bb || !s_hop || !s_sr) return ESP_ERR_INVALID_SIZE;
     // the active set's weights live in PSRAM next to the arenas (+ margin for the self-test buffer); else they run memory-mapped from flash (slow)
-    {
-        const size_t need = max_ext + 64 + s_bb + 320 * 1024;
-        if (heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM) > need) s_wbuf = heap_caps_aligned_alloc(64, max_ext + 64, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        if (!s_wbuf) printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
-    }
+    if (!allocate_weight_copy(max_ext, s_bb))
+        printf("weights: %u bytes do not fit in PSRAM next to the arenas: the active set will run memory-mapped from flash\n", (unsigned)max_ext);
     s_chunk_frames = STEADY_FRAMES;
     s_chunk_samples = s_chunk_frames * s_hop;
     s_style = demo_style[0];   // replaced by the first blob demo's style once the demos are loaded
