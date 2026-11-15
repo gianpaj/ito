@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-15",
+  "source": "User-provided monitor output and explicit confirmation",
+  "scope": "Independent manual listen and echo confirmation; separate from the 91-turn automated run",
+  "firmware_changed": false,
+  "new_agent_device_passes": 0,
+  "user_confirmed_working": true,
+  "commands": [
+    "listen 5",
+    "echo"
+  ],
+  "turn_id_in_user_session": 3,
+  "capture": {
+    "sample_rate_hz": 16000,
+    "samples": 80000,
+    "duration_ms_from_samples": 5000,
+    "elapsed_ms_reported": 5007,
+    "peak": 7340,
+    "clipped_samples": 0,
+    "cap_reached": true,
+    "cleanup_succeeded": true
+  },
+  "recognition": {
+    "hot_used_bytes": 204720,
+    "psram_used_bytes": 1309152,
+    "allocations": 59,
+    "encoder_frames": 63,
+    "setup_ms": 722.7,
+    "feed_ms": 3758.2,
+    "finish_ms": 442.5,
+    "setup_feed_finish_sum_ms": 4923.4,
+    "transcript_omitted_for_privacy": true
+  },
+  "restoration": {
+    "weights_reload_ms": 460,
+    "conversation_ready": true
+  },
+  "playback": {
+    "tokens": 20,
+    "audio_seconds_reported": 1.27,
+    "compute_ms": 1397.3,
+    "compute_rtf_reported": 1.096,
+    "first_chunk_ms": 576.7,
+    "text_to_first_i2s_submission_ms": 833.5,
+    "underruns": 0
+  },
+  "memory": {
+    "worker_stack_bytes": 12288,
+    "worker_stack_unused_bytes": 5760,
+    "idle_internal_free_bytes": 13994,
+    "lifetime_internal_minimum_bytes": 4130
+  },
+  "limits": [
+    "User confirmation is not a word-error-rate evaluation.",
+    "Timing fields are copied from the provided log; recognition sum excludes Ito restoration.",
+    "Raw utterance text and the full private log are not committed."
+  ]
+}

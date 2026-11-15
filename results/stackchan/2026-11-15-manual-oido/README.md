@@ -55,6 +55,18 @@ Ito's strict compute RTF below 1 remains unmet, and `degraded=1` remains truthfu
 The controller preserves half-duplex ownership. Oido borrows the retained hot and
 PSRAM workspaces only after Ito stops, and returns them before Ito resumes.
 
+## Independent monitor confirmation
+
+The user confirms that `listen 5`, followed by `echo` after
+`CONVERSATION READY`, works from their own terminal. The supplied log records
+80,000 samples in five seconds, no clipping, successful audio cleanup and zero
+playback underruns. Recognition setup, feed and finish total 4,923.4 ms;
+Ito weight reload takes another 460 ms. Text-to-first-I2S submission is 833.5 ms.
+
+[Sanitized confirmation](manual-monitor-confirmation.json) retains the reported
+metrics without the private utterance. This separate user-run example does not
+extend the 91-turn automated run or add another agent device pass.
+
 ## Memory
 
 The profile retains 239,948 bytes of internal hot storage and 4,891,328 bytes
