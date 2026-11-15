@@ -67,6 +67,32 @@ Ito weight reload takes another 460 ms. Text-to-first-I2S submission is 833.5 ms
 metrics without the private utterance. This separate user-run example does not
 extend the 91-turn automated run or add another agent device pass.
 
+## Automated latency benchmark
+
+The host [benchmark](../../../esp32/tools/stackchan_benchmark.py) uses the existing
+firmware and sends a fixed supplied reply after conversation READY. One five-second
+ambient-microphone trial is retained in [latency-benchmark.json](latency-benchmark.json).
+Oido reports no speech in that input; this measures timing, not recognition quality.
+The supplied reply is "This is a manual reply from StackChan."
+
+| Metric | Time | Boundary |
+|---|---:|---|
+| STT setup + feed + finish | 4,982.2 ms | Firmware counters |
+| STT report to conversation READY | 728.3 ms | Host observer, including Ito restoration/control |
+| Transcript to supplied-reply dispatch | 1.25 ms | Host observer, no human/LLM wait |
+| Reply text to first PCM ready | 584.8 ms | Firmware counter |
+| Reply text to first I2S submission | 1,073.1 ms | Firmware counter, includes prebuffer wait |
+| Recording-end log to playback-start log | 6,790 ms | One device log clock |
+| Listen command to playback-start log | 11,904.3 ms | Host observer, includes five-second recording |
+
+The 3.62-second reply reports zero underruns. PCM readiness occurs within the
+text-to-first-I2S interval; these two times must not be added. I2S submission and
+the playback callback are not acoustic onset. Device log timing is limited by
+the firmware tick; host timing includes USB delivery. The measured post-recording
+host interval is 6,793.2 ms. A single trial does not establish percentiles.
+The [benchmark guide](../../../esp32/BENCHMARKING.md#stackchan-manual-speech-latency)
+defines every metric and the JSON/CSV outputs. The firmware is unchanged.
+
 ## Memory
 
 The profile retains 239,948 bytes of internal hot storage and 4,891,328 bytes

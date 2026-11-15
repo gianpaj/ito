@@ -1,6 +1,6 @@
 # Agent Note: Manual speech-turn latency
 
-Status: implemented — Host protocol and timing-boundary tests pass.
+Status: implemented — Host timing tests and one native five-second benchmark pass.
 
 ## Problem
 
@@ -38,3 +38,11 @@ result. Boot is excluded, model setup and restoration remain visible, and no
 LLM latency is invented. Protocol tests cover turn correlation, delayed summary
 arrival, stale READY lines, multipart replies and missing metrics. Default runs
 stay small; additional runs require an explicit argument.
+
+One native five-second ambient-input trial measures STT at 4,982.2 ms, observed
+restoration/control at 728.3 ms and supplied reply text to first I2S submission
+at 1,073.1 ms. Device capture-end to playback-start logs span 6,790 ms, with zero
+output underruns. This trial returns no speech and makes no accuracy claim.
+The [result](../../../../results/stackchan/2026-11-15-manual-oido/latency-benchmark.json)
+retains the tool/image hashes and exact measurement boundaries. No firmware
+change or additional repeated device pass is needed for this slice.

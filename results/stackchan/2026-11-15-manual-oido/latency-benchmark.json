@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-11-15T16:09:59.678264+00:00",
+  "ended_utc": "2026-11-15T16:10:29.079742+00:00",
+  "requested_runs": 1,
+  "completed_runs": 1,
+  "exit_reason": "complete",
+  "source_revision": "ac8ba788ecd8da0072b845d5fc2e42d64fb1e6fe",
+  "source_dirty": false,
+  "tool_sha256": "7a7af25559b89ca6d4cae73d754b52bd4423a86e8bf5637d858b5e687fc97891",
+  "responder": {
+    "mode": "fixed_supplied_text",
+    "llm_called": false,
+    "reply_bytes": 38,
+    "reply_sha256": "26f227754c6a88f704ab4906778dff65798fbb2dc3a41c7f71a348b3b6fe5cf9"
+  },
+  "limits": [
+    "No LLM is timed; supplied reply is sent automatically after conversation READY.",
+    "Firmware text-to-first-I2S timing excludes DMA and acoustic latency.",
+    "Playback logs mark the callback after the first successful I2S write, not acoustic onset.",
+    "Host intervals include USB/log delivery and scheduling; device log intervals have millisecond log resolution.",
+    "Capture ends at the configured cap, not detected end of speech. Boot time is excluded from trials.",
+    "TTS compute/audio fields describe the first utterance; underruns sum all reply utterances.",
+    "Private serial/command logs can contain speech and reply text; metric rows omit transcript text."
+  ],
+  "input": {
+    "mode": "microphone",
+    "capture_seconds": 5,
+    "sample_rate_hz": 16000
+  },
+  "reply_text": "This is a manual reply from StackChan.",
+  "firmware": {
+    "bytes": 2047856,
+    "sha256": "b78e5d70581f6cdc3d88d6270a796034eef00d218c090ad613050b6f912d15c8"
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "mode": "microphone",
+      "turn": 1,
+      "transcript_kind": "no_speech",
+      "capture": {
+        "samples": 80000,
+        "peak": 4360,
+        "clipped": 0,
+        "elapsed_ms": 5007,
+        "cleanup": 1,
+        "audio_ms": 5000,
+        "capped": 1
+      },
+      "events_device_log_ms": {
+        "capture_end_log": 18906,
+        "playback_start_log": 25696
+      },
+      "stt_setup_ms": 752.6,
+      "stt_feed_ms": 3793.1,
+      "stt_finish_ms": 436.5,
+      "stt_total_ms": 4982.2,
+      "stt_report_to_conversation_ready_host_ms": 728.264,
+      "capture_report_to_transcript_host_ms": 5715.944,
+      "pcm_submit_to_transcript_host_ms": null,
+      "upload_host_ms": null,
+      "transcript_to_reply_sent_host_ms": 1.25,
+      "reply_sent_to_playback_log_host_ms": 1076.024,
+      "capture_report_to_playback_log_host_ms": 6793.219,
+      "capture_end_log_to_playback_log_device_ms": 6790,
+      "pcm_submit_to_playback_log_host_ms": null,
+      "input_command_to_playback_log_host_ms": 11904.342,
+      "reply_sent_to_speech_ready_host_ms": 4738.664,
+      "tts_first_utterance_audio_seconds": 3.62,
+      "tts_first_utterance_compute_ms": 3669.5,
+      "tts_first_utterance_compute_rtf": 1.012,
+      "tts_utterances": 1,
+      "tts_underruns": 0,
+      "tts_text_to_first_i2s_ms": 1073.1,
+      "tts_text_to_pcm_ready_ms": 584.8
+    }
+  ],
+  "private_session_id": "20261115T160959.677932Z",
+  "interpretation": "One ambient microphone timing trial; no-speech recognition result. The fixed reply times the manual responder boundary, not recognition quality or an LLM."
+}
